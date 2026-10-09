@@ -48,7 +48,8 @@ Run model stages sequentially; measure end-to-end seconds per area.
 ## Pipeline (`ml/`)
 1. **Submission first:** one command writes the exact JSON (every expected image/area key, real booleans, consistent `stock_level`/`stock_value`), with a deterministic fallback if a model fails. Schema check in `scripts/smoke_test.sh`.
 2. **Crops:** warp each area quad to a rectangle with a **valid-pixel mask** (negative coordinates = padding, never counted as empty shelf). Tight crop + context image (full frame, area outlined).
-3. **Timeline (sampled frames, expand where useful):** DINOv3 patch features, SAM 3 coverage of **generic produce** (not the expected product, or a wrong product looks empty), person/hand flag.
+3. **Timeline (sampled frames, expand where useful):** DINOv3 patch features, SAM 3 produce coverage, person/hand flag.
+   - SAM 3 prompt = union of masks for the English names of **all products on that camera** (not only the expected one, or a wrong product looks empty) + "produce" at threshold 0.3. Tested Fri: on a banana image "banana" covers 0.76, "produce" 0.97 at 0.3 but 0.20 at 0.5, "fruit"/"food"/"vegetable" ≈ 0. Translate the Portuguese names once.
 4. **VLM judge:** tight crop + context + reference crop → P(compliant), P(empty/half/full).
 5. **Calibration / fusion** over [VLM probs, coverage vs reference, patch distance]. Only if the mentor allows hand-label calibration (it is supervised, the brief stresses no labels).
 6. **Decision** with the rule above.

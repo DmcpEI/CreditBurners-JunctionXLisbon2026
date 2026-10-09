@@ -43,6 +43,7 @@
 - Start of every session: `git pull --rebase`, then read `docs/status/*.md`, `docs/CONTRACT.md` and `git log -10`.
 - Each person keeps `docs/status/<name>.md` (Doing / Done / Blocked / Decisions). Update it with every push, in 2-3 lines. One file per person avoids merge conflicts.
 - `docs/DEMO.md`: the 3-minute script, fallbacks and known failures. `docs/RESULTS.md`: metrics and how they were measured.
+- `docs/PLAN.md`: objective, approach, schedule. Read it at the start of every session.
 - No changelog, design notes or other docs.
 
 ## Testing and verification

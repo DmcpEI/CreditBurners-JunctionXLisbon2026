@@ -1,20 +1,24 @@
 # Plan — Sensei: Fresh eyes on fresh produce
 
-Challenge choice is conditional: if no measurable edge by hour 3, switch to QuantumTrace (Inspiring Solutions).
+Challenge: Sensei. Switch to QuantumTrace (Inspiring Solutions) only for a fundamental blocker (data unusable, crops unreadable, validation unavailable), not for "no edge yet". Otherwise cut scope.
 
 ## Objective
 > Every area calibrates itself against its own day, and every answer is the one that costs staff least.
 
 Two prizes, two targets, planned from hour 0:
 - **Sensei prize** = automatic score on 289 hidden validation areas (max 578). Owned by `ml/`.
-- **General / Peer prize** = demo and pitch. Owned by `api/` + `ui/`. Last year's winner (Forest Guardian) won with a known model (YOLOv8-seg) wrapped in a complete product: upload → instant result with confidence maps, clear impact story, production-looking architecture.
+- **General / Peer prize** = demo and pitch. Owned by `api/` + `ui/`. Last year's winner (Forest Guardian) wrapped a known model (YOLOv8-seg) in an immediately understandable result: image → visible detection → useful action. Copy that clarity, not their stack. Ours: **shelf image → priority task → evidence crop → measured reduction in costly errors**.
 
 ## Our edge
-1. **Per-area timeline from the same day, no labels.** Earliest frames = area full and compliant (planogram is valid "at the start of the day"). Stock = how much of its morning self is left. Compliance = did it change from its morning look. Occluded frame → nearest clear frame in time.
-2. **Cost-aware answers.** Calibrated probabilities, pick the answer with best expected score. Never skip an area (missing = −5).
-3. **Proof.** Local copy of the scoring function, hand labels used only to measure and calibrate, every change compared against two baselines.
-4. **Time-to-empty forecast** per area from the fill curve (brief's "future potential"; strong for the general jury).
+1. **Per-area timeline from the same day.** Several clear frames per area are evidence, not truth: the planogram says what *should* be there, not that the morning shelf was full or compliant.
+   - Full reference = the area's highest robust coverage over the day, not "the morning".
+   - Occluded frame → nearest clear frame only within a short window, keep its timestamp, never across a restock.
+   - Appearance change alone can't tell depletion from rearrangement, lighting or a wrong product; combine with the VLM.
+2. **Cost-aware answers** from calibrated probabilities (below). Never skip an area (missing = −5).
+3. **Proof.** Local copy of the scoring function, held-out evaluation, every component compared against baselines.
+4. **Stretch:** time-to-empty from the fill curve, only if it can be validated; otherwise "future work" in the pitch.
 
+## Decision rule
 Stock payoff (rows = prediction, cols = truth):
 
 | | empty | half | full |
@@ -23,62 +27,77 @@ Stock payoff (rows = prediction, cols = truth):
 | half | −3 | +1 | −2 |
 | full | −3 | −3 | +1 |
 
-Identification: +1 right / −2 wrong (symmetric). Flag a mismatch only on strong evidence; the prior is probably "compliant".
+With calibrated probabilities e, h, f pick the largest of:
+- S_empty = 3e − 2
+- S_half = −3e + h − 2f
+- S_full = 4f − 3
+
+Compliance (+1 / −2, symmetric): predict mismatch when calibrated P(mismatch) > 0.5. The compliant prior is already inside that probability; no extra threshold.
+
+Token probabilities are measurements, not probabilities: sum all variants of each label token (`empty`/`Empty`/` empty` are different tokens), normalise over the allowed labels at the same position, then calibrate. Raw VLM output was 0.999 on a test image.
 
 ## Models
-| Role | Pick | Fallback |
+| Role | Pick | Fallback / comparison |
 |---|---|---|
-| VLM judge (one-token answers, read as probabilities) | Qwen3.8-27B (dense, ~55 GB bf16, `enable_thinking: False`) | Qwen3.6-27B → Qwen3-VL-32B (on server) |
-| Produce coverage / occlusion (text-prompted masks) | SAM 3 (gated on HF) | Grounding DINO + SAM 2 |
-| Timeline / change detection | DINOv3 ViT-L/16 (gated on HF) | DINOv2-large |
-| Second opinion (only if Qwen does badly) | Gemma 4 31B | — |
+| VLM judge | Qwen3.8-27B (on knuth, tested: 54.7 GB VRAM, 0.27 s/question) | Compare against Qwen3-VL-32B (on knuth) on identical crops by actual score. Gemma 4 31B only if both fail. |
+| Produce coverage / occlusion | SAM 3, text prompts + visual exemplars (gated on HF) | Grounding DINO + SAM 2 |
+| Change detection | DINOv3 ViT-L/16, patch features inside the area (gated on HF) | ViT-B/16 if speed is a problem; DINOv2-large |
+
+Run model stages sequentially; measure end-to-end seconds per area.
 
 ## Pipeline (`ml/`)
-1. **Ingest:** parse `planogram.json`, index images by camera and timestamp. Warp each area quad to a rectangle; pad negative coordinates. Context image = full frame with the area outlined.
-2. **Timeline (all frames):** per area per frame: DINOv3 embedding, SAM 3 produce coverage, person/hand flag → full reference, coverage curve, nearest clear frame.
-3. **VLM judge:** context image + current crop + morning reference → P(compliant), P(empty/half/full).
-4. **Fusion + calibration:** logistic regression over [VLM probs, coverage vs morning, embedding distance], cross-validated on hand labels.
-5. **Decision:** expected-score answer from the payoff matrix.
-6. **Local scorer:** exact scoring, run against both baselines on every change. Numbers go to `docs/RESULTS.md`.
+1. **Submission first:** one command writes the exact JSON (every expected image/area key, real booleans, consistent `stock_level`/`stock_value`), with a deterministic fallback if a model fails. Schema check in `scripts/smoke_test.sh`.
+2. **Crops:** warp each area quad to a rectangle with a **valid-pixel mask** (negative coordinates = padding, never counted as empty shelf). Tight crop + context image (full frame, area outlined).
+3. **Timeline (sampled frames, expand where useful):** DINOv3 patch features, SAM 3 coverage of **generic produce** (not the expected product, or a wrong product looks empty), person/hand flag.
+4. **VLM judge:** tight crop + context + reference crop → P(compliant), P(empty/half/full).
+5. **Calibration / fusion** over [VLM probs, coverage vs reference, patch distance]. Only if the mentor allows hand-label calibration (it is supervised, the brief stresses no labels).
+6. **Decision** with the rule above.
+7. **Local scorer** on every change; numbers to `docs/RESULTS.md`.
 
-Baselines: (a) always compliant + one fixed stock level; (b) plain VLM, most likely answer.
-Hand labels: ~100 areas via the labelling tool; two people label the same 30 to measure disagreement on "half".
+Coverage is not pile volume (removing a top layer barely changes it); the VLM covers that.
+
+## Evaluation
+- Baselines: always compliant + each constant stock level (empty, half, full); plain VLM most-likely answer; then each component added separately.
+- Hand labels sampled across cameras, products, stock states and occlusions. Split by **area / time block**, never random adjacent crops. Representative holdout kept separate from hand-picked hard cases.
+- Two people label the same 30 to measure disagreement on "half". Small gains below that noise don't count.
 
 ## Product (`api/` + `ui/`)
 - Staff app opens on a **priority list**: restock now / wrong product / OK, sorted by cost to the store.
-- Area detail: current crop next to morning reference, fill curve over the day with time-to-empty, one-sentence reason.
-- Store map of the 14 cameras with coloured areas.
-- Output JSON = annotation format exactly. Richer per-area record (probabilities, crop URLs, timeline) defined in `docs/CONTRACT.md`.
-- **MongoDB Atlas (only if there's a MongoDB prize):** result documents, time-series collection for fill curves, Change Streams for live alerts. Bulk embeddings stay local (M0 = 512 MB). Keep a local JSON fallback (venue Wi-Fi).
+- Area detail: current crop next to reference, fill over the day, one-sentence reason. Show an occluded case honestly.
+- Output JSON = annotation format exactly. Richer per-area record in `docs/CONTRACT.md`.
+- Retrospective analysis (uses later frames) vs live monitoring: say which one the demo shows.
+- **MongoDB only with a confirmed prize:** one ordinary `observations` collection keyed by camera, image, area, run; images/embeddings stay outside; polling, not Change Streams (not supported on time-series collections). Local JSON stays the submission source and offline fallback.
+
+## Roles
+- Diogo: perception (`ml/`).
+- Emanuel: product (`api/`, `ui/`).
+- Reviewer agent (own worktree): scorer, labelling tool, schema checks, ablations, reviews against `docs/CONTRACT.md`, pitch challenge.
 
 ## Schedule
-| When | ml | api | 3rd member / shared |
-|---|---|---|---|
-| Fri night | HF access for SAM 3 / DINOv3; new env; Qwen3.8 one-image test, speed | Contract, API stack choice | Ask on Discord about MongoDB prize; Team Finder |
-| Sat 12–13 | Data look: timestamps, frames per camera, validation from same day? | Draft `CONTRACT.md` together | Mentor questions |
-| 13–15 | Crops + scorer + both baselines | API skeleton + labelling tool | Labelling |
-| 15–19 | Timeline, VLM with references, calibration, decision. **Kill checkpoint at hour 3** | API serving mocks; UI list + detail | Labelling, agreement check |
-| **19:00** | **First validation submission (baseline)** | | |
-| 19–02 | Ablations, time-to-empty, results table | UI on real outputs; MongoDB if prize | Pitch outline |
-| 02–07 | Sleep in shifts; long jobs run unattended | | |
-| 07–10 | **ML freeze 10:00**, final submission | Demo polish, cached fallback | Slides, architecture slide |
-| 10–13 | Rehearse 3 min ×3, `DEMO.md` fallbacks | | |
+| When | Goal |
+|---|---|
+| Fri night | HF access for SAM 3 / DINOv3; knuth env `jx` + Qwen3.8 ready (done) |
+| Sat 12–13 | Data look (timestamps, frames per camera, validation from same day?); mentor questions; draft `CONTRACT.md` |
+| **15:00** | Baseline JSON passing schema check + working list/detail screen |
+| 15–19 | Scorer on hand labels; VLM vs constant baselines; Qwen3.8 vs Qwen3-VL-32B |
+| **19:00** | Submission-ready artifact (confirm separately when Sensei validation opens) |
+| 19–07 | **One measured improvement at a time** (timeline → calibration); sleep in shifts |
+| **Sun 10:00** | ML freeze, final submission |
+| 10–13 | Demo polish, cached fallback, rehearse 3 min ×3, `DEMO.md` fallbacks |
 
-## Kill criteria
-1. 45 min: scorer + baseline on dev labels.
-2. Calibration + expected-score decoding: keep only if dev score rises.
-3. Per-area timeline: keep only if it helps.
-4. No edge by hour 3 → QuantumTrace.
+Cut order if behind: forecasting → store map → MongoDB → all-frame processing.
 
-## Mentor questions
-- How often can we submit validation outputs?
-- Does an empty area count as compliant?
+## Mentor questions (before building fusion)
+- How often can we submit validation outputs, and from when?
+- Does an empty area count as compliant? How are partly visible areas annotated?
+- Is calibrating on our own hand labels allowed?
+- May we use other frames from the same day (including later ones) as context?
 - Are validation images from the same day/cameras as train/test?
-- Are cloud VLM APIs allowed?
-- How is the general prize judged (pitch weight)?
+- Are cloud VLM APIs allowed? How is the general prize judged?
 
 ## Risks
-- Crops are small (~165×90 px) → context image + upscaled warp.
-- "half" is subjective → measure label disagreement, lean low.
+- Annotation semantics ("half", empty-area compliance) can erase small gains on our own labels.
+- Small crops (~165×90 px): upscaling presents detail, can't create it → add context.
+- VLM overconfidence → calibration is required, not optional.
 - Validation from another day → timeline edge mostly lost; fall back to cost-aware VLM.
-- Server disk: `/workspace` only (~45 GB free after models). Wi-Fi: test SSH over phone hotspot.
+- knuth: `/workspace` only, ~45 GB free; never delete pre-existing files. Wi-Fi: test SSH over phone hotspot.

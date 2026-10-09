@@ -27,7 +27,7 @@
 | `ui/` (frontend, demo, pitch visuals) | TBD |
 - Shared files (`AGENTS.md`, `CLAUDE.md`, lockfiles, config, `docs/CONTRACT.md`): small separate commits, and tell the team in Discord.
 - Interfaces between areas live in `docs/CONTRACT.md` (request/response shapes, file formats). If you change it, notify the affected owner first. Use mocks until real pieces connect.
-- If a task needs a change in someone else's area, don't make it. Note it in your status file and tell the owner.
+- If a task needs a change in someone else's area, don't make it. Tell the owner.
 
 ## Git (several people pushing at once)
 - `main` must always run. Never push something that breaks the demo path.
@@ -40,10 +40,9 @@
 - Commit message: `<area>: <what> — <why>`, one line.
 
 ## Tracking work
-- Start of every session: `git pull --rebase`, then read `docs/status/*.md`, `docs/CONTRACT.md` and `git log -10`.
-- Each person keeps `docs/status/<name>.md` (Doing / Done / Blocked / Decisions). Update it with every push, in 2-3 lines. One file per person avoids merge conflicts.
+- Start of every session: `git pull --rebase`, then read `docs/PLAN.md`, `docs/CONTRACT.md` and `git log -10`.
 - `docs/DEMO.md`: the 3-minute script, fallbacks and known failures. `docs/RESULTS.md`: metrics and how they were measured.
-- `docs/PLAN.md`: objective, approach, schedule. Read it at the start of every session.
+- `docs/PLAN.md`: objective, approach, schedule.
 - No changelog, design notes or other docs.
 
 ## Testing and verification

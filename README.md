@@ -1,1 +1,5 @@
-# CreditBurners-JunctionXLisbon2026
+# Credit Burners
+
+JunctionX Lisbon 2026
+
+## How to run

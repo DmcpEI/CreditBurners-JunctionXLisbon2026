@@ -1,0 +1,30 @@
+# Secrets
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Node
+node_modules/
+
+# Build
+target/
+build/
+dist/
+
+# Data and model weights
+data/
+*.pt
+*.pth
+*.onnx
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Cache
+.cache/

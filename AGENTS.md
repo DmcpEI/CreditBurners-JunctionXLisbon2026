@@ -25,7 +25,7 @@
 | `ml/` (models, pipeline, eval) | TBD |
 | `api/` (service, storage, deploy) | TBD |
 | `ui/` (frontend, demo, pitch visuals) | TBD |
-- Shared files (`AGENTS.md`, `CLAUDE.md`, lockfiles, config, `docs/CONTRACT.md`): small separate commits, and tell the team in Discord.
+- Shared files (`AGENTS.md`, lockfiles, config, `docs/CONTRACT.md`): small separate commits, and tell the team in Discord.
 - Interfaces between areas live in `docs/CONTRACT.md` (request/response shapes, file formats). If you change it, notify the affected owner first. Use mocks until real pieces connect.
 - If a task needs a change in someone else's area, don't make it. Tell the owner.
 

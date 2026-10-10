@@ -101,6 +101,9 @@ def main():
     parser.add_argument("--stock-crop-only", action="store_true", help="Stock question sees crop+mask only, no camera context")
     parser.add_argument("--context-max-side", type=int, default=0,
                         help="Downscale the camera-context image so its longest side is at most this (0 = original)")
+    parser.add_argument("--paired-prompt", choices=sorted(STOCK_PROMPTS),
+                        help="Stock-only: also answer this stock prompt from the same image prefix (computed once)")
+    parser.add_argument("--paired-output", type=Path, help="Results file for --paired-prompt answers")
     parser.add_argument("--batch-size", type=int, default=1,
                         help="Stock-only runs: answer this many areas per GPU forward pass (left padding)")
     parser.add_argument("--answer-prefix", default="",
@@ -109,6 +112,8 @@ def main():
     questions = tuple(q for q in args.questions.split(",") if q)
     if not set(questions) <= set(ALL_QUESTIONS) or "stock" not in questions:
         parser.error("--questions must include stock and only known stages")
+    if args.paired_prompt and (questions != ("stock",) or args.batch_size > 1 or not args.paired_output or args.answer_cache):
+        parser.error("--paired-prompt needs --questions stock, --paired-output, batch size 1 and no answer cache")
     if args.batch_size > 1 and questions != ("stock",):
         parser.error("--batch-size > 1 needs --questions stock (no gated stages)")
     answer_cache = json.loads(args.answer_cache.read_text()) if args.answer_cache and args.answer_cache.exists() else {}
@@ -198,6 +203,49 @@ def main():
             for (key, _), answer in zip(chunk, answers):
                 batched[key] = (answer, share)
             print(f"batch {start // args.batch_size + 1}: {len(chunk)} areas, {share:.3f}s/area", flush=True)
+
+    if args.paired_prompt:
+        # Both prompts share the images and the description text; only the question differs. Run the shared
+        # prefix once (vision encoder + prefill), then each question from a copy of that cache.
+        import copy
+        paired = json.loads(args.paired_output.read_text()) if args.paired_output.exists() else {}
+        for sample, fingerprint in pending:
+            started = time.perf_counter()
+            keys = question_input("stock", sample["product_name"], stock_crop_only=args.stock_crop_only)[0]
+            paths = [args.manifest.parent / sample[key] for key in keys]
+            images = load_images(paths)
+            encoded = [proc(text=[chat_text(question_input("stock", sample["product_name"], stock_prompt=name,
+                                                           stock_crop_only=args.stock_crop_only)[1], len(images))],
+                            images=images, return_tensors="pt").to("cuda") for name in (args.stock_prompt, args.paired_prompt)]
+            ids = [e["input_ids"][0] for e in encoded]
+            shared = next(i for i in range(min(map(len, ids))) if ids[0][i] != ids[1][i])
+            length = ids[0].shape[0]
+            prefix = {k: (v[:, :shared] if torch.is_tensor(v) and v.dim() == 2 and v.shape[1] == length else v)
+                      for k, v in encoded[0].items() if k != "input_ids"}
+            answers = []
+            with torch.inference_mode():
+                out = model(input_ids=ids[0][None, :shared], use_cache=True, **prefix)
+                for token_ids in ids:
+                    kv = copy.deepcopy(out.past_key_values)
+                    # no attention mask: positions continue from the cache length + stored M-RoPE image offset
+                    rest = model(input_ids=token_ids[None, shared:], past_key_values=kv, use_cache=True)
+                    answers.append(answer_from(rest.logits[0, -1].float(), "ABCD"))
+            torch.cuda.synchronize()
+            share = (time.perf_counter() - started) / 2  # one forward prefix serves both questions
+            for store, name, answer, path in ((cache, args.stock_prompt, answers[0], args.output),
+                                              (paired, args.paired_prompt, answers[1], args.paired_output)):
+                record = dict(sample=sample, fingerprint=fingerprint + ("" if store is cache else f":paired:{name}"),
+                              model=args.model, stock_prompt=name, questions=questions, context_max_side=args.context_max_side,
+                              shared_prefix=True, load_seconds=load_seconds, scores_uncalibrated=True, answers={})
+                record.update(inspect_stages(lambda _: {**answer, "cache_hit": False}, questions))
+                record["seconds"] = share
+                record["peak_vram_gb"] = torch.cuda.max_memory_allocated() / 1e9
+                store[sample["sample_id"]] = record
+                temporary = path.with_suffix(".tmp")
+                temporary.write_text(json.dumps(store, indent=2) + "\n")
+                temporary.replace(path)
+            print(sample["sample_id"], answers[0]["choice"], answers[1]["choice"], f"{2 * share:.2f}s", flush=True)
+        return
 
     for sample, fingerprint in pending:
         started = time.perf_counter()

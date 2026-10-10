@@ -22,10 +22,8 @@ if ssh -o ConnectTimeout=15 -o BatchMode=yes "$HOST" "test ! -e $REMOTE && mkdir
   INPUT=input; [ -d "$SRC" ] || INPUT=input.zip
   step "prepare on $HOST"
   ssh "$HOST" "cd $REMOTE && $RPY -B -m ml.validate $INPUT --references $REFS --output $OUT" 2>&1 | tee "$OUT-prepare.log" | grep -v "^WARNING" | tail -40
-  step "inference on $HOST (stock question, Qwen3.8-27B)"
-  ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v1 --questions stock --context-max-side 640 --output $OUT/results.json" > "$OUT/inference.log" 2>&1 || ok=0
-  step "empty check on $HOST (second stock question, prompt v4)"
-  ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v4 --questions stock --context-max-side 640 --output $OUT/results-empty.json" >> "$OUT/inference.log" 2>&1 || ok=0
+  step "inference on $HOST (Qwen3.8-27B: stock question + empty check from one shared image prefix)"
+  ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v1 --paired-prompt v4 --paired-output $OUT/results-empty.json --questions stock --context-max-side 640 --output $OUT/results.json" > "$OUT/inference.log" 2>&1 || ok=0
   step "fetch results"
   for f in expected sample report results results-empty; do ssh "$HOST" "cat $REMOTE/$OUT/$f.json" > "$OUT/$f.json" || ok=0; done
 else

@@ -106,3 +106,5 @@ Camera selection now stays accessible above the graphs while scrolling, with dir
 Recorded image selection, replay and thumbnail archive are inside Explore recorded images; observed changes and graph limitations have expandable sections. Opening shelf evidence retains frame selection controls and the camera selector. Saved predictions, fallback exclusions and product-match limitations remain unchanged.
 
 Verification: nine frontend tests and frontend/Maven builds passed. WebKit checked direct/adjacent camera selection, chart persistence, coverage drill-down, sticky controls, archive expansion, same-area frame navigation and reload. Layouts at 320/390/430/768/1440 pixels had no page overflow; mobile/desktop screenshots were inspected. Live API verification passed. Physical-phone interaction is still untested.
+
+The compact mobile summary now shows assessed, empty and full observations; product-match limitations stay in About these graphs and shelf evidence. The camera selector uses an explicit 44px height for WebKit touch targets.

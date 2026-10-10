@@ -90,14 +90,14 @@ export default function useSnapshots() {
   }, [mode, current, frames, navigate]);
 
   useEffect(() => {
-    if (mode !== 'study' || !current) return;
+    if (mode !== 'study' || !summaries.length) return;  // the study covers the whole store; scopes filter in the page
     let cancelled = false;
-    setStudyLoading(true); setStudyError(''); setStudySnapshots([]);
-    Promise.all(frames.map(frame => loadSnapshot(frame.snapshot_id)))
+    setStudyLoading(true); setStudyError('');
+    Promise.all(summaries.map(frame => loadSnapshot(frame.snapshot_id)))
       .then(data => {if (!cancelled) {setStudySnapshots(data); setStudyLoading(false);}})
       .catch(error => {if (!cancelled) {setStudyError(error.message); setStudyLoading(false);}});
     return () => {cancelled = true;};
-  }, [mode, current?.camera_id, summaries, retry, loadSnapshot]);
+  }, [mode, summaries, retry, loadSnapshot]);
 
   useEffect(() => {
     if (!location.snapshot || !summaries.length) return;

@@ -559,3 +559,25 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .camera-gallery .camera-tasks b.urgent { background: #faeae6; color: #a13a31; }
 .camera-gallery .camera-tasks b.low { background: #faf0c9; color: #775511; }
 .camera-gallery .camera-tasks.none { color: #517a50; }
+
+/* Shelf study: scope controls, lists in two columns, shelf detail replaces the study while open. */
+.study-scope { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin: 4px 0 20px; }
+.study-scope .filters { flex: 0 1 auto; }
+.study-select { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #59664b; }
+.study-select select { min-height: 44px; min-width: 220px; padding: 0 12px; font-size: 15px; border: 1px solid #cbd1bf; border-radius: 8px; background: #fffef9; color: inherit; }
+.study-metrics > div { display: flex; flex-direction: column; gap: 4px; }
+.study-hours { margin: 8px 0 8px; }
+.stock-timeline .timeline-col { width: 56px; min-height: 190px; padding: 8px 4px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.stock-timeline .timeline-col strong { font-size: 11px; font-weight: 500; }.stock-timeline .timeline-col small { font-size: 10px; color: #626d56; }
+.study-lists { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; }
+.study-lists .study-attention button { grid-template-columns: minmax(120px, 1.3fr) 1fr auto; }
+.study-attention button:disabled { cursor: default; }.study-attention button:disabled:hover { background: transparent; }
+.attention-track .activity { background: #59664b; }
+.study-page .workspace { display: block; }
+.study-page.detail-open .study-content { display: none; }
+@media (max-width: 760px) {
+  .study-lists { grid-template-columns: 1fr; }
+  .study-scope .filters { width: 100%; }
+  .study-select { width: 100%; }.study-select select { flex: 1; min-width: 0; }
+  .study-lists .study-attention button { grid-template-columns: 1fr auto; }
+}

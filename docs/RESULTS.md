@@ -2,6 +2,22 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Batch v3 labels, uncached cost, half rule v2 — 10 October 2026
+
+- **Labels:** batch v3 frozen by Member1 (blind, no suggestions): `data/ground-truth/human-v4-frozen.json` (copy of root export `sensei-6e5566ba3be1f7ba-frozen.json`), SHA256 `252f37ff7e74…`, 98 items, all visible. Development 78 (6 empty / 12 half / 60 full, 1 mismatch); evaluation 20 (1 / 2 / 17, 2 mismatches). Labelled total now 298 observations.
+- **Measured cost (uncached stock-only run over all 1,962 areas):** p50 0.550 s per area, **5.5 s per camera image** (p95 8.8 s), 18.0 min for the dataset, 55.6 GB peak. Decisions identical to the cached run (deterministic). Model time only; excludes 4.5 s model load and input preparation.
+- **Half rule v1 (0.15) did not transfer:** on the 48 new development areas no rule scores 106 vs 89 with it; the rule helps only the original 29 areas (many half shelves). Validation spans all 152 areas.
+- **Half rule v2 = threshold 0.20**, chosen on development (160 obs, 63 areas; best raw 201 and area-weighted 135.8 per 100 obs). Totals on stock-only answers:
+
+| Threshold | Development | Holdout | Evaluation (90 obs) | All |
+|---|---|---|---|---|
+| none | 179 | 13 | 90 | 282 |
+| 0.15 (v1) | 197 | 39 | 66 | 302 |
+| **0.20 (v2)** | **201** | 35 | 81 | **317** |
+| 0.30 | 184 | 27 | 105 | 316 |
+
+  Evaluation has been seen before (v1 decisions), so it is not a blind test of v2. Export: `results/qwen3.8-27b-stockonly-half020-full-v1/` (130 empty / 656 half / 1,176 full; 383 decisions changed by the rule; 15 fallbacks).
+
 ## Fewer questions, SAM 3 coverage, review batch v3 — 10 October 2026
 
 All on the 200 labelled observations (`data/labelled-v1/sample.json`, subset of the full-run inputs, built with `python3 -m ml.compare_runs --make-manifest data/full-v1/sample.json data/labelled-v1`), uncached, batch 1. Decisions made on development (v2+v3 dev), checked on holdouts; evaluation reported last. Scored with `python3 -m ml.compare_runs <results.json>…`. All variants answer compliant when compliance is not asked.

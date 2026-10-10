@@ -2,6 +2,23 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Error analysis, cost-justified rule, efficiency — 10 October 2026
+
+Current pipeline (stock question only + half rule v2 + always compliant) on all 294 labelled visible stock observations (`data/labelled-v1/error-rows.json`).
+
+**Errors are on the half/full boundary.** 228/294 correct (78%). Confusion (truth → prediction): empty 23/5/1, half 0/46/27, full 0/33/159. Over-estimates (shelf runs out unnoticed, −3 each): 33 → −99 points; under-estimates (useless restock trip, −2 each): 33 → −66. Worst cameras: 6371 melons/watermelons 10/21 wrong, 6376 citrus/kiwi packs 9/22, 6468 exotic fruit 8/22. Packaged vs loose error rate similar (18/77 vs 48/217).
+
+**The decision rule follows from the store's costs.** Sensei's table charges 3 for calling stock higher than reality (lost sales) and 2 for calling it lower (wasted staff trip). Between half and full, "half" is the cheaper answer whenever P(really half) ≥ 3/7 ≈ 43% (with h + f = 1: expected points of answering half = h − 2f, of answering full = f − 3h, so half wins when 4h > 3f, i.e. h > 3/7). Measured P(really half) by the model's half score B (half/full truths, all labels): B<0.02: 6% · 0.02–0.05: 9% · 0.05–0.10: 14% · 0.10–0.15: 23% · 0.15–0.20: 35% · **0.20–0.30: 43%** · 0.30–0.50: 53% · ≥0.50: 74%. It crosses 3/7 at B ≈ 0.20, the threshold already chosen on development. Pitch line: *we answer "half" unless the model is confident enough that the shelf is full, where "confident enough" is set by the store's cost of a missed stock-out vs a useless trip and by measured accuracy on 294 labelled shelves.* Empty side: P(really empty | empty score A) is 96% for A ≥ 0.4 and ≤ 33% below, so the same 3/7 bar leaves the model's empty answers unchanged (only 1 missed empty would flip).
+
+**Annotation check.** 18 observations where the model is very sure and disagrees (`data/labelled-v1/suspects.json`), reviewed visually by the assistant: label probably wrong 2 (`6383_1751044960_6383_9` cucumbers labelled empty, ~6 visible; `6371_1751044440_6371_3` melon labelled full with bare floor), leaning wrong / borderline 4 (lemons `6376_1751029801_6376_1`, Gala `6373_1751040770_6373_1`, Portuguese cabbage `6383_1751013620_6383_4`, `6383_1751044960_6383_4`), model clearly wrong 5, genuinely ambiguous half/full 7. Boundary noise exists but nothing systematic; frozen labels unchanged (any correction must be a new labelled version by Member1).
+
+**Efficiency.**
+- Batching (`--batch-size`, stock-only, left padding): p50 0.524 / 0.535 / 0.540 s per area at batch 4 / 8 / 16 vs 0.551 at batch 1, and 3–5 of 200 decisions change from padding numerics. Not adopted: prefill with three images is already compute-bound.
+- Smaller camera context (`--context-max-side 640`): **0.28 s per area** (vs 0.55) on the 200 v2/v3 labelled observations; with the half rule dev 99 vs 100, holdouts 32 vs 35, evaluation 66 vs 59. Full-development check (incl. 78 v4 observations) and 448 px pending.
+- Kernel packages: model logs say `flash-linear-attention` / `causal_conv1d` fall back to slow reference code. `flash-linear-attention` 0.5.2 installed in a cloned env `jx-fast` on knuth (`jx` untouched); speed/answer comparison pending.
+
+**Member2 review (10 Oct).** Spring API serves only snapshot-referenced assets with a strict ID pattern and real-path check; React app (Store view: latest image per camera with tasks/polygons/evidence; Shelf study: per-camera history and stock timeline) reads `results/qwen3.8-27b-stockonly-half020-full-v1/` and labels stock-only runs as "product not assessed". UI unit tests 9/9 pass with `node --test ui/tests/*.test.js`; `npm run build` succeeds. Java/Maven not installed on Member1's Mac, so the Spring app was not run here.
+
 ## Final-validation command rehearsed — 10 October 2026
 
 `scripts/run_validation.sh <images> <name>` (+ `ml/validate.py`). Rehearsed on 26 supplied images, 1–2 per camera, all 14 cameras, curtain and camera-reference frames excluded (mock of the 26-image validation set):

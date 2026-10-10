@@ -1,8 +1,31 @@
 import unittest
+import json
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
 from ml.infer_sample import answer_tokens, inspect_stages
 
 
 class AnswerTokenTests(unittest.TestCase):
+    def test_presence_ablation_empty_input_and_missing_mask(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = root / "sample.json"
+            manifest.write_text("[]")
+            command = [sys.executable, "-m", "ml.infer_sample", str(manifest),
+                       "--model", "nonexistent-model", "--output", str(root / "out.json"),
+                       "--crop-presence-only"]
+            result = subprocess.run(command, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("no model loaded", result.stdout)
+            (root / "crop.png").write_bytes(b"not decoded before input validation")
+            manifest.write_text(json.dumps([dict(sample_id="test", crop="crop.png", mask="missing-mask.png")]))
+            result = subprocess.run(command, capture_output=True, text=True)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("missing-mask.png", result.stderr)
+            self.assertFalse((root / "out.json").exists())
+
     def test_visibility_and_presence_gate_later_questions(self):
         cases = [
             ("B", ["visibility"], "inspect", None),

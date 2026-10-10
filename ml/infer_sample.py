@@ -55,16 +55,19 @@ def main():
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--model", required=True)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--crop-presence-only", action="store_true",
+                        help="Diagnostic ablation: presence only, using crop and mask without camera context")
     args = parser.parse_args()
+    image_keys = ("crop", "mask") if args.crop_presence_only else ("context", "crop", "mask")
     samples = json.loads(args.manifest.read_text())
     if len({s["sample_id"] for s in samples}) != len(samples):
         raise ValueError("Duplicate sample IDs")
     cache = json.loads(args.output.read_text()) if args.output.exists() else {}
     pending = []
     for sample in samples:
-        digest = hashlib.sha256(Path(__file__).read_bytes() + args.model.encode()
+        digest = hashlib.sha256(Path(__file__).read_bytes() + args.model.encode() + str(args.crop_presence_only).encode()
                                 + json.dumps(sample, sort_keys=True).encode())
-        for key in ("context", "crop", "mask"):
+        for key in image_keys:
             digest.update((args.manifest.parent / sample[key]).read_bytes())
         fingerprint = digest.hexdigest()
         previous = cache.get(sample["sample_id"])
@@ -91,18 +94,20 @@ def main():
     for sample, fingerprint in pending:
         started = time.perf_counter()
         images = [Image.open(args.manifest.parent / sample[key]).convert("RGB")
-                  for key in ("context", "crop", "mask")]
+                  for key in image_keys]
         result = dict(sample=sample, fingerprint=fingerprint, model=args.model,
-                      load_seconds=load_seconds, scores_uncalibrated=True, answers={})
+                      load_seconds=load_seconds, scores_uncalibrated=True,
+                      input_mode="crop_mask_presence_only" if args.crop_presence_only else "staged_context_crop_mask", answers={})
         def ask(name):
             question = QUESTIONS[name]
-            prompt = ("First image: store camera, target outlined in red. Second image: rectified target crop. "
-                      "Third image: validity mask aligned with the crop; white means real camera pixels, black means outside the camera view. "
+            description = ("First image: rectified target crop. Second image: " if args.crop_presence_only else
+                           "First image: store camera, target outlined in red. Second image: rectified target crop. Third image: ")
+            prompt = (description + "validity mask aligned with the crop; white means real camera pixels, black means outside the camera view. "
                       "Ignore those invalid pixels in the crop; they are neither stock nor a physical obstruction. "
                       + question.format(product=sample["product_name"])
                       + " Answer exactly A, B or C.")
             messages = [{"role": "user", "content": [
-                {"type": "image"}, {"type": "image"}, {"type": "image"}, {"type": "text", "text": prompt}]}]
+                *[{"type": "image"} for _ in images], {"type": "text", "text": prompt}]}]
             text = proc.apply_chat_template(messages, add_generation_prompt=True, enable_thinking=False)
             inputs = proc(text=[text], images=images, return_tensors="pt").to("cuda")
             with torch.inference_mode():
@@ -113,7 +118,10 @@ def main():
             return dict(scores=dict(zip("ABC", probabilities)),
                                            choice="ABC"[max(range(3), key=probabilities.__getitem__)],
                                            allowed_token_mass=mass)
-        result.update(inspect_stages(ask))
+        if args.crop_presence_only:
+            result["answers"]["presence"] = ask("presence")
+        else:
+            result.update(inspect_stages(ask))
         torch.cuda.synchronize()
         result["seconds"] = time.perf_counter() - started
         result["peak_vram_gb"] = torch.cuda.max_memory_allocated() / 1e9

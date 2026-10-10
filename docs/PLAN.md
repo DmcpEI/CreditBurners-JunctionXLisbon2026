@@ -2,7 +2,7 @@
 
 Challenge confirmed: Sensei. Team: two people, Member1 and Member2. Final validation is only available at the end; reserve time for inference and submission. Cut scope if progress is slow.
 
-Dataset received: 181 images at 1280×720, 14 cameras, 152 areas and 1,962 area observations; no ground-truth labels supplied. Same-camera frames are 60–78 minutes apart. Preparation, masks, complete constant baselines and scorer run locally. The staged Qwen diagnostic now stops on closed curtains and correctly accepts the open cabbage tray, but still misses sparse bananas; see `docs/RESULTS.md`. Next: isolate the sparse-produce error before expanding inference. Member2 can use the explicitly disclosed baseline app records for integration now.
+Dataset received: 181 images at 1280×720, 14 cameras, 152 areas and 1,962 area observations; no ground-truth labels supplied. Same-camera frames are 60–78 minutes apart. Preparation, masks, complete constant baselines and scorer run locally. The staged Qwen diagnostic now stops on closed curtains and correctly accepts the open cabbage tray, but still misses sparse bananas; see `docs/RESULTS.md`. A controlled presence-only comparison without camera context now detects those sparse bananas, with the other nine presence answers unchanged. Next: integrate that input choice into the staged flow and check new examples before expanding inference. Member2 can use the explicitly disclosed baseline app records for integration now.
 
 ## Objective
 > A store assistant that uses existing cameras to tell staff which produce shelves need attention, why, and what to do next.

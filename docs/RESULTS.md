@@ -70,3 +70,21 @@ Inputs/results: `data/qwen-sample-v2/{sample,results}.json`; manifest adds `mask
 ```
 
 No official labels, accuracy, calibration or verified mismatch test. The selected development cases are not a held-out evaluation. Next experiment should compare tight-crop-only presence against context-plus-crop on the sparse banana case and controls, keeping the same model; do not add another perception model before checking whether context is distracting it.
+
+
+## Presence input comparison — 10 October 2026
+
+Compared cached v2 presence answers with a new crop-plus-mask-only presence query on its ten clear-view examples. Same Qwen model, same crop/mask pixels, same presence question and answer scoring; removed the full-camera image and adjusted the image-description prefix accordingly. Closed curtains were excluded using cached visibility. No previous inference was rerun.
+
+- Sparse banana case `6215/1751001268.jpg/6215_1`: changed from absent to present, agreeing with visual inspection. The A/B/C scores were 0.845/0.130/0.026, uncalibrated.
+- All nine other presence decisions stayed unchanged: seven populated examples stayed present and two visibly empty trays stayed absent. This is a development-case comparison, not official accuracy or a held-out benchmark.
+- Median presence-query time: 0.180 seconds; first query: approximately 0.95 seconds. These are single-question timings, not whole-area pipeline latency.
+- The change supports removing camera context for presence, but does not prove the causal mechanism or generalisation. Processor image allocation also changes when an image is removed.
+
+Runner option: `--crop-presence-only`. It deliberately produces only presence answers and no stock, compliance or staff actions; the default staged runner remains unchanged. Inputs/results: `data/qwen-presence-ablation/{sample,results}.json`. Remote workspace: `/workspace/jx/sensei-presence-ablation`.
+```bash
+/workspace/miniconda/envs/jx/bin/python -B -u -m ml.infer_sample data/qwen-presence-ablation/sample.json --model /workspace/models/qwen3.8-27b --output data/qwen-presence-ablation/results.json --crop-presence-only
+```
+Verified all ten outputs contain only presence, exactly one answer changed, both empty controls remain absent, and repeated execution uses cache without loading the model. Seven synthetic test methods now pass, including the diagnostic CLI's empty-input and missing-mask handling.
+
+Next: integrate crop-plus-mask presence into the visibility-gated flow, then assess stock/compliance for the newly admitted sparse case and check fresh examples before broad inference. Do not claim stock classification is fixed: this experiment tested only presence.

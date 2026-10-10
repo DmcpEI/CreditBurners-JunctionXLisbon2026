@@ -16,7 +16,7 @@ export default function useSnapshots() {
   const [storeError, setStoreError] = useState('');
   const cache = useRef(new Map());
   const mode = ['study','replay'].includes(location.view) ? 'study' : 'shelves';
-  const storeView = location.scope !== 'camera' && mode === 'shelves';
+  const storeView = mode === 'shelves';
   const [studySnapshots, setStudySnapshots] = useState([]);
   const [studyLoading, setStudyLoading] = useState(false);
   const [studyError, setStudyError] = useState('');

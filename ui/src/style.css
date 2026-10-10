@@ -547,3 +547,9 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .hero-camera-controls button { width: 44px; height: 44px; border: 1px solid #dde1d6; border-radius: 8px; background: transparent; }
 .hero-camera-controls button:hover { background: #effa8b; }
 @media(max-width:760px) { .hero-camera { display: none; } }
+
+.hero-camera { border: 0; border-radius: 0; background: transparent; }
+.hero-camera-photo { border-radius: 12px; }
+.hero-camera figcaption { background: transparent; padding: 10px 0 0; }
+.hero-camera-controls button { border: 0; background: transparent; color: #656d5a; }
+.hero-camera-controls button:hover { background: #eeefe6; }

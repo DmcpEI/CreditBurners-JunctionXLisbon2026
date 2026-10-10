@@ -19,7 +19,7 @@ The core demo works from saved results. Label it "Recorded store replay" and sho
 - **0:00–0:20 — Problem:** staff discover shelf problems by walking the store; explain the cost of missing an empty shelf or raising an unnecessary alert.
 - **0:20–1:20 — Product:** show a real recorded shelf change, the resulting task, and the evidence detail. Let the judge scan the QR code. If the sequence contains an actual restock, show the later observation resolving the stock issue.
 - **1:20–2:00 — Journey and proof:** explain one assumption the real images challenged, one method kept/dropped and why, then show the measured score against the baseline. Name the sample size and distinguish local labels from official validation results. If the official result is not available yet, say so; do not make the pitch depend on it.
-- **2:00–2:30 — Trust:** show an obstructed/uncertain case, the observation age and why staff should check it. Optional fresh inference only if it has been tested and fits the time.
+- **2:00–2:30 — Journey:** explain that early images included closed refrigeration curtains, so we excluded those from stock evaluation instead of treating hidden stock as empty. Organisers confirmed final validation contains visible products. Show the human annotation process and one measured visible-shelf improvement; curtain handling is a robustness example, not a scored challenge advantage.
 - **2:30–3:00 — Opportunity:** explain how existing cameras could support more stores. Reduced waste, recovered sales and saved staff time are potential benefits, not measured claims unless evaluated.
 
 Confirm the actual General/Peer pitch format with organisers. Rehearse three times; adjust the timings to their limit.
@@ -54,7 +54,7 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 - Small/occluded crops and hidden pile depth limit visual stock estimates.
 - Closed white refrigeration curtains conceal shelves on early 6383/6386 frames; do not call them empty. Hour-scale frame gaps prevent claims about exactly when shelves changed or how quickly stock sold.
 - Phone-photo accuracy, browser latency and concurrent use are untested.
-- Public image permission, publication permission for knuth, public URL and domain/tunnel setup remain to be confirmed.
+- Knuth project/hosting use is authorised. Public image permission, public URL and domain/tunnel setup remain to be confirmed.
 
 ## Local verification — Member2
 
@@ -85,3 +85,8 @@ Study summaries count clear assessed area observations, empty observations and p
 Validation: seven frontend semantic tests (including explicit baseline inclusion, default exclusion and no fabricated transitions), frontend/Maven builds and live API checks passed. WebKit verified latest14-camera/152-area coverage, no Store view time picker, camera6462's13-image archive, same-area historical navigation, return to latest captures, deep-link reload, camera expansion and mobile widths. Reduced-motion screenshots were visually inspected. Study aggregation was tested on synthetic fixtures; no real inference statistics are available yet. Physical phone/public URL and full camera-by-camera geometry checks remain outstanding.
 
 Graph validation: frontend and Maven builds, live API verification and four ML smoke tests passed. WebKit checked all three graphs, 14 camera bars, clickable frame/camera navigation, demo/original switching and a 390px layout without page overflow. Reduced-motion mobile/desktop screenshots were inspected. Physical-phone chart interaction is not yet verified.
+
+## New efficiency criterion
+
+Pitch must include estimated cost per analysed source image, alongside accuracy/points. Measure all areas in an image, not a single crop, and distinguish warm computation, cold load and cached replay. State hardware, precision, image/area counts, throughput and the tariff assumption. Current provisional extrapolation is ~15.2 seconds per source image, or 0.00422×hourly machine rate per image; it is not a direct full-frame measurement. Do not claim donated knuth access makes computation free or use cached UI response time as inference time. Smaller models and YOLO are candidates, not demonstrated savings. Exact new judging weights remain unspecified.
+

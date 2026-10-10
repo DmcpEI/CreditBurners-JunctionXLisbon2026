@@ -112,3 +112,11 @@ The compact mobile summary now shows assessed, empty and full observations; prod
 ## Updated Member1 handoff
 
 Main updated to `b07b7d0` and merged into the mobile-dashboard branch. App defaults now use `results/qwen3.8-27b-ctx640-half020-emptycheck-full-v1/snapshots.json`, as recommended in CONTRACT.md. This run adds the model’s empty-check question, keeps compliance fixed true, and reuses prepared assets. Product assessment stays unavailable; no inference was rerun.
+
+## Shelf opening and staff actions
+
+Camera cards now open the interactive camera map and scroll it into view. Product cards open the crop before the camera map; scroll offsets account for sticky headers and dashboard controls. Returning to the list restores the previous position on desktop and mobile; selecting a single-camera filter also takes staff to its shelves. The product-compliance banner is kept in the overview and evidence details rather than above the opened crop.
+
+Cards use softly tinted red/amber/green backgrounds with visible borders. Primary actions are Restock urgently (empty), Restock (half; check the shelf before replenishing) and No restock needed (full). Lists and alerts omit duplicate stock-state badges; simultaneous product mismatches stay visible. Detailed stock states and graph data remain unchanged; fallback/unclear observations stay neutral.
+
+Validation: twelve frontend tests and frontend/Maven builds passed. WebKit checked camera/product opening, crop visibility, camera filter selection, alert navigation, restored list positions, all three tint colors and nonduplicated card labels. Checks covered desktop/mobile and motion enabled/reduced. Mobile screenshots were visually inspected. Physical-phone testing remains outstanding.

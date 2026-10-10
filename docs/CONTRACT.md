@@ -2,7 +2,7 @@
 
 Scope: Sensei, confirmed challenge. Member1 produces predictions; Member2 serves and displays them.
 
-Status: planned interface for the first implementation; no endpoints exist yet. Keep the scoring export separate from the richer presentation data. Member1 owns prediction semantics; Member2 owns API/UI integration. Coordinate changes before implementation.
+Status: ML preparation now writes the formats below; no endpoints exist yet. Generated app snapshots use an explicitly disclosed constant baseline with `fallback_used: true` and unknown visibility, not model classifications. Keep the scoring export separate from the richer presentation data. Member1 owns prediction semantics; Member2 owns API/UI integration. Coordinate changes before implementation.
 
 ## Endpoints
 
@@ -91,4 +91,4 @@ Python writes app snapshots and evidence assets; Spring reads them for the core 
 
 Use a small explicitly synthetic fixture covering empty, half, full, mismatch and occlusion so API/UI work can begin independently. It must use the same app format and `prediction_source: "mock"`; do not include it in measured evaluation or present it as model output.
 
-Implementation checks: exact Sensei keys/types/value pairs, one complete snapshot served through API/UI, correct capture/reference timestamps, unavailable assets, and visible fallback/mock labels. `scripts/smoke_test.sh` remains a placeholder until these checks are implemented.
+Implemented smoke checks cover synthetic ML preparation, stock value/type checks, area coverage, geometry/masks and scoring. Still required: one complete snapshot served through API/UI, correct displayed capture/reference timestamps, unavailable assets, and visible fallback/mock labels. `scripts/smoke_test.sh` explicitly reports that inference and API/UI are not covered yet.

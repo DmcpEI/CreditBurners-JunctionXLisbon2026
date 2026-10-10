@@ -85,7 +85,7 @@ Python writes app snapshots and evidence assets; Spring reads them for the core 
 - `reason` must follow the actual prediction/evidence, with no invented counts, freshness diagnosis, monetary value or causal claims.
 - Derive actions consistently: unclear visibility or `fallback_used` → inspect; otherwise empty → restock; mismatch → check product; half → check stock; otherwise OK. Retain both stock and compliance indicators even when one action is prioritised. Use this declared severity order, not an unsupported financial estimate.
 - Optional staff acknowledgement is separate from the model prediction. Marking a task checked must not change stock/compliance or the Sensei export.
-- Run identity links results to model, prompt and preprocessing settings retained with the ML output. Keep weights, real images, uploads and generated result files out of Git.
+- Run identity links results to model, prompt and preprocessing settings retained with the ML output. The supplied dataset archive is tracked at the team's request; keep extracted duplicates, weights, uploads and generated result files out of Git.
 
 ## Mocks
 

@@ -37,6 +37,8 @@ bash scripts/smoke_test.sh
 
 Choose a new output directory for each preparation run; existing outputs are not overwritten. The original ZIP is read directly, ignoring macOS metadata, without extracting arbitrary archive paths.
 
+The supplied dataset ZIP, planogram and challenge PDF are tracked at the team's request. Extracted duplicates, generated crops/results and model weights stay outside Git.
+
 Outputs in the ignored `data/prepared-v1/` directory:
 - `assets/`: original images, rectified shelf crops and validity masks (black = outside the image, not empty shelf).
 - `index.json`: each crop's identity, dimensions and visible fraction; `expected.json`: required camera/image/area keys.

@@ -17,7 +17,10 @@ dist/
 
 # Data and model weights
 data/
-new_dataset_hackathon_junctionx_10_oct_2026_v2/
+new_dataset_hackathon_junctionx_10_oct_2026_v2/*
+!new_dataset_hackathon_junctionx_10_oct_2026_v2/*.zip
+!new_dataset_hackathon_junctionx_10_oct_2026_v2/*.json
+!new_dataset_hackathon_junctionx_10_oct_2026_v2/*.pdf
 *.pt
 *.pth
 *.onnx

@@ -50,3 +50,7 @@ test('stock-only presentation does not claim verified product matches',()=>{
  assert.deepEqual(assessmentFacts(area).map(fact=>fact.label),['Full','Product not assessed']);
  assert.equal(original.areas[0].product_assessed,undefined);
 });
+test('empty-check run still does not assess product compliance',()=>{
+ const result=withAssessmentMetadata({run_id:'qwen3.8-27b-ctx640-half020-emptycheck-full-v1',areas:[{stock_level:'empty',visibility:'clear',fallback_used:false,planogram_compliant:true}]});
+ assert.deepEqual(assessmentFacts(result.areas[0]).map(fact=>fact.label),['Empty','Product not assessed']);
+});

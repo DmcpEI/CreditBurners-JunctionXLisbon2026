@@ -16,11 +16,13 @@ The core demo works from saved results. Label it "Recorded store replay" and sho
 ## 3-minute script
 - **0:00–0:20 — Problem:** staff discover shelf problems by walking the store; explain the cost of missing an empty shelf or raising an unnecessary alert.
 - **0:20–1:20 — Product:** show a real recorded shelf change, the resulting task, and the evidence detail. Let the judge scan the QR code. If the sequence contains an actual restock, show the later observation resolving the stock issue.
-- **1:20–2:00 — Proof:** show the measured score against the baseline, unnecessary alerts and missed problems on the labelled evaluation. Name the sample size and distinguish local labels from official validation results.
+- **1:20–2:00 — Journey and proof:** explain one assumption the real images challenged, one method kept/dropped and why, then show the measured score against the baseline. Name the sample size and distinguish local labels from official validation results. If the official result is not available yet, say so; do not make the pitch depend on it.
 - **2:00–2:30 — Trust:** show an obstructed/uncertain case, the observation age and why staff should check it. Optional fresh inference only if it has been tested and fits the time.
 - **2:30–3:00 — Opportunity:** explain how existing cameras could support more stores. Reduced waste, recovered sales and saved staff time are potential benefits, not measured claims unless evaluated.
 
 Confirm the actual General/Peer pitch format with organisers. Rehearse three times; adjust the timings to their limit.
+
+Two-person presentation: Member2 leads the problem and product demonstration; Member1 explains methods, failures and measured results. Rehearse before final validation arrives so Member1 can run and submit it during Sensei's confirmed window. Phone uploads and the physical tray are deferred; no third presenter or operator is assumed.
 
 ## Evidence and assets to prepare
 - Choose one short, understandable sequence from the supplied data after inspection; do not fabricate a restock or change.

@@ -1,6 +1,6 @@
 # Plan — Sensei: Fresh eyes on fresh produce
 
-Challenge: Sensei. Switch to QuantumTrace (Inspiring Solutions) only for a fundamental blocker (data unusable, crops unreadable, validation unavailable), not for "no edge yet". Otherwise cut scope.
+Challenge: Sensei. Confirmed team: two people, Member1 and Member2. Switch to QuantumTrace (Inspiring Solutions) only for a fundamental blocker (data unusable or crops unreadable), not for "no edge yet". Final validation is only available at the end; that is an expected constraint, not a reason to switch. Otherwise cut scope.
 
 ## Objective
 > A store assistant that uses existing cameras to tell staff which produce shelves need attention, why, and what to do next.
@@ -18,7 +18,7 @@ Two prizes, two targets, planned from hour 0:
    - Appearance change alone can't tell depletion from rearrangement, lighting or a wrong product; combine with the VLM.
 2. **Cost-aware answers** from calibrated probabilities (below). Never skip an area (missing = −5).
 3. **Proof.** Local copy of the scoring function, held-out evaluation, every component compared against baselines.
-4. **Stretch:** time-to-empty from the fill curve, only if it can be validated; otherwise "future work" in the pitch.
+4. **Future work:** time-to-empty forecasting; outside the two-person core scope.
 
 ## Decision rule
 Stock payoff (rows = prediction, cols = truth):
@@ -48,6 +48,8 @@ Token probabilities are uncalibrated scores: use verified single-token answer co
 Models are downloaded on knuth. These timings are setup smoke results, not challenge accuracy or public-app latency. Run model stages sequentially initially; measure end-to-end seconds per area and per browser request. Keep the selected VLM loaded for fresh requests; queue requests rather than loading models for each visitor.
 
 ## Pipeline (`ml/`)
+Build order: plain Qwen on one real image → complete JSON export → API/UI integration → local scorer and baseline evaluation → at most one additional perception component at a time. The timeline, SAM 3 and DINOv3 below are candidates, not dependencies of the first working version.
+
 1. **Submission first:** one command writes the exact JSON (every expected image/area key, real booleans, consistent `stock_level`/`stock_value`), with a deterministic fallback if a model fails. Schema check in `scripts/smoke_test.sh`.
 2. **Crops:** warp each area quad to a rectangle with a **valid-pixel mask** (negative coordinates = padding, never counted as empty shelf). Tight crop + context image (full frame, area outlined).
 3. **Timeline (sampled frames, expand where useful):** DINOv3 patch features, SAM 3 produce coverage, person/hand flag.
@@ -60,9 +62,12 @@ Models are downloaded on knuth. These timings are setup smoke results, not chall
 Coverage is not pile volume (removing a top layer barely changes it). The VLM may provide extra evidence, but hidden inventory cannot be reliably recovered from these images.
 
 ## Evaluation
+- Final official validation is only at the end. Choose methods using the permitted local evaluation; do not plan around repeated official feedback. Confirm release time, processing window, submission deadline and retry rules now.
 - Baselines: always compliant + each constant stock level (empty, half, full); plain VLM most-likely answer; then each component added separately.
 - Hand labels sampled across cameras, products, stock states and occlusions. Split by **area / time block**, never random adjacent crops. Representative holdout kept separate from hand-picked hard cases.
-- Two people label the same 30 to measure disagreement on "half". Small gains below that noise don't count.
+- Member1 owns labelling and evaluation. Both members independently label the same small subset in one time-boxed session (up to 30 areas if practical), then Member2 returns to the product. Record disagreement on "half"; do not treat small noisy gains as reliable.
+- Measure full-batch inference time before final validation and reserve that time plus recovery margin inside Sensei's confirmed window. Freeze model/prompt choices before that run; run schema and coverage checks before submission.
+- Record each experiment in `docs/RESULTS.md`: method, reason, dataset/split, result, failure and keep/drop decision. Distinguish local measurements from official results; the presentation should explain the journey as well as the final score.
 
 ## Product (`api/` + `ui/`)
 - **Needs attention:** product, shelf location, observation time, image and suggested action. Start with a declared severity order (empty, mismatch, half); it is not an estimate of euros lost. Obstructed observations visibly require inspection rather than claiming certainty.
@@ -87,25 +92,32 @@ Coverage is not pile volume (removing a top layer barely changes it). The VLM ma
 - Keep the built app, permitted images and results on a laptop for a local demo if knuth or the public link fails. Test the public URL from mobile data and the local fallback before judging. See `docs/DEMO.md`.
 
 ## Roles
-- Member1: perception (`ml/`).
-- Member2: product (`api/`, `ui/`).
-- Member3 (likely, not yet confirmed): labelling, evaluation, error analysis, temporal-context experiments and evidence selection for the demo, coordinated with Member1. If unavailable, Member1 and the reviewer cover evaluation; cut photo uploads first.
-- Reviewer agent (own worktree): scorer, labelling tool, schema checks, ablations, reviews against `docs/CONTRACT.md`, pitch challenge.
+- **Member1:** crops, model inference, exact submission export, scorer, labelling, evaluation, error analysis and final validation run. Start with one actual camera image and plain Qwen3.8; deliver every area's prediction in the agreed JSON formats.
+- **Member2:** Spring API, React list/detail/replay, public hosting, QR code, mobile presentation and laptop fallback. Start with a synthetic contract fixture; replace it with Member1's real outputs as soon as available. No database required for the core.
+- **Together:** inspect the first image/planogram and confirm the contract, answer mentor questions, integrate the first real result, select demo evidence and rehearse. Member1 explains methods/results; Member2 leads the product demonstration.
+- Agents assist only with explicitly assigned bounded tasks, in their own worktrees; no third human or continuously available agent is assumed in the schedule.
+
+## Two-person scope
+- Must ship: valid Sensei output, a measured baseline, one integrated list/detail flow, a short recorded replay, public QR access and a local fallback.
+- One improvement only after the baseline and integration work; choose it from observed errors, not model novelty.
+- Fresh inference on an approved image is the first optional product extension. Phone uploads, physical tray demo, MongoDB, store map and forecasting are deferred.
+- Laptop inference remains an optional efficiency experiment after the core is stable. Compare the same held-out examples, score, memory and latency; claim only the hardware actually tested. It must not delay submission or the public demo.
 
 ## Schedule
-| When | Goal |
-|---|---|
-| Fri night | HF access for SAM 3 / DINOv3; knuth env `jx` + Qwen3.8 ready (done) |
-| Sat 12–13 | Data look; mentor questions including public image use; confirm third member and contract; select a candidate demo sequence; check hosting prerequisites |
-| **15:00** | Baseline JSON passing schema check + working list/detail screen |
-| 15–19 | ML: baselines and scorer. Product: deploy gallery/list/detail/replay, test HTTPS link from mobile data, prepare QR code. Evaluation: select real demo evidence |
-| **19:00** | Submission-ready artifact plus a usable public demo on saved results (confirm separately when Sensei validation opens) |
-| 19–07 | **One measured improvement at a time** (timeline → calibration); sleep in shifts. Add fresh analysis only after the hosted core works; phone uploads only after that |
-| 07–10 | Select final results and demo sequence; test a few simultaneous visitors, unavailable worker and local fallback; rehearse pitch |
-| **Sun 10:00** | ML and feature freeze, final submission; public URL, QR code and local fallback verified |
-| 10–13 | Rehearse 3 min ×3, small presentation fixes only; no new feature or hosting work |
+| When | Member1 | Member2 / shared checkpoint |
+|---|---|---|
+| First 30 min | Together: inspect one real image and planogram; confirm contract and validation window | Together: confirm public image permission, choose demo candidate and check hosting prerequisites |
+| By Sat 15:00 | Plain Qwen → complete real JSON + schema check | List/detail on a mock, then integrate the real JSON; do not wait for the full ML pipeline |
+| 15–19 | Scorer, permitted labels, constant baselines vs plain Qwen; inspect errors | Host list/detail, add short replay, test HTTPS from mobile data and prepare QR code |
+| Sat 19:00 checkpoint | Submission command ready on available images; official validation still pending | Usable public app on saved real results |
+| Evening / overnight | Test one improvement against the baseline; record keep/drop decision | Polish the real demo sequence and prepare laptop fallback; fresh inference only if core is stable |
+| Overnight | Agree sleep shifts and cache completed work; no requirement to keep building all night | Same; leave shared inputs/results ready before sleeping |
+| Sun 07–10 | Freeze candidate; measure batch runtime, verify export and prepare validation run | Verify public URL, QR and local fallback; rehearse together |
+| Sun 10:00 onward | No new modelling work; execute final validation when Sensei releases it, check and submit within its confirmed window | No new features; small presentation fixes and rehearsal; cover demo while Member1 handles validation |
 
-Cut order if behind: forecasting → store map → MongoDB → phone uploads / physical tray → all-frame processing → fresh inference. Preserve the Sensei export, measured evaluation, public saved-result experience and local demo fallback.
+The 19:00 milestone is submission readiness, not an official validation result. Sensei's release time and deadline override the nominal Sunday timetable; reserve measured inference time plus recovery margin, even if rehearsal must move earlier.
+
+If behind, drop optional laptop benchmarking and fresh inference first, then unproven timeline/segmentation additions. Preserve the Sensei export, baseline evaluation, public saved-result experience and local demo fallback.
 
 ## Definition of done
 - Exact submission JSON covers every expected image/area and passes the real smoke/schema checks.
@@ -115,7 +127,7 @@ Cut order if behind: forecasting → store map → MongoDB → phone uploads / p
 - The three-minute story has been rehearsed, including the local fallback. Extra photo features are not required to finish.
 
 ## Mentor questions (before building fusion)
-- How often can we submit validation outputs, and from when?
+- Final validation is only at the end: exactly when are images released, how long can inference run, when is submission due, and are retries allowed?
 - Does an empty area count as compliant? How are partly visible areas annotated?
 - Is calibrating on our own hand labels allowed?
 - May we use other frames from the same day (including later ones) as context?

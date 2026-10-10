@@ -2,6 +2,23 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Blind final check and per-shelf thresholds adopted — final pipeline v5 — 10 October 2026
+
+- **Blind set labelled** by Member1 (`data/ground-truth/human-final-frozen.json`, SHA256 `cccc3310ffd2…`): 50 random observations, 39 full / 8 half / 3 empty, 1 mismatch. Scored **once**, per-area thresholds fitted on the earlier 298 labels only:
+
+| On the blind 50 | Stock correct | Points | % of max |
+|---|---|---|---|
+| current (global 0.20) | 37/50 (74%) | 52/99 | 53% |
+| **per-area threshold** | **39/50 (78%)** | **60/99** | **61%** |
+| per-area, ≥2 labels only | 38/50 | 57/99 | 58% |
+| always full | 39/50 | 52/99 | 53% |
+
+  Per-area fixes 2 half shelves without new full errors. On this random sample the global pipeline only ties "always full": random shelves are 78% full vs 64% in our labelled sets. Re-weighting labels to that natural mix still picks 0.20 on development (95.4 vs 92.6 at 0.30), so the global default stays.
+- **Mentor (relayed):** "You will get the timestamp but the model should learn from the image itself and not necessarily the time of day." Per-shelf thresholds use no timestamp: the prediction comes from the image (model scores); only each shelf's strictness is learned from our labels of that shelf.
+- **Adopted:** `ml/area_thresholds.py` fits per-shelf half thresholds on **all** labels (v2–v4 + r2 corrections + blind 50; refit after the blind check was used once) → `ml/area_thresholds.json`: 37 of 146 labelled areas deviate from 0.20 (0.02 ×15, 0.05 ×3, 0.1, 0.15, 0.3 ×14, 0.5 ×3). Export `--area-thresholds`; `scripts/run_validation.sh` uses it. No extra GPU work: **3.8 s per camera image**.
+- Export `results/qwen3.8-27b-ctx640-perarea-emptycheck-shared-alwayscompliant-full-v1/` (166 empty / 544 half / 1,252 full; 14 fallbacks). Validation rehearsal 26 images in **2 min 11 s**, identical to the full export 281/281.
+- **Honest expected performance:** leave-one-timestamp-out stock points 147 vs 78 (218 obs); blind check 61% vs 53% of max points. Scores on the labels used for fitting are optimistic and not reported as results.
+
 ## Research report follow-up: calibration, per-area thresholds, blind final set — 10 October 2026
 
 Deep-research report (`~/Downloads/deep-research-report (2).md`, not in repo): hidden validation reuses the same 152 areas from the same day, so area-specific correction and score-optimal calibration rank first; test area-specific methods by leaving timestamps out within an area, not by area-grouped splits.

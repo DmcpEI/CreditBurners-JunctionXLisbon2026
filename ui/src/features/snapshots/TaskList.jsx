@@ -1,15 +1,15 @@
 import React, {useMemo, useRef} from 'react';
 import Evidence from './Evidence';
 import useShelfMotion from './useShelfMotion';
-import {action, rank} from './actions';
+import {isAlert, rank} from './actions';
 import {timeLabel, areaHref, productLabel, shelfLabel, statusClass, statusLabel, taskDescription} from './presentation';
 
 export default function TaskList({areas: sourceAreas, storeView, location, navigate, onOpen}) {
   const query = location.q || '';
   const filter = location.filter === 'attention' ? 'attention' : 'all';
   const areas = useMemo(() => [...sourceAreas].sort((a, b) => rank(a) - rank(b)), [sourceAreas]);
-  const attention = areas.filter(area => action(area) !== 'OK');
-  const shown = areas.filter(area => (filter === 'all' || action(area) !== 'OK') &&
+  const attention = areas.filter(area => isAlert(area));
+  const shown = areas.filter(area => (filter === 'all' || isAlert(area)) &&
     `${area.product_name} ${area.area_id} ${shelfLabel(area)}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
   const motionScope = useRef(null);
   useShelfMotion(motionScope, `${location.snapshot}:${location.q || ''}:${filter}:${sourceAreas.length}`);
@@ -23,7 +23,7 @@ export default function TaskList({areas: sourceAreas, storeView, location, navig
     <div className="list-tools">
       <div className="filters" role="group" aria-label="Filter shelves">
         <button aria-pressed={filter === 'all'} onClick={() => navigate({filter: null}, true)}>All shelves <span>{areas.length}</span></button>
-        <button aria-pressed={filter === 'attention'} onClick={() => navigate({filter: 'attention'}, true)}>To review <span>{attention.length}</span></button>
+        <button aria-pressed={filter === 'attention'} onClick={() => navigate({filter: 'attention'}, true)}>With alerts <span>{attention.length}</span></button>
       </div>
       <label className="search-label"><span className="search-caption">Find a product or shelf</span><input name="shelf-search" type="search" autoComplete="off" placeholder="Find a product or shelf…" value={query} onChange={e => navigate({q: e.target.value || null}, true)}/></label>
     </div>

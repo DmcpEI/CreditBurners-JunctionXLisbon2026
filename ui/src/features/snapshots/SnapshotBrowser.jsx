@@ -5,7 +5,8 @@ import TaskList from './TaskList';
 import ShelfDetail from './ShelfDetail';
 import Evidence from './Evidence';
 import {timeLabel} from './presentation';
-import {action} from './actions';
+import {isAlert} from './actions';
+import AlertsPanel from './AlertsPanel';
 import {flushSync} from 'react-dom';
 import {transitionShelf} from './useShelfMotion';
 
@@ -14,10 +15,11 @@ export default function SnapshotBrowser() {
   const {snapshot, storeSnapshots, storeView, summaries, location, mode, navigate, loading, error, selectMode} = browser;
   const area = snapshot?.areas.find(a => a.area_id === location.area);
   const displayedSnapshots = storeView ? storeSnapshots : (snapshot ? [snapshot] : []);
-  const displayedAreas = displayedSnapshots.flatMap(s => s.areas.map(a => ({...a, snapshot_id: s.snapshot_id, camera_id: s.camera_id, captured_at: s.captured_at})));
+  const displayedAreas = displayedSnapshots.flatMap(s => s.areas.map(a => ({...a, snapshot_id: s.snapshot_id, camera_id: s.camera_id, captured_at: s.captured_at, prediction_source: s.prediction_source})));
   const fallback = displayedAreas.some(a => a.fallback_used);
   const allFallback = displayedAreas.length > 0 && displayedAreas.every(a => a.fallback_used);
-  const attention = displayedAreas.filter(a => !a.fallback_used && action(a) !== 'OK').length;
+  const alerts = displayedAreas.filter(isAlert);
+  const attention = alerts.length;
   const unassessed = displayedAreas.filter(a => a.fallback_used).length;
   const lastShelf = useRef(null);
   const listScroll = useRef(0);
@@ -42,7 +44,7 @@ export default function SnapshotBrowser() {
   }, [location.area]);
   return <div className={`app-shell ${area ? 'detail-open' : 'gallery-view'}`}>
     <a className="skip-link" href="#main-content">Skip to shelf checklist</a>
-    <header className="app-header"><a className="brand" href="/" aria-label="Sensei home">sensei<span className="brand-divider" aria-hidden="true"/><span className="brand-description">Shelf assistant</span></a><span className="recorded-label">Recorded dataset</span></header>
+    <header className="app-header"><a className="brand" href="/" aria-label="Sensei home">sensei<span className="brand-divider" aria-hidden="true"/><span className="brand-description">Shelf assistant</span></a><div className="header-tools"><span className="recorded-label">Recorded dataset</span><AlertsPanel areas={alerts} unavailable={displayedAreas.filter(a => a.fallback_used || a.prediction_source === 'mock').length} busy={loading || !!error || !displayedAreas.length} onOpen={openShelf}/></div></header>
     <main id="main-content">
       <div className="overview-content">
         <div className="page-heading"><div><p className="section-kicker">Sensei / Produce workspace</p><h1>Fresh eyes.<br/><span>Better shelves.</span></h1><p>A closer look at every shelf. Find your product and review the evidence.</p></div>{snapshot && <figure className="store-preview"><Evidence url={snapshot.image_url} alt={`Recorded store view from camera ${snapshot.camera_id}`}/><figcaption><span>Camera {snapshot.camera_id}</span><span>{timeLabel(snapshot.captured_at)} · Recorded image</span></figcaption></figure>}<div className="view-switch" role="group" aria-label="Choose view"><button aria-pressed={mode === 'shelves'} onClick={() => selectMode('shelves')}>Shelves</button><button aria-pressed={mode === 'replay'} onClick={() => selectMode('replay')}>Timeline</button></div></div>

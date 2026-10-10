@@ -33,13 +33,14 @@ def build_inputs(prepared, dataset, output):
     print(f"{len(samples)} inputs written to {output}")
 
 
-def reason(record, stock, compliant, fallback, model_mismatch=False):
+def reason(record, stock, compliant, fallback, model_mismatch=False, product_checked=True):
     if record is None:
         return "No model result for this area; fixed fallback (half, compliant) used."
     if record.get("visibility") != "clear":
         return f"Model judged the view {record.get('visibility')}; fixed fallback (half, compliant) used. Inspect."
     parts = [f"Model stock: {stock}" + (" (empty check)" if record.get("empty_rule") else " (half rule applied)" if record.get("decision_rule") else "")]
-    parts.append("expected product type visible" if compliant else "a different product type appears visible")
+    parts.append("product identity not checked (answered compliant by policy)" if not product_checked else
+                 "expected product type visible" if compliant else "a different product type appears visible")
     hint = " Model also flagged a possible wrong product (not used: unreliable on labelled data); check if convenient." if model_mismatch else ""
     return "; ".join(parts) + (". Some fields use the fixed fallback." if fallback else ".") + hint
 
@@ -65,6 +66,8 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
         stock = record and record.get("observed_stock")
         compliant = record and record.get("observed_compliance")
         model_mismatch = always_compliant and compliant is False
+        product_checked = bool(record) and "compliance" in record.get("answers", {}) and not always_compliant
+        stats["product_checked"] += product_checked
         if always_compliant and compliant is not None:
             compliant = True  # compliance check net-negative on labelled data (RESULTS, 10 Oct)
         fallback = stock is None or compliant is None
@@ -83,7 +86,7 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
             area_id=area, product_name=record["sample"]["product_name"] if record else None, **prediction,
             visibility=record.get("visibility", "unknown") if record else "unknown", fallback_used=fallback,
             crop_url=f"/assets/{camera}_{Path(filename).stem}_{area}.png", reference=None,
-            reason=reason(record, stock, compliant, fallback, model_mismatch)))
+            reason=reason(record, stock, compliant, fallback, model_mismatch, product_checked)))
         stats["model_mismatch_suppressed"] += model_mismatch
     validate_submission(submission, expected)
     output.mkdir(parents=True)
@@ -92,6 +95,7 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
         snapshot_id=f"{camera}_{Path(filename).stem}", run_id=run_id, camera_id=camera, image_file=filename,
         captured_at=datetime.fromtimestamp(int(Path(filename).stem), timezone.utc).isoformat(),
         processed_at=processed, prediction_source="saved", context_mode="current_image_only",
+        product_check="model" if stats["product_checked"] else "not_assessed",
         image_url=f"/assets/{camera}_{filename}", areas=areas) for (camera, filename), areas in snapshots.items()])
     per_image = sorted(seconds.values())
     report = dict(run_id=run_id, areas=len(expected), images=len(snapshots), decision_rule=f"half_if_stock_B>={HALF_THRESHOLD}",

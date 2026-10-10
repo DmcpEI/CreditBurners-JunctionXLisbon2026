@@ -111,6 +111,9 @@ def main():
     parser.add_argument("--paired-prompt", choices=sorted(STOCK_PROMPTS),
                         help="Stock-only: also answer this stock prompt from the same image prefix (computed once)")
     parser.add_argument("--paired-output", type=Path, help="Results file for --paired-prompt answers")
+    parser.add_argument("--paired-only-if-full-below", type=float, default=1.01,
+                        help="Ask the paired question only when the first answer's full (C) score is below this "
+                             "(0.5 lost no empty-check decisions on 1,962 areas)")
     parser.add_argument("--batch-size", type=int, default=1,
                         help="Stock-only runs: answer this many areas per GPU forward pass (left padding)")
     parser.add_argument("--answer-prefix", default="",
@@ -232,26 +235,35 @@ def main():
             answers = []
             with torch.inference_mode():
                 out = model(input_ids=ids[0][None, :shared], use_cache=True, **prefix)
-                for token_ids in ids:
-                    kv = copy.deepcopy(out.past_key_values)
+                for i, token_ids in enumerate(ids):
+                    if i == 1 and answers[0]["scores"]["C"] >= args.paired_only_if_full_below:
+                        answers.append(None)  # confidently full: the empty check cannot change the answer
+                        break
+                    # first question works on a copy so the prefix cache stays clean for the second
+                    kv = copy.deepcopy(out.past_key_values) if i == 0 else out.past_key_values
                     # no attention mask: positions continue from the cache length + stored M-RoPE image offset
                     rest = model(input_ids=token_ids[None, shared:], past_key_values=kv, use_cache=True)
                     answers.append(answer_from(rest.logits[0, -1].float(), "ABCD"))
             torch.cuda.synchronize()
-            share = (time.perf_counter() - started) / 2  # one forward prefix serves both questions
+            asked = sum(a is not None for a in answers)
+            share = (time.perf_counter() - started) / asked  # one forward prefix serves the questions asked
             for store, name, answer, path in ((cache, args.stock_prompt, answers[0], args.output),
                                               (paired, args.paired_prompt, answers[1], args.paired_output)):
                 record = dict(sample=sample, fingerprint=fingerprint + ("" if store is cache else f":paired:{name}"),
                               model=args.model, stock_prompt=name, questions=questions, context_max_side=args.context_max_side,
                               shared_prefix=True, load_seconds=load_seconds, scores_uncalibrated=True, answers={})
-                record.update(inspect_stages(lambda _: {**answer, "cache_hit": False}, questions))
-                record["seconds"] = share
+                if answer is None:  # skipped: export keeps the first answer unchanged
+                    record.update(skipped=True, observed_stock=None, observed_compliance=None, seconds=0.0)
+                else:
+                    record.update(inspect_stages(lambda _: {**answer, "cache_hit": False}, questions))
+                    record["seconds"] = share
                 record["peak_vram_gb"] = torch.cuda.max_memory_allocated() / 1e9
                 store[sample["sample_id"]] = record
                 temporary = path.with_suffix(".tmp")
                 temporary.write_text(json.dumps(store, indent=2) + "\n")
                 temporary.replace(path)
-            print(sample["sample_id"], answers[0]["choice"], answers[1]["choice"], f"{2 * share:.2f}s", flush=True)
+            print(sample["sample_id"], answers[0]["choice"], answers[1]["choice"] if answers[1] else "-",
+                  f"{asked * share:.2f}s", flush=True)
         return
 
     for sample, fingerprint in pending:

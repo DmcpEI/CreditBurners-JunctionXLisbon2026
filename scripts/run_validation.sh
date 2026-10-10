@@ -21,17 +21,18 @@ if ssh -o ConnectTimeout=15 -o BatchMode=yes "$HOST" "test ! -e $REMOTE && mkdir
    else cat "$SRC" | ssh "$HOST" "cat > $REMOTE/input.zip"; fi; then
   INPUT=input; [ -d "$SRC" ] || INPUT=input.zip
   step "prepare on $HOST"
-  ssh "$HOST" "cd $REMOTE && $RPY -B -m ml.validate $INPUT --references $REFS --output $OUT" 2>&1 | tee "$OUT-prepare.log" | grep -v "^WARNING" | tail -40
+  ssh "$HOST" "cd $REMOTE && $RPY -B -m ml.validate $INPUT --references $REFS --output $OUT ${VALIDATE_FLAGS:-}" 2>&1 | tee "$OUT-prepare.log" | grep -v "^WARNING" | tail -40
+  ssh "$HOST" "cat $REMOTE/$OUT/crops-sheet.jpg" > "$OUT-crops-sheet.jpg" 2>/dev/null && { step "CHECK $OUT-crops-sheet.jpg now (opening it): wrong crops = Ctrl-C"; open "$OUT-crops-sheet.jpg" 2>/dev/null || true; }
   step "inference on $HOST (Qwen3.8-27B: stock question + empty check from one shared image prefix)"
-  ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v1 --paired-prompt v4 --paired-output $OUT/results-empty.json --questions stock --context-max-side 640 --output $OUT/results.json" > "$OUT/inference.log" 2>&1 || ok=0
+  ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v1 --paired-prompt v4 --paired-output $OUT/results-empty.json --paired-only-if-full-below 0.5 --questions stock --context-max-side 640 --output $OUT/results.json" > "$OUT/inference.log" 2>&1 || ok=0
   step "fetch results"
   for f in expected sample report results results-empty; do ssh "$HOST" "cat $REMOTE/$OUT/$f.json" > "$OUT/$f.json" || ok=0; done
 else
   ok=0
   step "!!! $HOST unreachable: preparing locally for a fallback submission"
-  rmdir "$OUT"; $PY -m ml.validate "$SRC" --output "$OUT" || exit 1
+  rmdir "$OUT"; $PY -m ml.validate "$SRC" --output "$OUT" ${VALIDATE_FLAGS:-} || exit 1
 fi
-[ -s "$OUT/expected.json" ] || { step "!!! no expected keys from $HOST: preparing locally"; ok=0; mv "$OUT" "$OUT-partial"; $PY -m ml.validate "$SRC" --output "$OUT" || exit 1; }
+[ -s "$OUT/expected.json" ] || { step "!!! no expected keys from $HOST: preparing locally"; ok=0; mv "$OUT" "$OUT-partial"; $PY -m ml.validate "$SRC" --output "$OUT" ${VALIDATE_FLAGS:-} || exit 1; }
 [ -s "$OUT/results.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results.json" 2>/dev/null || { echo '{}' > "$OUT/results.json"; ok=0; }
 [ $ok = 1 ] || echo "!!! INFERENCE INCOMPLETE (see $OUT/inference.log): missing areas use the fallback (half, compliant)"
 

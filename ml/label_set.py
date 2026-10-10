@@ -78,7 +78,7 @@ def build(prepared, dataset, output):
     (output/'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
     html = Path(__file__).with_name('label_review.html').read_text()
     payload = json.dumps(manifest).replace('<', '\\u003c')
-    (output/'index.html').write_text(html.replace('__MANIFEST__', payload))
+    (output/'index.html').write_text(html.replace('__MANIFEST__', payload).replace('__SUGGESTIONS__', '{}'))
     print(f'{len(items)} observations; {sum(x["split"]=="development" for x in items)} development; '
           f'{sum(x["split"]=="holdout" for x in items)} holdout; set {manifest["set_id"]}')
 

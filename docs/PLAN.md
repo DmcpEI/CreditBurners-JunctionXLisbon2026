@@ -6,7 +6,7 @@ Dataset received: 181 images at 1280×720, 14 cameras, 152 areas and 1,962 area 
 
 We work with the supplied images and planogram now. The brief explicitly reserves annotated ground truth for the final hidden validation; no additional training labels are expected or required. Use a small visually reviewed development set to find errors, marking uncertain cases and reviewer provenance. Do not equate development checks with the official score or block implementation on hidden labels.
 
-Human review is ready at `http://127.0.0.1:8765` while the local server is running: 60 fixed examples (32 development, 28 held-out), blank human labels, draft export and freeze. See `docs/RESULTS.md` for restart/build commands. Collect those labels next; do not tune against held-out results.
+Human review is ready at `http://127.0.0.1:8765` while the local server is running: 60 fixed examples (32 development, 28 held-out), assistant suggestions awaiting human confirmation, draft export and freeze. See `docs/RESULTS.md` for restart/build commands. Collect those labels next; do not tune against held-out results.
 
 ## Confirmed guidance — 10 October
 

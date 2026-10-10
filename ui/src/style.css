@@ -449,3 +449,11 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
  .study-page .shelf-detail { top: 140px; max-height: calc(100dvh - 160px); }
 }
 .shelf-detail:focus-visible { outline: 2px solid #697a53; outline-offset: 3px; }
+
+.detail-guidance { font-size: 13px; color: #59664b; line-height: 1.6; margin: 12px 0; }
+.detail-limitation { font-size: 12px; color: #626d56; margin: 8px 0 14px; }
+.study-frame-choice { display: grid; grid-template-columns: 44px minmax(0,1fr) 44px; align-items: center; gap: 12px; padding: 12px; background: #fffef9; border: 1px solid #dde1d6; border-radius: 10px; }
+.study-frame-choice button { min-height: 44px; border: 1px solid #dde1d6; border-radius: 7px; background: #eeefe6; font-size: 20px; }.study-frame-choice button:disabled { opacity: .4; }
+.study-frame-choice > div { display: flex; flex-direction: column; gap: 5px; text-align: center; }.study-frame-choice span { font-size: 12px; color: #626d56; }.study-frame-choice strong { font-size: 14px; font-weight: 500; }
+.study-image-summary { margin: 14px 0 8px; font-size: 13px; color: #626d56; }.study-coverage { grid-column: 1 / -1; border-top: 1px solid #dce1d2; }.study-coverage > summary { min-height: 44px; padding: 16px 0; cursor: pointer; font-size: 16px; font-weight: 500; }.study-coverage > summary span { font-size: 12px; font-weight: 400; color: #626d56; margin-left: 8px; }
+@media(max-width:760px) { .study-frame-choice { padding: 10px; gap: 8px; }.study-frame-choice strong { font-size: 13px; }.study-coverage > summary span { display: block; margin: 6px 0 0 18px; }.study-coverage .study-chart { display: block; }.study-image-summary { font-size: 12px; } }

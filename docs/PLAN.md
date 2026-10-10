@@ -241,3 +241,5 @@ Presentation photos show angled multi-level crates, visible shelf labels, differ
 - Validation from another day → timeline edge mostly lost; fall back to cost-aware VLM.
 - knuth: `/workspace` only, ~37 GB free at last inspection; never delete pre-existing files. Public hosting/network access still needs testing. Wi-Fi: test SSH over phone hotspot.
 - Phone photos differ from ceiling-camera crops; upload accuracy is unproven. Queue fresh requests and measure latency before promising a response time.
+
+Shelf study refinement: prioritise the per-camera daily stock timeline, with direct image selection from each bar. Selected-image counts must remain separate from historical totals. Keep the image archive, observed changes and dataset inventory secondary. Simplify staff detail to action and evidence while retaining assessment limitations.

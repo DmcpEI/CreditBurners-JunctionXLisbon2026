@@ -63,3 +63,11 @@ test('staff labels distinguish restock urgency without changing stored stock sta
  assert.equal(statusLabel({...area,stock_level:'full'}),'No restock needed');
  assert.equal(statusLabel({...area,stock_level:'empty',fallback_used:true}),'Not assessed');
 });
+
+test('explicit product_check overrides legacy run-name inference',()=>{
+ const area={stock_level:'full',visibility:'clear',fallback_used:false,planogram_compliant:true};
+ const unassessed=withAssessmentMetadata({run_id:'new-name',product_check:'not_assessed',areas:[area]});
+ assert.equal(unassessed.areas[0].product_assessed,false);
+ const assessed=withAssessmentMetadata({run_id:'legacy-emptycheck',product_check:'model',areas:[area]});
+ assert.equal(assessed.areas[0].product_assessed,true);
+});

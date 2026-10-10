@@ -32,3 +32,7 @@ new_dataset_hackathon_junctionx_10_oct_2026_v2/*
 
 # Cache
 .cache/
+
+# Model weights (only our small adapter is tracked)
+models/*
+!models/lora-stock-v1/

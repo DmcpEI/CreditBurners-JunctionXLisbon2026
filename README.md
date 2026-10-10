@@ -62,6 +62,7 @@ Full-dataset predictions of the current pipeline: `results/qwen3.8-27b-ctx640-lo
 | Path | What |
 |---|---|
 | `ml/run.py` | One-command validation run (prepare → infer → export) |
+| `models/lora-stock-v1/` | Our fine-tuned stock adapter (60 MB) |
 | `ml/prepare.py`, `ml/validate.py` | Crops, masks, expected keys; validation input handling and guards |
 | `ml/infer_sample.py` | Qwen inference, cached per question; shared-prefix paired questions |
 | `ml/decision_rule.py`, `ml/area_thresholds.py` | Cost-based half rule, empty check, per-shelf thresholds |

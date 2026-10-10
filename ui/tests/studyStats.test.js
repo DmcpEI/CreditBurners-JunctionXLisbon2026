@@ -12,3 +12,10 @@ test('unknown observations break transitions and demo/fallback data produce no m
  assert.equal(result.assessed,2);assert.equal(result.unassessed,1);assert.equal(result.transitions.length,0);
  for(const data of [[{...frame('2025-06-27T10:00:00Z','empty'),prediction_source:'mock'}],[frame('2025-06-27T10:00:00Z','empty',{manual_preview:true})],[frame('2025-06-27T10:00:00Z','empty',{fallback_used:true})]])assert.equal(studyStats(data).assessed,0);
 });
+test('explicit preview includes preserved baseline values and never fabricates trends',()=>{
+ const snapshots=['10','11'].map(hour=>({...frame(`2025-06-27T${hour}:00:00Z`,'half',{manual_preview:true}),prediction_source:'mock'}));
+ const result=studyStats(snapshots,{includePreview:true});
+ assert.equal(result.assessed,2);assert.equal(result.half,2);assert.equal(result.empty,0);assert.equal(result.full,0);assert.equal(result.transitions.length,0);
+ assert.deepEqual(result.series.map(point=>[point.half,point.unknown]),[[1,0],[1,0]]);
+ assert.equal(studyStats([{...snapshots[0],areas:[{...snapshots[0].areas[0],manual_preview:false}]}],{includePreview:true}).assessed,0);
+});

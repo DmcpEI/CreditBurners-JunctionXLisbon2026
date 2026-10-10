@@ -45,12 +45,13 @@ def reason(record, stock, compliant, fallback, model_mismatch=False, product_che
     return "; ".join(parts) + (". Some fields use the fixed fallback." if fallback else ".") + hint
 
 
-def build_outputs(prepared, results_path, output, run_id, always_compliant=False, empty_results_path=None):
+def build_outputs(prepared, results_path, output, run_id, always_compliant=False, empty_results_path=None, area_thresholds_path=None):
     if output.exists():
         raise ValueError("Output exists; choose a new directory")
     expected = json.loads((prepared/"expected.json").read_text())
     results = json.loads(results_path.read_text())
     empty_results = json.loads(empty_results_path.read_text()) if empty_results_path else None
+    area_thresholds = json.loads(area_thresholds_path.read_text()) if area_thresholds_path else dict(default=HALF_THRESHOLD, areas={})
     processed = datetime.now(timezone.utc).isoformat()
     submission, snapshots, stats = {}, defaultdict(list), Counter()
     seconds = defaultdict(float)
@@ -58,7 +59,7 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
         key = f"{camera}_{Path(filename).stem}_{area}"
         record = results.get(key)
         if record is not None:
-            record = apply_half_rule(record)
+            record = apply_half_rule(record, area_thresholds["areas"].get(area, area_thresholds["default"]))
             if empty_results is not None:
                 record = apply_empty_rule(record, empty_results.get(key))
                 seconds[camera, filename] += (empty_results.get(key) or {}).get("seconds", 0)
@@ -101,6 +102,7 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
     report = dict(run_id=run_id, areas=len(expected), images=len(snapshots), decision_rule=f"half_if_stock_B>={HALF_THRESHOLD}",
                   compliance="always_true" if always_compliant else "model",
                   empty_rule=f"empty_if_v4_A>={EMPTY_THRESHOLD}" if empty_results is not None else None,
+                  area_thresholds=len(area_thresholds["areas"]),
                   fallback=dict(stock=FALLBACK_STOCK, compliant=FALLBACK_COMPLIANT), counts=dict(stats),
                   seconds_per_image=dict(p50=per_image[len(per_image)//2], p95=per_image[int(0.95*(len(per_image)-1))],
                                          total=sum(per_image)) if per_image else None)
@@ -120,10 +122,11 @@ if __name__ == "__main__":
     b.add_argument("--prepared", type=Path, default=Path("data/prepared-v1"))
     b.add_argument("--output", type=Path, required=True)
     b.add_argument("--run-id", required=True)
+    b.add_argument("--area-thresholds", type=Path, help="Per-shelf half thresholds (ml/area_thresholds.json)")
     b.add_argument("--empty-results", type=Path, help="Results of the prompt-v4 empty check (second stock question)")
     b.add_argument("--always-compliant", action="store_true", help="Answer compliant everywhere; model mismatch kept only as an app hint")
     args = parser.parse_args()
     if args.mode == "inputs":
         build_inputs(args.prepared, args.dataset, args.output)
     else:
-        build_outputs(args.prepared, args.results, args.output, args.run_id, args.always_compliant, args.empty_results)
+        build_outputs(args.prepared, args.results, args.output, args.run_id, args.always_compliant, args.empty_results, args.area_thresholds)

@@ -36,7 +36,7 @@ fi
 [ -s "$OUT/results.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results.json" 2>/dev/null || { echo '{}' > "$OUT/results.json"; ok=0; }
 [ $ok = 1 ] || echo "!!! INFERENCE INCOMPLETE (see $OUT/inference.log): missing areas use the fallback (half, compliant)"
 
-step "export (half rule 0.20, empty check, always compliant) + coverage check"
+step "export (per-shelf half thresholds, empty check, always compliant) + coverage check"
 EMPTY=(); [ -s "$OUT/results-empty.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results-empty.json" 2>/dev/null && EMPTY=(--empty-results "$OUT/results-empty.json")
-$PY -m ml.export outputs "$OUT/results.json" --prepared "$OUT" --output "$OUT/export" --run-id "val-$NAME" --always-compliant ${EMPTY[@]+"${EMPTY[@]}"} || exit 1
+$PY -m ml.export outputs "$OUT/results.json" --prepared "$OUT" --output "$OUT/export" --run-id "val-$NAME" --always-compliant --area-thresholds ml/area_thresholds.json ${EMPTY[@]+"${EMPTY[@]}"} || exit 1
 step "DONE: $OUT/export/submission.json"

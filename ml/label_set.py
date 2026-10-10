@@ -186,8 +186,8 @@ def build_expansion(prepared, dataset, previous_dirs, label_paths, output, exclu
 
 
 REPLENISH_PROTOCOL = dict(
-    revision='sensei-replenish-v4',
-    stock='Organiser definition: empty = a customer would not be willing to buy what is left; half = still sellable, but staff would take the time to replenish now; full = not worth replenishing yet. In case of doubt, choose the lower level. Judge only the supplied polygon.',
+    revision='sensei-replenish-v5',
+    stock='Organiser definition, refined by the team: empty = nothing left or only about one purchase (a single package, bag or bunch, or a couple of loose items); staff must replenish urgently. half = more than one purchase left, but staff would take the time to replenish now. full = well stocked; not worth replenishing yet. In case of doubt, choose the lower level. Judge only the supplied polygon.',
     compliance='Visible product type matches the expected product; a genuinely empty area is compliant.')
 
 

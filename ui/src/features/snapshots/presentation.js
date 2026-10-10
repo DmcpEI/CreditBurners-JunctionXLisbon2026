@@ -1,4 +1,4 @@
-import {action} from './actions';
+import {action} from './actions.js';
 
 export const dateLabel = value => new Intl.DateTimeFormat(undefined, {dateStyle: 'medium'}).format(new Date(value));
 export const timeLabel = value => new Intl.DateTimeFormat(undefined, {hour: '2-digit', minute: '2-digit', timeZoneName: 'short'}).format(new Date(value));
@@ -23,4 +23,13 @@ export function areaHref(location, id) {
   const params = new URLSearchParams(location);
   params.set('area', id);
   return `?${params}`;
+}
+
+export const searchText = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+export function assessmentFacts(area) {
+  if (area.fallback_used || area.visibility !== 'clear' || area.prediction_source === 'mock') return [];
+  return [
+    {label: {empty:'Empty', half:'Half stocked', full:'Full'}[area.stock_level], tone: {empty:'restock',half:'low',full:'okay'}[area.stock_level]},
+    {label: area.planogram_compliant ? 'Expected product matches' : 'Product mismatch', tone: area.planogram_compliant ? 'okay' : 'mismatch'}
+  ];
 }

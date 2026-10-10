@@ -1,8 +1,9 @@
 import React, {useMemo, useRef} from 'react';
 import Evidence from './Evidence';
+import AssessmentBadges from './AssessmentBadges';
 import useShelfMotion from './useShelfMotion';
 import {isAlert, rank} from './actions';
-import {timeLabel, areaHref, productLabel, shelfLabel, statusClass, statusLabel, taskDescription} from './presentation';
+import {searchText, timeLabel, areaHref, productLabel, shelfLabel, statusClass, statusLabel, taskDescription} from './presentation';
 
 export default function TaskList({areas: sourceAreas, storeView, location, navigate, onOpen}) {
   const query = location.q || '';
@@ -10,7 +11,7 @@ export default function TaskList({areas: sourceAreas, storeView, location, navig
   const areas = useMemo(() => [...sourceAreas].sort((a, b) => rank(a) - rank(b)), [sourceAreas]);
   const attention = areas.filter(area => isAlert(area));
   const shown = areas.filter(area => (filter === 'all' || isAlert(area)) &&
-    `${area.product_name} ${area.area_id} ${shelfLabel(area)}`.toLocaleLowerCase().includes(query.toLocaleLowerCase()));
+    searchText(`${area.product_name} ${area.area_id} ${shelfLabel(area)}`).includes(searchText(query)));
   const motionScope = useRef(null);
   useShelfMotion(motionScope, `${location.snapshot}:${location.q || ''}:${filter}:${sourceAreas.length}`);
   const follow = (event, area) => {
@@ -32,9 +33,9 @@ export default function TaskList({areas: sourceAreas, storeView, location, navig
       <a className={`shelf-task ${location.area === area.area_id ? 'selected' : ''}`} href={areaHref({...location, snapshot: area.snapshot_id}, area.area_id)}
         aria-current={location.area === area.area_id ? 'true' : undefined} onClick={event => follow(event, area)}>
         <div className="task-media"><Evidence className="task-thumbnail" url={area.crop_url} alt="" thumbnail/><span className="photo-location">{shelfLabel(area)}</span><span className="photo-open" aria-hidden="true">↗</span></div>
-        <div className="task-copy"><span className="shelf-location">{storeView ? `Camera ${area.camera_id}` : shelfLabel(area)}</span><span className="expected-label">Expected product</span><h3 title={area.product_name}>{productLabel(area.product_name)}</h3><p className="task-assessment">{taskDescription(area)}</p><div className="card-assessment"><span className={`status ${statusClass(area)}`}>{statusLabel(area)}</span><span className="card-time">{timeLabel(area.captured_at)}</span></div><span className="card-cta">View shelf <span aria-hidden="true">↗</span></span></div>
+        <div className="task-copy"><span className="shelf-location">{storeView ? `Camera ${area.camera_id}` : shelfLabel(area)}</span><span className="expected-label">Expected product</span><h3 title={area.product_name}>{productLabel(area.product_name)}</h3><p className="task-assessment">{taskDescription(area)}</p><div className="card-assessment"><span className={`status ${statusClass(area)}`}>{statusLabel(area)}</span><span className="card-time">{timeLabel(area.captured_at)}</span></div><AssessmentBadges area={area}/><span className="card-cta">View shelf <span aria-hidden="true">↗</span></span></div>
         <span className="task-arrow" aria-hidden="true">→</span>
       </a>
-    </li>)}</ul> : <div className="empty-state"><h3>{query ? 'No matching shelves' : 'No shelves need attention'}</h3><p>{query ? 'Try a different product name or shelf number.' : 'No stock or product issues were flagged in this observation.'}</p><button className="button secondary" onClick={() => navigate({q: null, filter: null}, true)}>Show all shelves</button></div>}
+    </li>)}</ul> : <div className="empty-state"><h3>{query ? 'No matching shelves' : 'No assessed alerts to show'}</h3><p>{query ? 'Try a different product name or shelf number.' : areas.some(area => area.fallback_used || area.prediction_source === 'mock') ? 'Some shelves have no reliable assessment. Browse their images before drawing conclusions.' : 'No stock or product issues were flagged in this observation.'}</p><button className="button secondary" onClick={() => navigate({q: null, filter: null}, true)}>Show all shelves</button></div>}
   </section>;
 }

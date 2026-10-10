@@ -71,8 +71,8 @@ def build(prepared, dataset, output):
                           image_sha256=hashlib.sha256(original.read_bytes()).hexdigest(),
                           crop_sha256=hashlib.sha256(crop.read_bytes()).hexdigest()))
     manifest = dict(schema_version=1, protocol=dict(
-        stock='empty: no produce; half: some produce with substantial unfilled space; full: full/nearly full. Provisional visual definitions; uncertain when ambiguous.',
-        compliance='Visible product type matches expected product; do not guess cultivar, brand or origin. Empty/blocked areas have unknown compliance.',
+        stock='Judge supplied polygon only, relative to capacity for this product. Empty includes nearly depleted; half is intermediate stock; full is full/nearly full. No exact numeric thresholds supplied; uncertain when ambiguous.',
+        compliance='Visible product type matches expected product; do not guess cultivar, brand or origin. No-visible-produce/blocked areas have unknown compliance; near-empty stock with visible produce may still match.',
         holdout='Area-disjoint and excludes all areas in existing qwen sample manifests. Keep holdout results out of prompt tuning.'), items=items)
     manifest['set_id'] = hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()[:16]
     (output/'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')

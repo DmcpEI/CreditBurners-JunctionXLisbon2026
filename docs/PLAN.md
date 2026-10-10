@@ -14,6 +14,8 @@ User relayed organiser guidance: self-annotation of empty/half/full is appropria
 
 Knuth is authorised for project use, including required setup and hosting. Continue to use `/workspace`, preserve unrelated files/processes, and check network/disk availability. Public image redistribution remains a separate question. Focus further experiments on visible shelves and the human-reviewed stock reference rather than tuning curtain detection.
 
+Stock semantics confirmed: use only the supplied polygon and judge stock relative to capacity for that product. Empty may mean nearly depleted, not only zero items. Human review protocol is now `sensei-box-capacity-v2`; recheck earlier saved labels. Next model change must allow visible produce to still have an empty stock class and then evaluate against the reviewed labels.
+
 ## Objective
 > A store assistant that uses existing cameras to tell staff which produce shelves need attention, why, and what to do next.
 

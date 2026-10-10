@@ -56,7 +56,7 @@ export default function SnapshotBrowser() {
       const target = document.querySelector(`.shelf-task[href*="area=${CSS.escape(shelf)}"]`);
       target?.focus({preventScroll: true});
       window.scrollTo({top: listScroll.current, behavior: 'instant'});
-    } else if (!location.area && mode==='shelves' && location.scope==='camera' && (previousCamera.current!==browser.current?.camera_id || previousScope.current!==location.scope)) {
+    } else if (!location.area && mode==='shelves' && location.scope==='camera' && previousCamera.current && (previousCamera.current!==browser.current?.camera_id || previousScope.current!==location.scope)) {
       scrollToContent(document.querySelector('.shelf-list'));
     }
     previousArea.current = location.area;

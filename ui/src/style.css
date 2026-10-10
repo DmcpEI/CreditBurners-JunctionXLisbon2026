@@ -435,17 +435,17 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 
 .study-camera-controls select { appearance: none; height: 44px; min-height: 44px; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%2359664b' stroke-width='1.5'/%3E%3C/svg%3E"); background-position: right 6px center; background-repeat: no-repeat; }
 
-/* Stock is a quiet frame around the evidence, never a solid card background. */
-.shelf-task[data-stock="empty"] { --stock-edge: #d99b95; --stock-active: #b9554b; }
-.shelf-task[data-stock="half"] { --stock-edge: #d8bd69; --stock-active: #a78322; }
-.shelf-task[data-stock="full"] { --stock-edge: #a0b99b; --stock-active: #567f50; }
-.app-shell .shelf-task[data-stock] { border: 1px solid var(--stock-edge); box-shadow: inset 0 0 0 1px var(--stock-edge); }
-.app-shell .shelf-task[data-stock]:hover { border-color: var(--stock-active); box-shadow: inset 0 0 0 1px var(--stock-active); }
-.app-shell .shelf-task[data-stock].selected { outline: 2px solid var(--stock-active); outline-offset: 2px; }
+/* Shared stock backgrounds keep shelf cards and alerts consistent. */
+.shelf-task[data-stock="empty"],.alert-card[data-stock="empty"] { --stock-tint: #fcecea; --stock-hover: #f9ded9; }
+.shelf-task[data-stock="half"],.alert-card[data-stock="half"] { --stock-tint: #fcf4d9; --stock-hover: #f8edc1; }
+.shelf-task[data-stock="full"],.alert-card[data-stock="full"] { --stock-tint: #edf4e9; --stock-hover: #e1ecdb; }
+.alerts-list .alert-card:is(.restock,.low,.mismatch,.inspect) { border: 1px solid #dde1d6; }
+.app-shell .shelf-task[data-stock],.alerts-list .alert-card[data-stock] { background: var(--stock-tint); border: 1px solid #dde1d6; box-shadow: none; }
+.app-shell .shelf-task[data-stock]:hover,.alerts-list .alert-card[data-stock]:hover { background: var(--stock-hover); border-color: #cbd1c3; }
+.app-shell .shelf-task.selected { outline: 2px solid #697a53; outline-offset: 2px; }
 
-
-.shelf-task[data-stock="empty"] { --stock-tint: #fcecea; --stock-hover: #f9ded9; }
-.shelf-task[data-stock="half"] { --stock-tint: #fcf4d9; --stock-hover: #f8edc1; }
-.shelf-task[data-stock="full"] { --stock-tint: #edf4e9; --stock-hover: #e1ecdb; }
-.app-shell .shelf-task[data-stock] { background: var(--stock-tint); }
-.app-shell .shelf-task[data-stock]:hover { background: var(--stock-hover); }
+@media(min-width:761px) {
+ .shelf-detail { top: 20px; max-height: calc(100dvh - 40px); overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; scroll-padding-top: 16px; }
+ .study-page .shelf-detail { top: 140px; max-height: calc(100dvh - 160px); }
+}
+.shelf-detail:focus-visible { outline: 2px solid #697a53; outline-offset: 3px; }

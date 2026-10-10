@@ -12,6 +12,7 @@ export default function ShelfDetail({snapshot, area, onBack, onSelectArea,camera
   const detail=useRef(null);
   useEffect(() => {
     if (!area) return;
+    if (detail.current) detail.current.scrollTop=0;
     heading.current?.focus({preventScroll:true});
     scrollToContent(detail.current);
   }, [area?.area_id,cameraFirst]);
@@ -19,7 +20,7 @@ export default function ShelfDetail({snapshot, area, onBack, onSelectArea,camera
   const fallback = area.fallback_used;
   const position = snapshot.areas.findIndex(item => item.area_id === area.area_id);
   const inspect = action(area) === 'Inspect';
-  return <section className="shelf-detail" ref={detail} aria-labelledby="detail-title">
+  return <section className="shelf-detail" ref={detail} tabIndex={0} aria-labelledby="detail-title">
     <h1 className="sr-only mobile-detail-title">Shelf evidence</h1>
     <button className="back-button" onClick={onBack}><span aria-hidden="true">←</span> Back to shelves</button>
     <div className="detail-heading"><p className="shelf-location">{shelfLabel(area)} · Camera {snapshot.camera_id}</p><h2 id="detail-title" tabIndex={-1} ref={heading}>{productLabel(area.product_name)}</h2><span className={`status ${statusClass(area)}`}>{statusLabel(area)}</span></div>

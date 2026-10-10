@@ -27,7 +27,7 @@ export function areaHref(location, id) {
 
 export const searchText = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
 export function assessmentFacts(area) {
-  if (area.fallback_used || area.visibility !== 'clear' || area.prediction_source === 'mock') return [];
+  if (area.fallback_used || area.visibility !== 'clear' || (area.prediction_source === 'mock' && !area.manual_preview)) return [];
   return [
     {label: {empty:'Empty', half:'Half stocked', full:'Full'}[area.stock_level], tone: {empty:'restock',half:'low',full:'okay'}[area.stock_level]},
     {label: area.planogram_compliant ? 'Expected product matches' : 'Product mismatch', tone: area.planogram_compliant ? 'okay' : 'mismatch'}

@@ -30,3 +30,15 @@ test('a shelf with two issues appears in both relevant task filters', () => {
   assert.equal(matchesAlertType(area,'Check stock'),false);
   assert.equal(matchesAlertType({...area,fallback_used:true},'Restock'),false);
 });
+
+import {manualPreview} from '../src/features/snapshots/manualPreview.js';
+test('manual preview is explicit and does not mutate saved records', () => {
+  const original={prediction_source:'saved',areas:Array.from({length:4},(_,i)=>({area_id:`a${i}`,fallback_used:true,stock_level:'half'}))};
+  const preview=manualPreview(original);
+  assert.equal(original.areas[0].stock_level,'half');
+  assert.equal(original.prediction_source,'saved');
+  assert.equal(preview.prediction_source,'mock');
+  assert.equal(preview.areas.filter(isAlert).length,4);
+  assert.deepEqual(preview.areas.map(a=>a.stock_level),original.areas.map(a=>a.stock_level));
+  assert.equal(preview.areas.every(a=>a.manual_preview),true);
+});

@@ -1,6 +1,6 @@
 # Demo
 
-Status: local Spring/React list, evidence detail and recorded replay implemented; no public deployment, URL or rehearsed sequence yet. Local preparation provides real images/crops with constant-baseline records for integration; these are explicitly marked as fallbacks, not model predictions.
+Status: working local Spring/React app on saved real predictions from `qwen3.8-27b-ctx640-perarea-emptycheck-shared-alwayscompliant-full-v1`. Store view, alerts, interactive camera/crop navigation and historical stock graphs are implemented. Public deployment/QR and the final presentation rehearsal remain pending. Current continuation instructions: `docs/PLAN.md`, Member2 continuation.
 
 Challenge confirmed: Sensei. The script below demonstrates the shelf assistant and its measured results.
 
@@ -8,8 +8,9 @@ Challenge confirmed: Sensei. The script below demonstrates the shelf assistant a
 We turn existing store cameras into a prioritised list of shelf tasks, with visible evidence so staff can decide what to restock or inspect.
 
 ## What judges can try
-- Scan a QR code and open the phone-friendly app without installing anything.
-- Select a camera/time, inspect a priority task, and compare the current crop with its reference.
+- Open the phone-friendly app without installing anything (local Wi-Fi now; public QR still pending).
+- Store view: open a camera or priority shelf task and inspect the crop/full-camera evidence.
+- Shelf study: choose a camera and a timeline bar; compare saved stock states, then open a shelf-to-watch row.
 - Watch a short recorded sequence and see tasks change with the actual observations.
 - Stretch: request fresh inference on an approved image. Further stretch: photograph one produce tray and select the expected product.
 
@@ -40,7 +41,7 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 - **Local app fails:** show the recorded walkthrough and say it is a recording.
 - **Photo mode unreliable or unfinished:** omit it. The store replay remains the main product.
 - No invented model results or impact metrics. Any development fixture must say "Illustrative mock" and must not enter evaluation results.
-- Current integration data: `data/prepared-v1/snapshots.json` contains a constant compliant/half baseline, unknown visibility and `fallback_used: true` on every area. Display its explanation. Do not present these records as image analysis or use their alerts as proof of product accuracy.
+- Current integration data: `results/qwen3.8-27b-ctx640-perarea-emptycheck-shared-alwayscompliant-full-v1/snapshots.json`. The old `data/prepared-v1/snapshots.json` is a constant baseline available only by explicit override; never present it as model output.
 
 ## Acceptance checks before judging
 - Public URL and QR code work from a phone on mobile data; list, detail and replay work on a narrow screen.
@@ -56,79 +57,66 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 - Phone-photo accuracy, browser latency and concurrent use are untested.
 - Knuth project/hosting use is authorised. Public image permission, public URL and domain/tunnel setup remain to be confirmed.
 
-## Local verification — Member2
+## Current app and verification
 
-Built React and packaged Spring with 181 prepared snapshots. `python3 api/verify.py` passes snapshot/detail, capture-time consistency, images, bundled frontend, repeated requests, unknown IDs and traversal rejection. WebKit browser checks passed area selection, camera switching, frame navigation and automatic replay; evidence loaded and a 390px viewport had no horizontal overflow. Constant-baseline fallback labels were visible. The four ML smoke tests also pass with `PYTHON=.venv/bin/python`. Public mobile-data access, approved publication subset, real model predictions and the disconnected-laptop rehearsal remain unverified.
+The default export contains 181 frames / 1,962 observations: 166 empty, 544 half, 1,252 full, including 14 fallbacks. Product identity is not assessed (`product_check: not_assessed`); fixed compliance=true must never become a verified-product badge. Staff UI deliberately omits technical product-check notices. Fallback/unusable shelves remain neutral/unassessed and are excluded from study counts and reliable stock alerts. Source files and model values are never rewritten by UI controls. `?demo=1` is an explicitly labelled illustrative preview preserving supplied values; not evaluation or inference.
 
-## Staff-first frontend verification
+Store view always uses each camera's latest capture, displays all camera cards on mobile and exposes product search/task filters. No Store camera/time dropdown. Empty/half/full backgrounds and polygons use red/amber/green with neutral card borders. “Restock urgently” means empty; “Restock” means half. Desktop hero preview has transparent chrome, discrete camera arrows and clickable regions; hidden on mobile. Selecting a camera shows the map; selecting a fruit scrolls to its crop. Mobile offers all shelves together in a two-column selector; desktop evidence scrolls independently. Back restores the list position. Cart SVG and the original dark sensei wordmark remain; no startup splash/toast/name badge. Hero typing remains and may feel slow (known user feedback).
 
-The landing gallery uses the latest saved snapshot per camera (14 cameras, 152 areas). Camera/time selection and recorded replay are secondary. On a phone, selecting a shelf opens evidence directly; Back restores the checklist URL, focus and scroll. Product titles hide retail metadata for readability; original labels remain in observation details. Baseline/mock/fallback and retrospective labels remain explicit.
+Shelf study: camera dropdown, daily stacked bars and selected-image distribution. Each timeline bar selects a frame; selected counts are never accumulated day totals. “Shelves to watch” shows up to five areas ranked by (empty+half)/assessed frames, separated empty/half bars and an evidence link to the latest matching frame. Coverage graph, technical expanders, thumbnail archive and long stock-change list are removed. Recorded-image dropdown and replay remain. The data cannot prove sales, customer movement, restocks or exact empty duration. Product names come from the planogram.
 
-Earlier checklist builds passed WebKit checks for store totals, first-screen shelf visibility at 375px, mobile evidence, Back URL/focus/scroll, search/no-match recovery, camera filtering, all-camera return, replay advance/pause, pause on keyboard focus and reduced-motion behavior. Separate checks passed desktop split view, landscape width, reloaded deep links, missing images, API failure/retry and empty gallery recovery. API integration checks still pass. Browser network failures were test-only simulations, not model evaluation. Public access and the physical-phone/offline rehearsal remain unverified.
+Alerts are derived from the latest selected saved data: a new observation with no issue removes the corresponding task, but there is no automatic ingestion or manual completion database. Login, staff roles, assignment, vibration/push notifications and fresh-analysis jobs are not implemented.
 
-Frontend motion: shelf cards reveal on entering the viewport; hover/press feedback and image fades support browsing. Detail navigation uses native view transitions when supported and ordinary navigation otherwise. Reduced-motion preference disables animated transitions. Verified WebKit mobile detail/back, no horizontal overflow, reduced motion, frontend build and live API/assets. No inference is triggered by these effects.
+Latest integration verification: 15 preparation/scoring smoke tests, 14 frontend tests, Vite/Maven builds and `api/verify.py` passed. On an isolated port, verified the recommended run and explicit product-check metadata, all 181 indexed frames/assets, 14 camera cards/152 latest shelves, no 390px overflow and study ranking → crop navigation. Physical device/public/mobile-data access and full per-camera polygon review remain unverified. Temporary test servers were stopped; user-owned IntelliJ processes were not stopped.
 
-Evidence inspection: open a shelf and select Enlarge image. Switch between Shelf crop and Full camera, zoom up to 300%, scroll to inspect and use Fit to reset. Escape or Close returns focus to the opener. Verified desktop/mobile zoom scrolling, image switching, reset, Escape, focus restoration and body-scroll restoration. Enlargement adds no detail and browsing does not run inference.
+## Run locally
 
-Interactive camera view: shelf details include the full recorded camera image with clickable planogram polygons. Select another area by touch, pointer, keyboard, Previous/Next or dropdown without leaving the camera. Geometry is bundled from the supplied planogram at frontend build time; rebuild if that planogram changes. Verified nine regions on camera 6462, polygon selection, next navigation, Enter activation and mobile width. General alignment across every camera and timeline selection persistence still need a broader visual review.
+From the repository root, with Node, Java17+ and Maven installed, and `data/prepared-v1/assets` prepared as described in CONTRACT:
 
-Manual UI preview is now opt-in with `?demo=1`; the default shows Member1’s recommended saved stock results. Preview preserves supplied stock/compliance values without inventing empty/full states or mismatches and clearly labels them as illustrative. Exit preview uses `demo=0`. No files or model outputs are modified; preview is excluded from measured results and submission.
+```bash
+npm ci --prefix ui
+npm run build --prefix ui
+mvn -f api/pom.xml package
+java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=data/prepared-v1 --server.address=0.0.0.0 --server.port=8080
+```
 
-## Store view and Shelf study
+Open http://localhost:8080. For a phone on the same Wi-Fi use `http://<Mac-LAN-IP>:8080`; get the IP with `ipconfig getifaddr en0`. The Java process serves the built UI and reads the export only at startup. Stop with Ctrl+C before rebuilding/replacing its running JAR. If 8080 is user-owned, choose 8082 and use that URL for verification.
 
-The top navigation now separates staff operations from history. Store view always uses the latest saved image per camera, displays camera overview cards and all crops, and has no historical time selector. Mobile initially shows two camera cards with Show all cameras and a shortcut to all shelves. The interactive map, alert panel, fullscreen viewer and fixed shelf controls are retained.
+For React development, leave the API running and in a second terminal:
 
-Shelf study offers every saved image for the selected camera, chronological thumbnails, historical selection and optional replay. Selecting another image retains the same area when available; missing areas produce an explanatory notice. Returning to Store view resets to latest captures. Shelf study defaults to saved-stock graphs with fallback/mock observations excluded. Enable demo graphs is an optional, explicitly labelled preview. Historical crops show saved assessments or unavailable-assessment labels as applicable.
+```bash
+npm run dev --prefix ui -- --host 0.0.0.0
+```
 
-Shelf study opens with the daily stock timeline on mobile. Each bar selects its recorded image. The image summary and stock distribution count only shelves in that selected image; they are not accumulated day totals. Previous/next buttons change the image without opening the archive. Observed stock changes and dataset coverage remain collapsed secondary details. Unknown/fallback observations break transitions. These graphs do not measure purchases, customer movement, confirmed restocks or time spent empty. The staff shelf panel shows the action, image, capture time and shelf navigation; raw model reasons, internal identifiers and duplicate evidence sections have been removed. Product-match limitations remain visible.
+Use the URL printed by Vite (API/assets proxy to 8080). `npm run build` is required for the Java-only version to include UI edits. Stop each process in its own terminal with Ctrl+C.
 
-Validation: seven frontend semantic tests (including explicit baseline inclusion, default exclusion and no fabricated transitions), frontend/Maven builds and live API checks passed. WebKit verified latest14-camera/152-area coverage, no Store view time picker, camera6462's13-image archive, same-area historical navigation, return to latest captures, deep-link reload, camera expansion and mobile widths. Reduced-motion screenshots were visually inspected. Study aggregation was initially tested on synthetic fixtures; the integration checks below now cover real saved results. Physical phone/public URL and full camera-by-camera geometry checks remain outstanding.
+```bash
+PYTHON=.venv/bin/python bash scripts/smoke_test.sh
+node --test ui/tests/*.test.js
+python3 api/verify.py http://127.0.0.1:8080
+```
 
-Graph validation: frontend and Maven builds, live API verification and four ML smoke tests passed. WebKit checked all three graphs, 14 camera bars, clickable frame/camera navigation, demo/original switching and a 390px layout without page overflow. Reduced-motion mobile/desktop screenshots were inspected. Physical-phone chart interaction is not yet verified.
+IntelliJ is intentionally local-only: `.idea/runConfigurations/Sensei app.xml` starts `team.creditburners.Application` using module `sensei`, repo-root working directory, frontend build before launch, and `--spring.web.resources.static-locations=file:./ui/dist/,classpath:/static/`. Import `api/pom.xml` as Maven and configure Java/Node if setting up another machine. A local `.idea/sensei.iml` was registered to address “module not specified”; no IDE configuration was committed. Run-button execution remains unverified; reopen/import if configuration changes are not picked up.
 
-## New efficiency criterion
+## Defence: new organiser images
 
-Pitch must include estimated cost per analysed source image, alongside accuracy/points. Measure all areas in an image, not a single crop, and distinguish warm computation, cold load and cached replay. State hardware, precision, image/area counts, throughput and the tariff assumption. Current provisional extrapolation is ~15.2 seconds per source image, or 0.00422×hourly machine rate per image; it is not a direct full-frame measurement. Do not claim donated knuth access makes computation free or use cached UI response time as inference time. Smaller models and YOLO are candidates, not demonstrated savings. Exact new judging weights remain unspecified.
+Keep the original supplied dataset and its planogram unchanged. New validation input can be a separate folder or ZIP; do not overwrite the original images. Member1 owns inference/submission. From the root:
 
+```bash
+scripts/run_validation.sh data/validation-input defesa-01
+```
 
-## Member1 merge and saved-results integration
+Expected final submission: `data/val-defesa-01/export/submission.json`; app records: `data/val-defesa-01/export/snapshots.json`. Choose a new run name each time: the script rejects an existing output folder. It uses the original planogram to infer/validate camera mapping and rejects unsuitable inputs; inspect its crops contact sheet. It prepares/infers on knuth and downloads JSON, not the full local image/crop inventory. If knuth fails it explicitly emits a half/compliant fallback; disclose that, never call it real inference. Final validation timings/metrics are in RESULTS; no GPU validation was rerun during this UI integration.
 
-Merged `origin/main` at `620f40b` into `feat/interactive-shelf-explorer`, preserving both members’ demo notes. Spring defaults to `results/qwen3.8-27b-stockonly-half020-full-v1/snapshots.json`; assets remain under `data/prepared-v1/assets`. Override results with `--sensei.snapshots-file=<path>`. No inference was rerun and no ML result files were edited.
+To display the new results in the app, also prepare the validation assets locally (requires Pillow and valid camera mapping), in a separate folder:
 
-The complete export contains 181 images and 1,962 areas: 130 empty, 656 half and 1,176 full values, including 15 fallback areas. UI labels those fallback areas unassessed and excludes them from graph assessment counts. Product compliance is fixed true by this run, so product badges/details say not assessed and mismatch statistics are unavailable. Stock predictions are model estimates, not ground truth or proof of purchases.
+```bash
+python3 -m ml.validate data/validation-input --output data/val-defesa-01-assets
+java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=data/val-defesa-01-assets --sensei.snapshots-file=data/val-defesa-01/export/snapshots.json --server.address=0.0.0.0 --server.port=8080
+```
 
-Validation: nine frontend tests, thirteen ML smoke tests, frontend/Maven builds and live API verification passed. WebKit checked all 181 served run IDs and stock counts, latest 152-shelf coverage, saved-data default, absence of false product-match badges, timeline navigation, and a 390px layout without page overflow. Real-data mobile screenshots were inspected. Physical-phone testing, public access and fresh inference remain unverified. Changes are local commits; no push or merge into main was performed.
+Preparation creates images and rectified crops; it does not run the model. Confirm every JSON image/crop URL resolves to that local assets folder before presenting. This fresh-input-to-app procedure has not been rehearsed in this session; do it with Member1 before the defence. Generic handheld/store images without matching camera/planogram geometry are outside the current pipeline. Copying photos into the original dataset folder alone does not analyse them or refresh the app.
 
-## Mobile study dashboard
+## Pitch evidence and efficiency
 
-Camera selection now stays accessible above the graphs while scrolling, with direct selection and previous/next camera buttons. Mobile shows one chart at a time: Stock, Timeline or Coverage. The selected chart survives camera changes and reloads through the `chart` URL parameter. Tapping a coverage bar returns to that camera’s stock chart. Desktop still shows all three charts.
-
-Recorded image selection, replay and thumbnail archive are inside Explore recorded images; observed changes and graph limitations have expandable sections. Opening shelf evidence retains frame selection controls and the camera selector. Saved predictions, fallback exclusions and product-match limitations remain unchanged.
-
-Verification: nine frontend tests and frontend/Maven builds passed. WebKit checked direct/adjacent camera selection, chart persistence, coverage drill-down, sticky controls, archive expansion, same-area frame navigation and reload. Layouts at 320/390/430/768/1440 pixels had no page overflow; mobile/desktop screenshots were inspected. Live API verification passed. Physical-phone interaction is still untested.
-
-The compact mobile summary now shows assessed, empty and full observations; product-match limitations stay in About these graphs and shelf evidence. The camera selector uses an explicit 44px height for WebKit touch targets.
-
-## Updated Member1 handoff
-
-Main updated to `b07b7d0` and merged into the mobile-dashboard branch. App defaults now use `results/qwen3.8-27b-ctx640-half020-emptycheck-full-v1/snapshots.json`, as recommended in CONTRACT.md. This run adds the model’s empty-check question, keeps compliance fixed true, and reuses prepared assets. Product assessment stays unavailable; no inference was rerun.
-
-## Shelf opening and staff actions
-
-Camera cards now open the interactive camera map and scroll it into view. Product cards open the crop before the camera map; scroll offsets account for sticky headers and dashboard controls. Returning to the list restores the previous position on desktop and mobile; selecting a single-camera filter also takes staff to its shelves. The product-compliance banner is kept in the overview and evidence details rather than above the opened crop.
-
-Cards use softly tinted red/amber/green backgrounds with visible borders. Primary actions are Restock urgently (empty), Restock (half; check the shelf before replenishing) and No restock needed (full). Lists and alerts omit duplicate stock-state badges; simultaneous product mismatches stay visible. Detailed stock states and graph data remain unchanged; fallback/unclear observations stay neutral.
-
-Validation: twelve frontend tests and frontend/Maven builds passed. WebKit checked camera/product opening, crop visibility, camera filter selection, alert navigation, restored list positions, all three tint colors and nonduplicated card labels. Checks covered desktop/mobile and motion enabled/reduced. Mobile screenshots were visually inspected. Physical-phone testing remains outstanding.
-
-## Desktop panel scroll and consistent card backgrounds
-
-Fresh page loads start at the top, including a single-camera URL without an area selection. Explicit evidence links and click navigation still open the requested detail. On desktop, the right-hand evidence panel fits the viewport and scrolls independently with mouse wheel or keyboard; selecting another shelf resets its internal scroll. Mobile retains normal page scrolling. Back to shelves still restores the saved list position.
-
-Shelf cards and alert cards now share the same soft stock backgrounds, with neutral borders rather than coloured outlines. WebKit verified reload position, actual wheel scrolling inside the desktop panel without moving the page, card/alert style consistency and mobile crop visibility. Frontend/Maven builds passed; physical-phone interaction remains unverified.
-
-Mobile shelf navigation now shows the full camera map before the selected crop, plus a two-column selector for every shelf in that camera. Map regions and selector tiles use assessed stock colors (empty red, half amber, full green); unavailable assessments stay neutral. Shelf study removes dataset coverage and expandable technical sections, retaining stock graphs, observed changes and recorded-image controls.
-
-The cart/shelf symbol is applied in the header and favicon; the name remains unchanged until the team chooses a replacement. Shelf study shows up to five shelves most often empty/half, ranked by their share of assessed camera images. Counts exclude unavailable/fallback records; each row opens the latest assessed empty/half image. This is sampled prediction frequency, not duration or sales.
-
-Store view always includes all cameras; its camera-filter dropdown is removed, including for old camera-scoped links. Camera cards and the desktop hero preview still open individual shelf evidence. The hero preview has no outer card border/background; its caption sits directly on the page.
+Use the latest measured evaluation in RESULTS and name the labelled sample and pipeline. Current report has median 3.81 s / camera image on the measured hardware; cached browser replay is not inference time. Include a tariff assumption for cost estimates and distinguish warm processing/cold loading. Official hidden-validation accuracy is not yet claimed. User-visible images and stock conditions may differ between cameras' capture times; never describe the gallery as a live feed.

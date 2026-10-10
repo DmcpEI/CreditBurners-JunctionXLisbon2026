@@ -2,9 +2,31 @@
 
 Challenge confirmed: Sensei. Team: two people, Member1 and Member2. Final validation is only available at the end; reserve time for inference and submission. Cut scope if progress is slow.
 
+## Member2 continuation — current app, 10 October 2026
+
+This section describes the implemented product; older ML experiments below remain historical. Read `AGENTS.md`, `docs/CONTRACT.md`, this section, `docs/DEMO.md` and the latest `docs/RESULTS.md` before continuing. Member1 owns ML/evaluation; Member2 owns API/UI. No parallel agents unless requested. Current branch: `main`; remote updates through `631bc46` integrated without conflicts. Do not rerun inference for UI changes.
+
+**Goal and working state:** a clean mobile store assistant using saved camera predictions, plus historical study. Java Spring serves React and read-only assets. Default export: `results/qwen3.8-27b-ctx640-perarea-emptycheck-shared-alwayscompliant-full-v1/snapshots.json`; images/crops: `data/prepared-v1/assets`. 181 frames, 14 cameras, 152 areas, 1,962 observations; export totals 166 empty / 544 half / 1,252 full, including 14 fallbacks. These are model predictions, not measured inventory. Latest ML metrics and limitations belong in RESULTS, not UI copy.
+
+**Implemented flow:** Store view always includes every camera's latest image and all 152 shelves. No camera/time dropdown or mobile “Show all cameras” button. Camera cards and the desktop hero preview open full-camera evidence; product cards/alerts open the selected crop. Red/amber/green backgrounds and map polygons mean empty/half/full; fallback areas stay neutral. Labels remain “Restock urgently”, “Restock”, “No restock needed”. Mobile shows all camera cards, full map plus a two-column shelf selector; choosing a fruit scrolls directly to its crop. Desktop evidence scrolls independently. Back restores list position; fresh loads start at the top. URL stores camera-frame/area selection; no inference on clicks.
+
+**Study:** compact camera dropdown; daily stacked stock timeline first on mobile, image distribution as the other graph. Tapping a bar selects its frame. Counts above describe only that image. “Shelves to watch” ranks up to five areas by (empty+half)/assessed images, splits red/amber bars and opens the latest qualifying evidence. Fallback/mock/unusable records are excluded. This is frequency in sampled frames, not purchases, customer traffic or hours empty. Recorded-image selector/replay remains; dataset coverage, expandable technical blocks, thumbnail archive and long stock-change list were removed.
+
+**Files to touch:** `SnapshotBrowser.jsx` coordinates views and navigation; `useSnapshots.js` handles latest-per-camera/history/cache/URL; `ShelfDetail.jsx` handles evidence/focus/scroll; `CameraMap.jsx` maps supplied polygons and mobile shelf buttons; `CameraPreview.jsx` is the desktop-only hero; `AlertsPanel.jsx` and `TaskList.jsx` expose staff tasks; `studyStats.js` computes image counts/transitions/attention ranking; `StudyGraphs.jsx`, `ShelfStudy.jsx`, `StudyCameraControls.jsx` render study. All live under `ui/src/features/snapshots/`. `ui/src/style.css` holds responsive styling; later rules override earlier design iterations. `api/src/main/java/team/creditburners/` uses controller/service/repository/dto; `SnapshotRepository.java` selects the saved export at startup. Contract and source data are not edited by the browser.
+
+**Product assessment:** latest snapshots supply `product_check: not_assessed`; prefer this field to legacy run-name inference in `assessmentMetadata.js`. Fixed compliant=true is not a verified product match. User explicitly removed product-not-checked messages from the staff UI; preserve semantic gating so no false match badge appears. Do not reintroduce technical notices just to fill space.
+
+**Design decisions and rejected attempts:** user prefers clean photo-led UI, neutral borders with colored backgrounds (not colored card borders), compact mobile controls. Cart logo is inline SVG in `BrandSymbol.jsx`, favicon in `ui/public/brand/cart-symbol.svg`; name remains sensei until the team picks a replacement. Wordmark is original dark #292d25; no colored name badge. Startup splash/cart animation and intro toast were rejected and removed. The hero title still types via `TypedHeadline.jsx`; user reported perceived slowness, so shortening/removing it is an optional next improvement, not a confirmed fix. Do not recreate intro overlays. Desktop preview is borderless/transparent and hidden on mobile. Generated PNG logo is an unused concept, not the live mark.
+
+**Run, verify and stop:** commands and fresh-validation handoff are in DEMO. Node/Java17+/Maven and locally prepared images are required. Builds and 15 ML smoke / 14 UI tests passed after this integration; live isolated-port API verified all 181 frames/assets, browser checked 14 cameras/152 latest shelves, no mobile overflow and study-to-crop navigation. Test servers were stopped. Physical phone, public hosting/QR and full camera-geometry sweep were not verified. Do not stop a user-owned IntelliJ process; stop only exact processes you started.
+
+**Local IntelliJ only:** `.idea/runConfigurations/Sensei app.xml` runs `team.creditburners.Application`, module `sensei`, working directory repo root, builds npm first and serves `ui/dist` directly. `.idea/sensei.iml` locally registers Java sources and Maven-resolved dependencies after “module not specified”; re-open/import `api/pom.xml` if missing. These files are ignored and intentionally not shared. IDE Run remains unverified because macOS UI permissions blocked automation. Another machine must import the Maven module and set its own Java/Node interpreters.
+
+**Next steps:** (1) verify user’s IntelliJ Run and physical-phone URL; use a spare port if 8080 is already user-owned. (2) Decide whether to shorten/remove hero typing. (3) Rehearse the evidence-first demo and fresh-validation script with Member1; do not run GPU inference without need. (4) Public deployment/QR, login, real live captures, staff completion/assignment and push notifications are not implemented. Alerts are derived from current saved stock and disappear only when a newer observation no longer triggers them; there is no manual completion persistence. (5) Before push, pull/rebase and smoke test; keep small area-prefixed commits. No extra HANDOFF/changelog/design-note files. Do not commit data/builds/.env or `.playwright-cli/`. Memory observer was signed out during this session, so these committed docs are the durable handoff; do not assume chat memory exists.
+
 ## Resume here — latest organiser updates
 
-User requests a complete handoff because current agent credits may run out. Read this section, then Current handoff below and the top of `docs/RESULTS.md`. Do not restart annotation or broad model research.
+User requests a complete handoff because current agent credits may run out. Read this section, then the earlier ML context below and the top of `docs/RESULTS.md`. Do not restart annotation or broad model research.
 
 **Stock definition (organiser, refined by the team, 10 Oct evening):** empty = nothing left or only about one purchase (a single package, bag or bunch, or a couple of loose items); staff must replenish urgently. half = more than one purchase left, but staff would take the time to replenish now. full = well stocked; not worth replenishing yet. **In case of doubt, choose the lower level** (Sensei: over-estimate −3 vs under −2; our 3/7 half rule). Used for stock prompt v4, label protocol `sensei-replenish-v5` and all future labelling; existing frozen labels stay unchanged (corrections are a new version).
 
@@ -26,7 +48,7 @@ User requests a complete handoff because current agent credits may run out. Read
 
 **Verified references:** https://huggingface.co/Qwen/Qwen3.5-4B ; https://huggingface.co/Qwen/Qwen3-VL-4B-Instruct ; https://docs.ultralytics.com/datasets/detect/coco/ . These verify candidate availability/class scope, not performance on our dataset.
 
-## Current handoff — 10 October 2026
+## Earlier ML handoff — historical context, 10 October 2026
 
 Human local ground truth is collected and frozen: 60 reviewed observations, protocol `sensei-box-capacity-v2`, source `sensei-93b9d1c2db63ec53-frozen.json` at repository root; working copy `data/ground-truth/human-v2-frozen.json`. Preserve both. Generated data and labels remain local/untracked; do not assume a fresh clone includes them. Labels were assistant-prefilled and human-reviewed, so report assisted annotation, not blind annotation.
 
@@ -125,14 +147,14 @@ Coverage is not pile volume (removing a top layer barely changes it). The VLM ma
 
 ### Two-page app revision — saved stock results integrated
 
-Implementation status: Store view/Shelf study navigation, latest-camera view, historical archive, shared evidence tools and assessment-gated summary logic and mobile study graphs are implemented. Store tasks and study graphs now use Member1’s recommended saved stock run `qwen3.8-27b-ctx640-half020-emptycheck-full-v1` by default; camera coverage uses actual image counts. Its fixed compliance is disclosed as product match not assessed. Fallback areas are excluded from assessed statistics. Public hosting remains pending.
+Implementation status: the implemented Store view and Shelf study are described in the Member2 continuation section above. Default saved export is `qwen3.8-27b-ctx640-perarea-emptycheck-shared-alwayscompliant-full-v1`. Product check is not assessed and fallback areas are excluded from usable statistics. Public hosting remains pending.
 
 Keep the current React/Spring app, visual identity, photo cards, alerts, fullscreen evidence viewer, planogram polygons and mobile previous/next controls. Adapt the existing store overview and replay rather than building a second app. Add two navigation links at the top: **Store view** and **Shelf study**. The PDF's core remains per-area stock and planogram compliance; historical study supports that purpose rather than becoming sales analytics.
 
 **Page 1 — Store view (staff, beginning of shift)**
 - Show exactly one latest saved image per camera, ordered by capture time within that camera, and all its planogram areas. Never retain an old study-frame selection when returning to Store view.
-- Provide camera photo cards and the existing all-area product search/alert filters; selecting a camera opens its full image with clickable polygons and every associated crop. A camera filter may narrow the view but does not expose a historical time picker.
-- Selecting a crop opens evidence and both stock/compliance indicators. Staff can switch areas without leaving the camera, using polygons, selector or previous/next controls.
+- Provide camera photo cards and the existing all-area product search/alert filters; selecting a camera opens its full image with clickable polygons and every associated crop. All cameras are included by default; no Store view camera filter or historical time picker.
+- Selecting a crop opens evidence and stock status and evidence. Staff can switch areas without leaving the camera, using polygons, selector or previous/next controls.
 - Keep the bell linked to tasks from these latest observations only. Include both issues when a shelf is empty and mismatched; full stock with the wrong product still needs review. Unassessed and illustrative results must not appear to be reliable operational findings.
 - Label this **Latest recorded view**, not a live feed. Each camera may have a different capture time; show its actual date/time, not a single unsupported store-wide timestamp. A later actual live source can use the same layout.
 
@@ -140,8 +162,8 @@ Keep the current React/Spring app, visual identity, photo cards, alerts, fullscr
 - First choose a camera, then show every published image for it in chronological order with its date/time. The current dataset has 181 images, 14 cameras and 12–14 frames per camera, with approximately 60–78 minutes between frames.
 - Opening an image reuses the interactive full-camera map, crop detail and fullscreen viewer. Keep a selected area when changing frames of the same camera if that area exists; otherwise explain its absence. Preserve camera, frame and area in the URL and Back navigation.
 - Reuse manual previous/next frame navigation and the existing optional recorded replay. Move the historical time selector here; do not leave it on Store view.
-- The image archive now includes stock distribution, a clickable per-frame stock timeline and camera coverage graphs. Default graphs use saved stock results and exclude mock/fallback observations. Manual preview is opt-in (`demo=1`), preserving supplied values and clearly labelling them as illustrative. Product mismatch rates remain unavailable for the stock-only run.
-- Mobile dashboard: keep the camera selector and previous/next camera controls at the top while scrolling. Show one graph at a time (Stock, Timeline, Coverage), persist its selection in the URL, and keep replay/archive and observed changes in expandable sections. Desktop retains simultaneous charts. Coverage drill-down returns directly to the selected camera’s stock view.
+- Charts show selected-image stock distribution and a clickable daily timeline. Saved results are the default; fallback/mock/unusable observations are excluded. Optional demo values remain explicitly illustrative.
+- Mobile keeps a compact camera selector and shows “Through the day” / “This image” graphs one at a time. Desktop shows both. Top-five shelf attention frequency links to evidence. Recorded-image selection/replay remains below; coverage and expandable extras are removed.
 
 | Study question | Supported presentation | Limit |
 |---|---|---|
@@ -162,7 +184,7 @@ Do not rank cameras by raw alert totals: they have different numbers of areas an
 **Mobile layout**
 - Two clear top navigation items. Keep Store view compact: search, tasks and images close to the first screen; keep larger branding treatment on desktop.
 - Camera cards show capture date/time and number of areas. The study camera picker and date/time selection stay accessible without overcrowding the screen.
-- Use a vertical frame archive and stacked study summaries. Avoid wide tables or tiny chart targets; every summary links to readable evidence.
+- Use compact image controls and a three-column selected-image summary. Avoid wide tables or tiny chart targets; every summary links to readable evidence.
 - Reuse fixed thumb-reachable previous/next shelf controls, stable scroll, touch targets, focus/Back restoration and reduced-motion behavior. Frame controls must be clearly distinguished from shelf controls.
 
 **Delivery order and scope cut**

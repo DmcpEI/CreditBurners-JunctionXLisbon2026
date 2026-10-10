@@ -2,7 +2,7 @@
 
 Scope: Sensei, confirmed challenge. Member1 produces predictions; Member2 serves and displays them.
 
-Status: **real model results are available** (see Real data below); no endpoints exist yet. The older `data/prepared-v1/snapshots.json` is still the disclosed constant baseline; use `results/` instead. Keep the scoring export separate from the richer presentation data. Member1 owns prediction semantics; Member2 owns API/UI integration. Coordinate changes before implementation.
+Status: **real model results are available** (see Real data below); the read-only Spring endpoints below are implemented. The older `data/prepared-v1/snapshots.json` is still the disclosed constant baseline; use `results/` instead. Keep the scoring export separate from the richer presentation data. Member1 owns prediction semantics; Member2 owns API/UI integration. Coordinate changes before implementation.
 
 ## Endpoints
 
@@ -107,7 +107,7 @@ Committed in `results/<run_id>/` (deliberately tracked for integration; regenera
 Each run folder has:
 - `snapshots.json`: array of 181 app snapshots (one per camera image, 1,962 areas), exactly the App snapshot format above. `prediction_source: "saved"`, `context_mode: "current_image_only"`, `reference: null`, `visibility` is `clear`/`occluded`/`unknown`, `fallback_used: true` when an answer used the fixed half/compliant fallback. Load the whole file; it is the snapshot index.
 - `submission.json`: the exact Sensei export (all 1,962 keys). Not for the UI.
-- `report.json`: counts, fallbacks and measured model time per camera image (median 16 s).
+- `report.json`: counts, fallbacks and measured model time per camera image (current run median 3.81 s; older runs differ).
 
 Assets (images and crops are not in Git). From the repo root, once (needs Python 3 + Pillow; writes ~150 MB):
 ```bash

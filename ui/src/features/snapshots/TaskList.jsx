@@ -3,7 +3,7 @@ import Evidence from './Evidence';
 import AssessmentBadges from './AssessmentBadges';
 import useShelfMotion from './useShelfMotion';
 import {isAlert, rank} from './actions';
-import {searchText, fullTime, areaHref, productLabel, shelfLabel, statusClass, statusLabel, taskDescription} from './presentation';
+import {assessmentFacts, searchText, fullTime, areaHref, productLabel, shelfLabel, statusClass, statusLabel, taskDescription} from './presentation';
 
 export default function TaskList({areas: sourceAreas, storeView, location, navigate, onOpen}) {
   const query = location.q || '';
@@ -31,6 +31,7 @@ export default function TaskList({areas: sourceAreas, storeView, location, navig
     <p className="sr-only" role="status">{shown.length} matching shelves.</p>
     {shown.length ? <ul className="task-list">{shown.map(area => <li key={area.area_id}>
       <a className={`shelf-task ${location.area === area.area_id ? 'selected' : ''}`} href={areaHref({...location, snapshot: area.snapshot_id}, area.area_id)}
+        data-stock={assessmentFacts(area).length ? area.stock_level : undefined}
         aria-current={location.area === area.area_id ? 'true' : undefined} onClick={event => follow(event, area)}>
         <div className="task-media"><Evidence className="task-thumbnail" url={area.crop_url} alt="" thumbnail/><span className="photo-location">{shelfLabel(area)}</span><span className="photo-open" aria-hidden="true">↗</span></div>
         <div className="task-copy"><span className="shelf-location">{storeView ? `Camera ${area.camera_id}` : shelfLabel(area)}</span><span className="expected-label">Expected product</span><h3 title={area.product_name}>{productLabel(area.product_name)}</h3><p className="task-assessment">{taskDescription(area)}</p><div className="card-assessment"><span className={`status ${statusClass(area)}`}>{statusLabel(area)}</span><span className="card-time">{fullTime(area.captured_at)}</span></div><AssessmentBadges area={area}/><span className="card-cta">View shelf <span aria-hidden="true">↗</span></span></div>

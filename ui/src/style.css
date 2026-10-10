@@ -434,3 +434,11 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .study-page :is(button,select,summary,a) { scroll-margin-top: 240px; }
 
 .study-camera-controls select { appearance: none; height: 44px; min-height: 44px; padding-right: 28px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%2359664b' stroke-width='1.5'/%3E%3C/svg%3E"); background-position: right 6px center; background-repeat: no-repeat; }
+
+/* Stock is a quiet frame around the evidence, never a solid card background. */
+.shelf-task[data-stock="empty"] { --stock-edge: #d99b95; --stock-active: #b9554b; }
+.shelf-task[data-stock="half"] { --stock-edge: #d8bd69; --stock-active: #a78322; }
+.shelf-task[data-stock="full"] { --stock-edge: #a0b99b; --stock-active: #567f50; }
+.app-shell .shelf-task[data-stock] { border: 1px solid var(--stock-edge); box-shadow: inset 0 0 0 1px var(--stock-edge); }
+.app-shell .shelf-task[data-stock]:hover { border-color: var(--stock-active); box-shadow: inset 0 0 0 1px var(--stock-active); }
+.app-shell .shelf-task[data-stock].selected { outline: 2px solid var(--stock-active); outline-offset: 2px; }

@@ -123,3 +123,16 @@ Default pipeline now uses crop+mask for both presence and compliance, with camer
 Experiment inputs/results: `data/qwen-compliance-ablation/{sample,results}.json`; remote workspace `/workspace/jx/sensei-compliance-ablation`. Diagnostic flag: `--crop-compliance-only` (mutually exclusive with `--crop-presence-only`). Integrated cached replay: `data/qwen-integrated-v4/replay-results.json`, with input manifest and seeded question cache alongside it. This replay is a diagnostic artifact, not the competition export or app snapshots. No new live end-to-end latency measurement was made for the final combination.
 
 Next delivery: complete scoring/app exports with explicit fallbacks for unobservable cases, then broader visual review and a full dataset run. Keep ambiguous half/full examples uncertain in development references. No dependence on receiving training labels; final scoring follows Sensei's end-of-event validation.
+
+
+## Human review set v1 — 10 October 2026
+
+Built `data/human-review-v1/`: 60 observations, 32 development and 28 held-out, spanning all 14 cameras. Each camera contributes first/last frames of one development area and one previously untested area; four development areas also contribute middle frames. Splits are area-disjoint. Held-out areas exclude every area in the existing `data/qwen*/sample.json` manifests at creation. This is a coverage-oriented sample, not a random estimate of production accuracy; it does not deliberately include verified real mismatches.
+
+Set ID: `93b9d1c2db63ec53`. The manifest fixes image/crop hashes, sampling split and provisional labeling definitions. Generated artifacts stay local. No model answers are shown or prefilled. Human labels have **not** been collected yet. Stock choices are empty/half/full or uncertain; blocked observations and empty-area compliance remain null for local review, not fabricated competition labels. Product labels refer to visibly identifiable type, not unverifiable cultivar/brand/origin.
+
+Build with `python3 -m ml.label_set --output data/human-review-v1` (refuses overwriting an existing set). Open via `python3 -m http.server 8765 --bind 127.0.0.1 --directory data/human-review-v1`, then visit `http://127.0.0.1:8765`. Enter reviewer, label each item, and Save & next. Draft JSON exports provide backups; freeze/export becomes available when all items are reviewed. Frozen references are locked in that browser and any later corrections must be a separate explicit revision. Save downloaded labels under the local review directory before scoring. Browser storage is local to that browser/origin; use the same browser and port when resuming.
+
+Keep holdout results out of prompt tuning; compare development results first. Score stock and compliance separately on definite labels and report the number excluded as uncertain. Do not use partially labelled references as an official competition score. Review is for evaluation, not fine-tuning or fitting a calibration model.
+
+Nine Python test methods pass, including deterministic area-disjoint sampling and exclusion of exposed areas. Browser checks cover blank initial answers, blocked-view gating, save/reload, null export values and mobile layout. Synthetic browser test labels are isolated and are not part of the review dataset.

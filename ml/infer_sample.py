@@ -108,6 +108,8 @@ def main():
     parser.add_argument("--stock-crop-only", action="store_true", help="Stock question sees crop+mask only, no camera context")
     parser.add_argument("--context-max-side", type=int, default=0,
                         help="Downscale the camera-context image so its longest side is at most this (0 = original)")
+    parser.add_argument("--references", type=Path,
+                        help="JSON list of {crop, level, note}: labelled reference crops shown before the target (stock question)")
     parser.add_argument("--paired-prompt", choices=sorted(STOCK_PROMPTS),
                         help="Stock-only: also answer this stock prompt from the same image prefix (computed once)")
     parser.add_argument("--paired-output", type=Path, help="Results file for --paired-prompt answers")
@@ -168,15 +170,27 @@ def main():
         return (prompt + ("\n[answer-prefix]" + args.answer_prefix if args.answer_prefix else "")
                 + (f"\n[context-max-side]{args.context_max_side}" if args.context_max_side else ""))
 
+    references = json.loads(args.references.read_text()) if args.references else []
+
+    def with_references(prompt, paths):
+        if not references:
+            return prompt, paths
+        intro = (f"The first {len(references)} images are reference crops of other shelves in this store, already judged by staff: "
+                 + "; ".join(f"reference {i + 1}: {r['level']} ({r['note']})" for i, r in enumerate(references))
+                 + ". Use them to calibrate empty / half / full. Then the target images follow. ")
+        prompt = prompt.replace("First image:", "Target image 1:").replace("Second image:", "Target image 2:").replace("Third image:", "Target image 3:")
+        return intro + prompt, [Path(r["crop"]) for r in references] + paths
+
     def stock_question(sample):
         keys, prompt = question_input("stock", sample["product_name"], stock_prompt=args.stock_prompt, stock_crop_only=args.stock_crop_only)
-        paths = [args.manifest.parent / sample[key] for key in keys]
+        prompt, paths = with_references(prompt, [args.manifest.parent / sample[key] for key in keys])
         return prompt, paths, question_fingerprint(args.model, question_key(prompt), paths)
 
     def load_images(paths):
         images = [Image.open(path).convert("RGB") for path in paths]
-        if args.context_max_side and len(images) == 3:  # context is first when present
-            images[0].thumbnail((args.context_max_side, args.context_max_side))
+        for path, image in zip(paths, images):
+            if args.context_max_side and path.name.endswith("-context.jpg"):
+                image.thumbnail((args.context_max_side, args.context_max_side))
         return images
 
     def chat_text(prompt, count):

@@ -12,7 +12,8 @@ def load_review(path, manifest_path):
     manifest = json.loads(manifest_path.read_text())
     if review.get('status') != 'frozen' or not review.get('reviewer') or not review.get('frozen_at'):
         raise ValueError('A frozen named human review is required')
-    if review.get('set_id') != manifest['set_id'] or review.get('protocol', {}).get('revision') != 'sensei-box-capacity-v2':
+    revision = manifest.get('protocol', {}).get('revision', 'sensei-box-capacity-v2')  # v1 set predates the field
+    if review.get('set_id') != manifest['set_id'] or review.get('protocol', {}).get('revision') != revision:
         raise ValueError('Wrong set or annotation protocol')
     expected = {x['id']: x for x in manifest['items']}
     items = review['items']
@@ -22,7 +23,7 @@ def load_review(path, manifest_path):
         if any(item[k] != expected[item['id']][k] for k in expected[item['id']]):
             raise ValueError('Review metadata differs from original manifest')
         label = item.get('label')
-        if not label or label.get('protocol_revision') != 'sensei-box-capacity-v2':
+        if not label or label.get('protocol_revision') != revision:
             raise ValueError('Unreviewed or old-protocol label')
         if label.get('visibility') not in ('clear', 'occluded', 'unknown'):
             raise ValueError('Invalid visibility')
@@ -84,7 +85,7 @@ def main():
     parser.add_argument('labels',type=Path)
     parser.add_argument('--review-dir',type=Path,default=Path('data/human-review-v1'))
     parser.add_argument('--prepared',type=Path,default=Path('data/prepared-v1'))
-    parser.add_argument('--split',choices=['development','holdout'],default='development')
+    parser.add_argument('--split',choices=['development','holdout','evaluation'],default='development')
     parser.add_argument('--predictions',type=Path)
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()

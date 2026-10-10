@@ -4,29 +4,28 @@ import AssessmentBadges from './AssessmentBadges';
 import CameraMap from './CameraMap';
 import EvidenceViewer from './EvidenceViewer';
 import {action} from './actions';
+import {scrollToContent} from './scrollToContent';
 import {fullTime, productLabel, shelfLabel, statusClass, statusLabel, taskDescription} from './presentation';
 
-export default function ShelfDetail({snapshot, area, onBack, onSelectArea}) {
+export default function ShelfDetail({snapshot, area, onBack, onSelectArea,cameraFirst=false}) {
   const heading = useRef(null);
-  const previousCamera = useRef(null);
+  const detail=useRef(null);
   useEffect(() => {
-    if (!area) {previousCamera.current = null; return;}
-    if (previousCamera.current !== snapshot.camera_id) {
-      heading.current?.focus({preventScroll: true});
-      if (window.matchMedia('(max-width: 760px)').matches) window.scrollTo({top: 0, behavior: 'instant'});
-    }
-    previousCamera.current = snapshot.camera_id;
-  }, [area?.area_id, snapshot.camera_id]);
+    if (!area) return;
+    heading.current?.focus({preventScroll:true});
+    scrollToContent(detail.current);
+  }, [area?.area_id,cameraFirst]);
   if (!area) return <aside className="detail-placeholder"><span className="placeholder-mark" aria-hidden="true">↗</span><h2>A closer look</h2><p>Choose a shelf from the checklist to see its image, suggested action and supporting evidence.</p></aside>;
   const fallback = area.fallback_used;
   const position = snapshot.areas.findIndex(item => item.area_id === area.area_id);
   const inspect = action(area) === 'Inspect';
-  return <section className="shelf-detail" aria-labelledby="detail-title">
+  return <section className="shelf-detail" ref={detail} aria-labelledby="detail-title">
     <h1 className="sr-only mobile-detail-title">Shelf evidence</h1>
     <button className="back-button" onClick={onBack}><span aria-hidden="true">←</span> Back to shelves</button>
     <div className="detail-heading"><p className="shelf-location">{shelfLabel(area)} · Camera {snapshot.camera_id}</p><h2 id="detail-title" tabIndex={-1} ref={heading}>{productLabel(area.product_name)}</h2><span className={`status ${statusClass(area)}`}>{statusLabel(area)}</span></div>
     <div className="mobile-assessment"><strong>{statusLabel(area)}</strong><span>Captured {fullTime(snapshot.captured_at)}</span></div>
-    <AssessmentBadges area={{...area, prediction_source:snapshot.prediction_source}}/><CameraMap snapshot={snapshot} selected={area.area_id} onSelect={onSelectArea}/><figure className="crop-evidence"><Evidence url={area.crop_url} alt={`Observed crop of ${area.product_name}, ${shelfLabel(area)}, camera ${snapshot.camera_id}`}/><figcaption><span>Captured {fullTime(snapshot.captured_at)}</span><EvidenceViewer key={`${snapshot.snapshot_id}:${area.area_id}`} cropUrl={area.crop_url} cameraUrl={snapshot.image_url} title={`${productLabel(area.product_name)} · ${shelfLabel(area)}`} capturedAt={fullTime(snapshot.captured_at)}/></figcaption></figure>
+    <AssessmentBadges area={{...area, prediction_source:snapshot.prediction_source}}/>{cameraFirst && <CameraMap snapshot={snapshot} selected={area.area_id} onSelect={onSelectArea}/>}<figure className="crop-evidence"><Evidence url={area.crop_url} alt={`Observed crop of ${area.product_name}, ${shelfLabel(area)}, camera ${snapshot.camera_id}`}/><figcaption><span>Captured {fullTime(snapshot.captured_at)}</span><EvidenceViewer key={`${snapshot.snapshot_id}:${area.area_id}`} cropUrl={area.crop_url} cameraUrl={snapshot.image_url} title={`${productLabel(area.product_name)} · ${shelfLabel(area)}`} capturedAt={fullTime(snapshot.captured_at)}/></figcaption></figure>
+    {!cameraFirst && <CameraMap snapshot={snapshot} selected={area.area_id} onSelect={onSelectArea}/>}
     <div className={`suggestion ${statusClass(area)}`}><h3>{fallback ? 'Assessment unavailable' : inspect ? 'Check the shelf before acting' : statusLabel(area)}</h3><p>{taskDescription(area)}</p>{fallback && <p className="suggestion-note">The photo is available, but the supplied results use default values. They do not describe the stock visible in this image.</p>}</div>
     <section className="observation-facts" aria-label="Observation assessment"><h3>{fallback ? 'What we know' : 'What was observed'}</h3><dl><div><dt>Stock</dt><dd>{fallback ? 'Not assessed' : area.stock_level}</dd></div><div><dt>Expected product · planogram</dt><dd>{productLabel(area.product_name)}</dd></div><div><dt>Product match</dt><dd>{fallback || area.product_assessed === false ? 'Not assessed' : area.planogram_compliant ? 'Matches planogram' : 'Product mismatch'}</dd></div><div><dt>Visibility</dt><dd>{area.visibility === 'clear' ? 'Clear view' : area.visibility === 'occluded' ? 'Obstructed' : 'Not assessed'}</dd></div></dl></section>
     <details className="evidence-disclosure"><summary>Why this task?</summary><p>{area.reason || 'No additional explanation was supplied.'}</p></details>

@@ -442,3 +442,10 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .app-shell .shelf-task[data-stock] { border: 1px solid var(--stock-edge); box-shadow: inset 0 0 0 1px var(--stock-edge); }
 .app-shell .shelf-task[data-stock]:hover { border-color: var(--stock-active); box-shadow: inset 0 0 0 1px var(--stock-active); }
 .app-shell .shelf-task[data-stock].selected { outline: 2px solid var(--stock-active); outline-offset: 2px; }
+
+
+.shelf-task[data-stock="empty"] { --stock-tint: #fcecea; --stock-hover: #f9ded9; }
+.shelf-task[data-stock="half"] { --stock-tint: #fcf4d9; --stock-hover: #f8edc1; }
+.shelf-task[data-stock="full"] { --stock-tint: #edf4e9; --stock-hover: #e1ecdb; }
+.app-shell .shelf-task[data-stock] { background: var(--stock-tint); }
+.app-shell .shelf-task[data-stock]:hover { background: var(--stock-hover); }

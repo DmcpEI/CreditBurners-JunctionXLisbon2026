@@ -54,3 +54,12 @@ test('empty-check run still does not assess product compliance',()=>{
  const result=withAssessmentMetadata({run_id:'qwen3.8-27b-ctx640-half020-emptycheck-full-v1',areas:[{stock_level:'empty',visibility:'clear',fallback_used:false,planogram_compliant:true}]});
  assert.deepEqual(assessmentFacts(result.areas[0]).map(fact=>fact.label),['Empty','Product not assessed']);
 });
+
+import {statusLabel} from '../src/features/snapshots/presentation.js';
+test('staff labels distinguish restock urgency without changing stored stock states',()=>{
+ const area={fallback_used:false,visibility:'clear',planogram_compliant:true};
+ assert.equal(statusLabel({...area,stock_level:'empty'}),'Restock urgently');
+ assert.equal(statusLabel({...area,stock_level:'half'}),'Restock');
+ assert.equal(statusLabel({...area,stock_level:'full'}),'No restock needed');
+ assert.equal(statusLabel({...area,stock_level:'empty',fallback_used:true}),'Not assessed');
+});

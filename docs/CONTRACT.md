@@ -93,7 +93,8 @@ Committed in `results/<run_id>/` (deliberately tracked for integration; regenera
 
 | Run | Use |
 |---|---|
-| `qwen3.8-27b-v1-halfrule-alwayscompliant-full-v1` | **Use for the app.** Current recommended submission: model stock + half rule, every area compliant. Areas where the model suspected a wrong product say so at the end of `reason` ("Model also flagged a possible wrong product…"); show it as a soft "check product" hint, not as a mismatch. |
+| `qwen3.8-27b-stockonly-halfrule-full-v1` | **Use for the app (current best).** One stock question per area + half rule, every area compliant. Same format; no wrong-product hints in `reason` (product question not asked). |
+| `qwen3.8-27b-v1-halfrule-alwayscompliant-full-v1` | Previous recommendation: 4 questions per area; keeps a soft "Model also flagged a possible wrong product…" hint at the end of `reason` that the UI can show as "check product". |
 | `qwen3.8-27b-v1-halfrule-full-v1` | Same stock, with the model's compliance answers (250 mismatches, many false alarms). Comparison only. |
 
 Each run folder has:

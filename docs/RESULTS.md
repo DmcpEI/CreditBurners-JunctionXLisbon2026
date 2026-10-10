@@ -110,3 +110,16 @@ Remote workspace: `/workspace/jx/sensei-integrated-v3`:
 Eight synthetic test methods pass, including input selection, expected-product isolation and cache identity. API/UI and full-dataset submission remain separate unfinished steps. Next: isolate product-match false alarms using the same input-comparison approach, preserving visibility gates and cached answers.
 
 Clarification from the supplied brief: shared train/test images have no annotations; only the hidden final validation has `annotations.json`. The JSON shown in the PDF illustrates its format, not labels for all supplied images. We are not waiting for more labels: proceed with the planogram, image inspection and a small provisional development reference set. The final competition score will come from Sensei at the end as planned.
+
+
+## Crop-only product matching and integration — 10 October 2026
+
+Ran 16 visible/populated cases using crop+mask for compliance, keeping the question and expected product unchanged and removing camera context. Compared with cached v3 answers. Added four explicitly synthetic wrong-product expectations (banana→tomato, tomato→banana, lemon→strawberry, cabbage→lemon) to test obvious rejection; these are not real shelf mismatches.
+
+All 16 actual expected-product queries returned match. The two apple examples and packaged strawberry example no longer trigger the suspected false alarms; sparse bananas move from uncertain to match. Apricot also moves from mismatch to match, but its exact identity remains unverified by a human. All four synthetic wrong expectations returned mismatch. This is a development comparison, not a claim of 100% real-world compliance accuracy; subtle cultivar and mixed-product errors are still untested.
+
+Default pipeline now uses crop+mask for both presence and compliance, with camera context retained for visibility and stock. Integrated all 20 original examples by replaying exact prompt/image cache matches through the stage logic, without repeating inference. The sparse banana tray now yields half/match and `check_stock`; both curtains still yield `inspect`. Eight synthetic test methods pass.
+
+Experiment inputs/results: `data/qwen-compliance-ablation/{sample,results}.json`; remote workspace `/workspace/jx/sensei-compliance-ablation`. Diagnostic flag: `--crop-compliance-only` (mutually exclusive with `--crop-presence-only`). Integrated cached replay: `data/qwen-integrated-v4/replay-results.json`, with input manifest and seeded question cache alongside it. This replay is a diagnostic artifact, not the competition export or app snapshots. No new live end-to-end latency measurement was made for the final combination.
+
+Next delivery: complete scoring/app exports with explicit fallbacks for unobservable cases, then broader visual review and a full dataset run. Keep ambiguous half/full examples uncertain in development references. No dependence on receiving training labels; final scoring follows Sensei's end-of-event validation.

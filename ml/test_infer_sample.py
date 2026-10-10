@@ -15,6 +15,10 @@ class AnswerTokenTests(unittest.TestCase):
         self.assertEqual(question_input("visibility", "SECRET_PRODUCT")[0], ("context", "crop", "mask"))
         self.assertNotIn("SECRET_PRODUCT", question_input("visibility", "SECRET_PRODUCT")[1])
         self.assertIn("SECRET_PRODUCT", question_input("compliance", "SECRET_PRODUCT")[1])
+        self.assertEqual(question_input("compliance", "apple", True)[0], ("crop", "mask"))
+        self.assertEqual(question_input("compliance", "apple", False)[0], ("context", "crop", "mask"))
+        self.assertIn("apple", question_input("compliance", "apple", True)[1])
+        self.assertEqual(question_input("compliance", "apple")[0], ("crop", "mask"))
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "image"
             path.write_bytes(b"original")

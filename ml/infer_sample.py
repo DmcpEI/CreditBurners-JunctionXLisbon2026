@@ -50,9 +50,10 @@ def inspect_stages(ask):
                 observed_compliance=compliance, action=action)
 
 
-def question_input(name, product):
-    keys = ("crop", "mask") if name == "presence" else ("context", "crop", "mask")
-    description = ("First image: rectified target crop. Second image: " if name == "presence" else
+def question_input(name, product, crop_compliance=True):
+    crop_only = name == "presence" or (name == "compliance" and crop_compliance)
+    keys = ("crop", "mask") if crop_only else ("context", "crop", "mask")
+    description = ("First image: rectified target crop. Second image: " if crop_only else
                    "First image: store camera, target outlined in red. Second image: rectified target crop. Third image: ")
     prompt = (description + "validity mask aligned with the crop; white means real camera pixels, black means outside the camera view. "
               "Ignore those invalid pixels in the crop; they are neither stock nor a physical obstruction. "
@@ -74,19 +75,22 @@ def main():
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--model", required=True)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--crop-presence-only", action="store_true",
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--crop-presence-only", action="store_true",
                         help="Diagnostic ablation: presence only, using crop and mask without camera context")
+    modes.add_argument("--crop-compliance-only", action="store_true",
+                       help="Diagnostic ablation: product match using crop and mask only")
     parser.add_argument("--answer-cache", type=Path, help="Reuse identical individual questions across staged runs")
     args = parser.parse_args()
     answer_cache = json.loads(args.answer_cache.read_text()) if args.answer_cache and args.answer_cache.exists() else {}
-    image_keys = ("crop", "mask") if args.crop_presence_only else ("context", "crop", "mask")
+    image_keys = ("crop", "mask") if args.crop_presence_only or args.crop_compliance_only else ("context", "crop", "mask")
     samples = json.loads(args.manifest.read_text())
     if len({s["sample_id"] for s in samples}) != len(samples):
         raise ValueError("Duplicate sample IDs")
     cache = json.loads(args.output.read_text()) if args.output.exists() else {}
     pending = []
     for sample in samples:
-        digest = hashlib.sha256(Path(__file__).read_bytes() + args.model.encode() + str(args.crop_presence_only).encode()
+        digest = hashlib.sha256(Path(__file__).read_bytes() + args.model.encode() + str((args.crop_presence_only, args.crop_compliance_only)).encode()
                                 + json.dumps(sample, sort_keys=True).encode())
         for key in image_keys:
             digest.update((args.manifest.parent / sample[key]).read_bytes())
@@ -116,7 +120,7 @@ def main():
         started = time.perf_counter()
         result = dict(sample=sample, fingerprint=fingerprint, model=args.model,
                       load_seconds=load_seconds, scores_uncalibrated=True,
-                      input_mode="crop_mask_presence_only" if args.crop_presence_only else "staged_crop_presence", answers={})
+                      input_mode="crop_mask_presence_only" if args.crop_presence_only else "crop_mask_compliance_only" if args.crop_compliance_only else "staged_crop_presence_compliance", answers={})
         def ask(name):
             keys, prompt = question_input(name, sample["product_name"])
             paths = [args.manifest.parent / sample[key] for key in keys]
@@ -145,6 +149,8 @@ def main():
             return {**answer, "cache_hit": False}
         if args.crop_presence_only:
             result["answers"]["presence"] = ask("presence")
+        elif args.crop_compliance_only:
+            result["answers"]["compliance"] = ask("compliance")
         else:
             result.update(inspect_stages(ask))
         torch.cuda.synchronize()

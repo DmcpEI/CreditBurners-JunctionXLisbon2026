@@ -12,12 +12,12 @@ export const shelfLabel = area => `Shelf ${area.area_id.split('_').at(-1)}`;
 export const statusLabel = area => area.fallback_used ? 'Not assessed' : ({Inspect:'Needs inspection',Restock:'Restock urgently','Check stock':'Restock',OK:'No restock needed','Check product':'Check product'})[action(area)];
 export const statusClass = area => ({Inspect: 'inspect', Restock: 'restock', 'Check product': 'mismatch', 'Check stock': 'low', OK: 'okay'})[action(area)];
 export const taskDescription = area => {
-  if (area.fallback_used) return 'Image available. Stock and product match are not assessed.';
+  if (area.fallback_used) return 'Image available. Stock has not been assessed.';
   if (area.visibility !== 'clear') return 'Stock cannot be confirmed from this image.';
   if (area.stock_level === 'empty') return 'Shelf appears empty. Check for a restock.';
   if (!area.planogram_compliant) return 'Check the produce against the expected product.';
   if (area.stock_level === 'half') return 'Stock appears partly depleted. Check the shelf before replenishing.';
-  return area.product_assessed === false ? 'No stock issue flagged. Product match was not assessed.' : 'No stock or product issue flagged.';
+  return area.product_assessed === false ? 'No stock issue flagged.' : 'No stock or product issue flagged.';
 };
 export function areaHref(location, id) {
   const params = new URLSearchParams(location);

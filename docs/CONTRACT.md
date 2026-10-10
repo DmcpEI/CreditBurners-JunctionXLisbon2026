@@ -2,7 +2,7 @@
 
 Scope: Sensei, confirmed challenge. Member1 produces predictions; Member2 serves and displays them.
 
-Status: ML preparation now writes the formats below; no endpoints exist yet. Generated app snapshots use an explicitly disclosed constant baseline with `fallback_used: true` and unknown visibility, not model classifications. Keep the scoring export separate from the richer presentation data. Member1 owns prediction semantics; Member2 owns API/UI integration. Coordinate changes before implementation.
+Status: **real model results are available** (see Real data below); no endpoints exist yet. The older `data/prepared-v1/snapshots.json` is still the disclosed constant baseline; use `results/` instead. Keep the scoring export separate from the richer presentation data. Member1 owns prediction semantics; Member2 owns API/UI integration. Coordinate changes before implementation.
 
 ## Endpoints
 
@@ -86,6 +86,28 @@ Python writes app snapshots and evidence assets; Spring reads them for the core 
 - Derive actions consistently: unclear visibility or `fallback_used` → inspect; otherwise empty → restock; mismatch → check product; half → check stock; otherwise OK. Retain both stock and compliance indicators even when one action is prioritised. Use this declared severity order, not an unsupported financial estimate.
 - Optional staff acknowledgement is separate from the model prediction. Marking a task checked must not change stock/compliance or the Sensei export.
 - Run identity links results to model, prompt and preprocessing settings retained with the ML output. The supplied dataset archive is tracked at the team's request; keep extracted duplicates, weights, uploads and generated result files out of Git.
+
+## Real data (Member2: start here)
+
+Committed in `results/<run_id>/` (deliberately tracked for integration; regenerate with `python3 -m ml.export outputs …`):
+
+| Run | Use |
+|---|---|
+| `qwen3.8-27b-v1-halfrule-alwayscompliant-full-v1` | **Use for the app.** Current recommended submission: model stock + half rule, every area compliant. Areas where the model suspected a wrong product say so at the end of `reason` ("Model also flagged a possible wrong product…"); show it as a soft "check product" hint, not as a mismatch. |
+| `qwen3.8-27b-v1-halfrule-full-v1` | Same stock, with the model's compliance answers (250 mismatches, many false alarms). Comparison only. |
+
+Each run folder has:
+- `snapshots.json`: array of 181 app snapshots (one per camera image, 1,962 areas), exactly the App snapshot format above. `prediction_source: "saved"`, `context_mode: "current_image_only"`, `reference: null`, `visibility` is `clear`/`occluded`/`unknown`, `fallback_used: true` when an answer used the fixed half/compliant fallback. Load the whole file; it is the snapshot index.
+- `submission.json`: the exact Sensei export (all 1,962 keys). Not for the UI.
+- `report.json`: counts, fallbacks and measured model time per camera image (median 16 s).
+
+Assets (images and crops are not in Git). From the repo root, once (needs Python 3 + Pillow; writes ~150 MB):
+```bash
+python3 -m ml.prepare new_dataset_hackathon_junctionx_10_oct_2026_v2 --output data/prepared-v1
+```
+Then `/assets/<name>` in any snapshot = file `data/prepared-v1/assets/<name>`: `image_url` is the original camera image (`<camera>_<timestamp>.jpg`), `crop_url` the rectified area crop (`<camera>_<timestamp>_<area_id>.png`). All 1,962 crop and 181 image URLs resolve. Area polygons for outlining live in `new_dataset_hackathon_junctionx_10_oct_2026_v2/planogram.json` (`image_coordinates`, pixel corners on the 1280×720 image).
+
+Accuracy caveat for the pitch/UI: stock matched our labels on 64–87% of areas depending on the labelled group (64% on fresh evaluation areas) (see `docs/RESULTS.md`); do not display model scores as confidence.
 
 ## Mocks
 

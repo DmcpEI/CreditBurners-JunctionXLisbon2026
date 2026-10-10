@@ -1,0 +1,4 @@
+import { defineConfig } from 'vite';
+import {readFileSync} from 'node:fs';
+import tailwindcss from '@tailwindcss/vite';
+export default defineConfig({build:{assetsDir:"app"},plugins:[tailwindcss(), {name:'shelf-geometry',resolveId(id){if(id==='virtual:shelf-geometry')return '\0shelf-geometry';},load(id){if(id!=='\0shelf-geometry')return; const cameras=JSON.parse(readFileSync(new URL('../new_dataset_hackathon_junctionx_10_oct_2026_v2/planogram.json',import.meta.url),'utf8'))['Frutas e Legumes'].cameras; return 'export default '+JSON.stringify(Object.fromEntries(Object.entries(cameras).map(([id,c])=>[id,Object.fromEntries(c.products.map(a=>[a.area_id,['top_left','top_right','bottom_right','bottom_left'].map(k=>a.image_coordinates[k])]))])));}}],server:{proxy:{'/api':'http://127.0.0.1:8080','/assets':'http://127.0.0.1:8080'}}});

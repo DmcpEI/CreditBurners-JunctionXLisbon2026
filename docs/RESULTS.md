@@ -2,6 +2,13 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Corrected labels, empty check — final pipeline v4 — 10 October 2026
+
+- **Corrections:** Member1 confirmed the 27-flag re-check under the refined definition: 24 suggestions accepted, 3 old labels kept (#13 2–3 banana bunches stay empty, #51 ~3 apple bags stay empty, #72 single kiwi bag stays full). Frozen as `data/ground-truth/human-r2-corrections-frozen.json` (SHA256 `e010889783db…`, protocol `sensei-replenish-v5`); `ml/compare_runs.py` overlays it on the v2–v4 frozen labels (originals untouched).
+- **Prompts on corrected labels (640 px; best threshold chosen on development):** v1 at 0.20: dev 201 / holdout 34 / eval 85; v3 at 0.40: 201 / 33 / 82; v4 (refined rule) at 0.40: 183 / 18 / 81. v1 kept. Calibration on corrected dev labels: P(really half) 31% for B 0.15–0.20, **46% for 0.20–0.30** (crosses 3/7), so 0.20 still follows from the cost table.
+- **Empty check adopted:** prompt v4 catches empty shelves v1 misses (empty recall 28/30 vs 23/30) but is worse on half/full. Rule: answer empty when the v4 answer's empty score A ≥ 0.70, otherwise v1 + half rule (`ml/decision_rule.py apply_empty_rule`, chosen on development): **dev 205 / holdout 38 / eval 94 (all 337) vs 201 / 34 / 85 (320)**, gains on every group. Cost: two stock questions per area, ~5.8 s per camera image (v1 alone 2.9 s).
+- Export: `python3 -m ml.export outputs data/full-v1/results-ctx640-jx.json --empty-results data/full-v1/results-ctx640-v4.json --always-compliant …`; `scripts/run_validation.sh` asks both questions.
+
 ## Final pipeline v3: 640 px context; label re-check under organiser definition — 10 October 2026
 
 - **Full-dataset runs, 640 px context** (stock-only, prompt v1, half rule 0.20, always compliant): standard env `jx` p50 **2.87 s per camera image** (p95 4.66), 0.29 s per area, 10.6 min wall for 1,962 areas incl. load; `jx-fast` (flash-linear-attention) 2.37 s per image, 8.9 min. Development identical (207 vs 207), holdout 32 vs 28, evaluation 90 vs 87, 71/1,962 decisions differ. **Adopted: standard env** (same score, no extra dependency or JIT compile in the final run); kernels kept as an 18% speed option.

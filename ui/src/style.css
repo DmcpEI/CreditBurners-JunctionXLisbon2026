@@ -501,3 +501,11 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .store-camera-picker { border: 0; padding: 0; margin: 18px 0 24px; justify-content: flex-start; }
 .store-camera-picker select { background: #f8f7f4; }
 @media (max-width: 760px) { .store-camera-picker { margin: 14px 0 20px; padding: 0; } }
+
+.study-camera-picker { margin: 0; }
+@media (max-width: 760px) {
+ .study-camera-picker { margin: 0; }
+ .study-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+ .study-metrics > div { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 6px; padding: 12px 8px; }
+ .study-metrics span { text-align: left; font-size: 11px; }
+}

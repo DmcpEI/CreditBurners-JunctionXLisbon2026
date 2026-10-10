@@ -93,7 +93,8 @@ Committed in `results/<run_id>/` (deliberately tracked for integration; regenera
 
 | Run | Use |
 |---|---|
-| `qwen3.8-27b-ctx640-probe-emptycheck-shared-alwayscompliant-full-v1` | **Use for the app (current best).** Stock decided by a small probe on the model's internal state (`ml/probe.npz`) + per-shelf thresholds; empty check; every area compliant. Blind check 75/99 points. 3.8 s per camera image. Point `sensei.snapshots-file` here. |
+| `qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1` | **Use for the app (current best).** Stock question answered by Qwen3.8-27B with our LoRA adapter (`/workspace/models/lora-stock-v1`), half if its half score ≥ 0.4 (`ml/lora_thresholds.json`); empty check on the base model; every area compliant. Held-out (2 folds, 138 labels): 78 stock points vs 68 for the probe. About 4.5 s per camera image. 8 of 1,962 areas use the fallback (model answered "can't tell"). Point `sensei.snapshots-file` here. |
+| `qwen3.8-27b-ctx640-probe-emptycheck-shared-alwayscompliant-full-v1` | Superseded (hidden-state probe + per-shelf thresholds; blind 75/99, 3.8 s per image). |
 | `qwen3.8-27b-ctx640-perarea-emptycheck-shared-alwayscompliant-full-v1` | Superseded (per-shelf half rule on the answer scores; blind 60/99). |
 | `qwen3.8-27b-ctx640-half020-emptycheck-shared-full-v1` | Superseded (global half threshold 0.20, 3.8 s per image). |
 | `qwen3.8-27b-ctx640-half020-emptycheck-full-v1` | Superseded (questions computed separately, 5.75 s per image; 97% identical answers). |

@@ -1,0 +1,5 @@
+{
+  "default": 0.4,
+  "areas": {},
+  "note": "Half threshold for the LoRA fine-tuned stock answer; chosen on the training labels of two held-out folds (both 0.4)."
+}

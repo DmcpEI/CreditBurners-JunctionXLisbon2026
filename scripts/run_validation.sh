@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.."
 SRC=${1:?images folder or zip}; NAME=${2:?run name}
 PY=${PYTHON:-python3}; HOST=${KNUTH:-knuth}
 OUT=data/val-$NAME; REMOTE=/workspace/jx/val-$NAME
-RPY=/workspace/miniconda/envs/jx/bin/python; REFS=/workspace/jx/sensei-full-v1/data/prepared-v1/assets
+RPY=/workspace/miniconda/envs/jx-fast/bin/python; REFS=/workspace/jx/sensei-full-v1/data/prepared-v1/assets
 DATASET=new_dataset_hackathon_junctionx_10_oct_2026_v2
 [ -e "$OUT" ] && { echo "$OUT exists; choose a new name"; exit 1; }
 mkdir -p "$OUT"; start=$(date +%s); ok=1
@@ -23,11 +23,10 @@ if ssh -o ConnectTimeout=15 -o BatchMode=yes "$HOST" "test ! -e $REMOTE && mkdir
   step "prepare on $HOST"
   ssh "$HOST" "cd $REMOTE && $RPY -B -m ml.validate $INPUT --references $REFS --output $OUT ${VALIDATE_FLAGS:-}" 2>&1 | tee "$OUT-prepare.log" | grep -v "^WARNING" | tail -40
   ssh "$HOST" "cat $REMOTE/$OUT/crops-sheet.jpg" > "$OUT-crops-sheet.jpg" 2>/dev/null && { step "CHECK $OUT-crops-sheet.jpg now (opening it): wrong crops = Ctrl-C"; open "$OUT-crops-sheet.jpg" 2>/dev/null || true; }
-  step "inference on $HOST (Qwen3.8-27B: stock question + empty check from one shared image prefix)"
-  ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v1 --paired-prompt v4 --paired-output $OUT/results-empty.json --paired-only-if-full-below 0.5 --questions stock --context-max-side 640 --save-hidden $OUT/hidden.npz --output $OUT/results.json" > "$OUT/inference.log" 2>&1 || ok=0
+  step "inference on $HOST (Qwen3.8-27B + LoRA stock question; empty check on the base model when needed)"
+  ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v1 --paired-prompt v4 --paired-output $OUT/results-empty.json --paired-only-if-full-below 0.5 --questions stock --context-max-side 640 --adapter /workspace/models/lora-stock-v1 --output $OUT/results.json" > "$OUT/inference.log" 2>&1 || ok=0
   step "fetch results"
   for f in expected sample report results results-empty; do ssh "$HOST" "cat $REMOTE/$OUT/$f.json" > "$OUT/$f.json" || ok=0; done
-  ssh "$HOST" "cat $REMOTE/$OUT/hidden.npz" > "$OUT/hidden.npz" 2>/dev/null || rm -f "$OUT/hidden.npz"
 else
   ok=0
   step "!!! $HOST unreachable: preparing locally for a fallback submission"
@@ -37,8 +36,7 @@ fi
 [ -s "$OUT/results.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results.json" 2>/dev/null || { echo '{}' > "$OUT/results.json"; ok=0; }
 [ $ok = 1 ] || echo "!!! INFERENCE INCOMPLETE (see $OUT/inference.log): missing areas use the fallback (half, compliant)"
 
-step "export (probe + per-shelf thresholds, empty check, always compliant) + coverage check"
-PROBE=(); [ -s "$OUT/hidden.npz" ] && PROBE=(--probe ml/probe.npz --hidden "$OUT/hidden.npz")
+step "export (half threshold 0.4 on the fine-tuned answer, empty check, always compliant) + coverage check"
 EMPTY=(); [ -s "$OUT/results-empty.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results-empty.json" 2>/dev/null && EMPTY=(--empty-results "$OUT/results-empty.json")
-$PY -m ml.export outputs "$OUT/results.json" --prepared "$OUT" --output "$OUT/export" --run-id "val-$NAME" --always-compliant --area-thresholds ml/area_thresholds.json ${EMPTY[@]+"${EMPTY[@]}"} ${PROBE[@]+"${PROBE[@]}"} || exit 1
+$PY -m ml.export outputs "$OUT/results.json" --prepared "$OUT" --output "$OUT/export" --run-id "val-$NAME" --always-compliant --area-thresholds ml/lora_thresholds.json ${EMPTY[@]+"${EMPTY[@]}"} || exit 1
 step "DONE: $OUT/export/submission.json"

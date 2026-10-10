@@ -1,0 +1,32 @@
+{
+  "run_id": "qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1",
+  "areas": 1962,
+  "images": 181,
+  "decision_rule": "half_if_stock_B>=0.4",
+  "compliance": "always_true",
+  "empty_rule": "empty_if_v4_A>=0.7",
+  "area_thresholds": 0,
+  "probe": null,
+  "fallback": {
+    "stock": "half",
+    "compliant": true
+  },
+  "counts": {
+    "product_checked": 0,
+    "missing_result": 0,
+    "stock_fallback": 8,
+    "compliance_fallback": 0,
+    "empty_rule_changed": 2,
+    "half_rule_changed": 39,
+    "stock_empty": 200,
+    "non_compliant": 0,
+    "model_mismatch_suppressed": 0,
+    "stock_full": 1123,
+    "stock_half": 639
+  },
+  "seconds_per_image": {
+    "p50": 3.843883751949761,
+    "p95": 5.919555534055689,
+    "total": 714.1760628524935
+  }
+}

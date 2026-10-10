@@ -41,7 +41,7 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 - **Local app fails:** show the recorded walkthrough and say it is a recording.
 - **Photo mode unreliable or unfinished:** omit it. The store replay remains the main product.
 - No invented model results or impact metrics. Any development fixture must say "Illustrative mock" and must not enter evaluation results.
-- Current integration data: `results/qwen3.8-27b-ctx640-probe-emptycheck-shared-alwayscompliant-full-v1/snapshots.json`. The old `data/prepared-v1/snapshots.json` is a constant baseline available only by explicit override; never present it as model output.
+- Current integration data: `results/qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1/snapshots.json`. The old `data/prepared-v1/snapshots.json` is a constant baseline available only by explicit override; never present it as model output.
 
 ## Acceptance checks before judging
 - Public URL and QR code work from a phone on mobile data; list, detail and replay work on a narrow screen.

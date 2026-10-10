@@ -110,7 +110,7 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
         product_check="model" if stats["product_checked"] else "not_assessed",
         image_url=f"/assets/{camera}_{filename}", areas=areas) for (camera, filename), areas in snapshots.items()])
     per_image = sorted(seconds.values())
-    report = dict(run_id=run_id, areas=len(expected), images=len(snapshots), decision_rule=f"half_if_stock_B>={HALF_THRESHOLD}",
+    report = dict(run_id=run_id, areas=len(expected), images=len(snapshots), decision_rule=f"half_if_stock_B>={area_thresholds['default']}",
                   compliance="always_true" if always_compliant else "model",
                   empty_rule=f"empty_if_v4_A>={EMPTY_THRESHOLD}" if empty_results is not None else None,
                   area_thresholds=len(area_thresholds["areas"]), probe=str(probe_path) if probe_path else None,

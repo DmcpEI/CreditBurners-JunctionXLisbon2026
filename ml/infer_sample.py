@@ -141,6 +141,7 @@ def main():
     for sample in samples:
         digest = hashlib.sha256(Path(__file__).read_bytes() + args.model.encode() + str((args.crop_presence_only, args.crop_compliance_only, args.stock_prompt, args.answer_prefix)
                                                                                                 + (("context", args.context_max_side) if args.context_max_side else ())
+                                                                                                + (("adapter", str(args.adapter)) if args.adapter else ())
                                                                                                 + ((questions, args.stock_crop_only) if questions != ALL_QUESTIONS or args.stock_crop_only else ())).encode()
                                 + json.dumps(sample, sort_keys=True).encode())
         for key in image_keys:
@@ -255,7 +256,16 @@ def main():
             prefix = {k: (v[:, :shared] if torch.is_tensor(v) and v.dim() == 2 and v.shape[1] == length else v)
                       for k, v in encoded[0].items() if k != "input_ids"}
             answers = []
-            with torch.inference_mode():
+            if args.adapter:  # fine-tuned stock question; empty check on the base model (adapter off), as evaluated
+                with torch.inference_mode():
+                    answers.append(answer_from(model(**encoded[0]).logits[0, -1].float(), "ABCD"))
+                    if answers[0]["scores"]["C"] < args.paired_only_if_full_below:
+                        with model.disable_adapter():
+                            answers.append(answer_from(model(**encoded[1]).logits[0, -1].float(), "ABCD"))
+                    else:
+                        answers.append(None)
+            else:
+              with torch.inference_mode():
                 out = model(input_ids=ids[0][None, :shared], use_cache=True, **prefix)
                 for i, token_ids in enumerate(ids):
                     if i == 1 and answers[0]["scores"]["C"] >= args.paired_only_if_full_below:

@@ -23,6 +23,7 @@ def main():
     parser.add_argument("images", type=Path, help="Folder or ZIP of camera images (camera-id folders, or flat)")
     parser.add_argument("--output", type=Path, required=True, help="New directory for crops, results and submission")
     parser.add_argument("--model", default="Qwen/Qwen3.8-27B", help="Local model directory or Hugging Face id")
+    parser.add_argument("--adapter", type=Path, help="LoRA stock adapter (current best: /workspace/models/lora-stock-v1; needs peft)")
     parser.add_argument("--dataset", type=Path, default=ROOT / "new_dataset_hackathon_junctionx_10_oct_2026_v2",
                         help="Folder with planogram.json")
     parser.add_argument("--references", type=Path, default=ROOT / "data/prepared-v1/assets",
@@ -38,7 +39,8 @@ def main():
     results, empty = args.output / "results.json", args.output / "results-empty.json"
     command = [sys.executable, "-B", "-u", "-m", "ml.infer_sample", str(args.output / "sample.json"), "--model", args.model,
                "--stock-prompt", "v1", "--paired-prompt", "v4", "--paired-output", str(empty), "--paired-only-if-full-below", "0.5",
-               "--questions", "stock", "--context-max-side", "640", "--save-hidden", str(args.output / "hidden.npz"), "--output", str(results)]
+               "--questions", "stock", "--context-max-side", "640", "--output", str(results)]
+    command += ["--adapter", str(args.adapter)] if args.adapter else ["--save-hidden", str(args.output / "hidden.npz")]
     status = subprocess.run(command, cwd=ROOT).returncode
     if status != 0 or not results.exists():
         print(f"!!! inference failed (exit {status}); missing areas get the fallback answer (half, compliant)", flush=True)
@@ -46,8 +48,8 @@ def main():
             results.write_text("{}\n")
 
     build_outputs(args.output, results, args.output / "export", f"credit-burners-{args.output.name}", always_compliant=True,
-                  empty_results_path=empty if empty.exists() else None, area_thresholds_path=ROOT / "ml/area_thresholds.json",
-                  probe_path=ROOT / "ml/probe.npz" if (args.output / "hidden.npz").exists() else None,
+                  empty_results_path=empty if empty.exists() else None, area_thresholds_path=ROOT / ("ml/lora_thresholds.json" if args.adapter else "ml/area_thresholds.json"),
+                  probe_path=ROOT / "ml/probe.npz" if not args.adapter and (args.output / "hidden.npz").exists() else None,
                   hidden_path=args.output / "hidden.npz")
     print(f"DONE in {time.perf_counter() - started:.0f}s: {args.output / 'export/submission.json'}", flush=True)
 

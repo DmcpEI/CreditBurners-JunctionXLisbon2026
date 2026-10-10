@@ -2,6 +2,14 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## LoRA adopted — final pipeline v7 — 11 October 2026
+
+- **Final adapter** `lora-stock-v1` trained on all 344 labels (same settings as the folds, 8 minutes); half threshold 0.4 (`ml/lora_thresholds.json`, no per-shelf thresholds); the empty check (prompt v4, empty if A ≥ 0.7, asked when C < 0.5) runs on the base model with the adapter disabled, as evaluated.
+- **Why:** 2-fold held-out stock points (138 labels) LoRA 78 vs probe 68 vs per-shelf 60. No untouched check remains: the blind 50 are part of the 344 training labels.
+- **Full export** `results/qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1/`: 200 empty / 639 half / 1,123 full; 84% identical to the probe export, mostly full→half (243) — the cheaper direction under Sensei's costs. 8 areas (early images of cameras 6383/6386) answered D "can't tell" → fixed fallback (half).
+- **Cost:** 822 s for 181 images incl. model load = 4.5 s per camera image (p50 3.8 s model time); the adapter path does not share the image prefix between the two questions.
+- `ml.run --adapter` and `scripts/run_validation.sh` use the adapter; `ml.run` without `--adapter` keeps the probe pipeline.
+
 ## Claude models (agents) on the blind 50; LoRA fine-tuning — 10–11 October 2026
 
 **Claude Haiku / Sonnet / Opus**, via isolated Claude Code agents (two per model, 25 items each) given only our exact stock prompt v1 and the anonymised images (640 px camera view with outline, crop, mask) of the blind 50; no repo context, no labels. Mimics an API call (not identical: agent harness, self-reported probabilities). Product answered compliant for all.
@@ -15,7 +23,7 @@ Latest rule update after the benchmark: truly empty areas are compliant; `ml/inf
 
 Applying the cost formula to the agents' self-reported probabilities lowered every model (Opus 66/99). Opus zero-shot ≈ our probe pipeline (difference within ±5 noise); Haiku is below "always full" (52/99). Not adopted: no gain, per-image API cost, open questions on cloud APIs and sending store images to a third party. The blind 50 have now been used for several comparisons; further choices must not be made on them.
 
-**LoRA fine-tuning** (`ml/finetune.py`, peft only in env `jx-fast`): rank 8 on the language model's attention projections (`q/k/v/o_proj`, `in_proj_qkv`, `out_proj`), target = answer letter, 2 epochs, lr 1e-4, accumulation 8, same inputs as production; 275 training labels, 7 minutes on the RTX PRO 6000. Held-out fold 0 (69 labels: 16 half, 46 full, 7 empty), stock points: global rule 16, per-shelf thresholds 20, probe + per-shelf 27, LoRA raw 23, **LoRA + empty check with half threshold 0.4 chosen on the training labels 32**. Second fold running before any adoption.
+**LoRA fine-tuning** (`ml/finetune.py`, peft only in env `jx-fast`): rank 8 on the language model's attention projections (`q/k/v/o_proj`, `in_proj_qkv`, `out_proj`), target = answer letter, 2 epochs, lr 1e-4, accumulation 8, same inputs as production; 275 training labels, 7 minutes on the RTX PRO 6000. Held-out fold 0 (69 labels: 16 half, 46 full, 7 empty), stock points: global rule 16, per-shelf thresholds 20, probe + per-shelf 27, LoRA raw 23, **LoRA + empty check with half threshold 0.4 chosen on the training labels 32**. Both folds (138 held-out labels): **LoRA 78**, probe 68, per-shelf thresholds 60 stock points.
 
 ## Hidden-state probe adopted — final pipeline v6 — 10 October 2026
 

@@ -7,8 +7,9 @@ from pathlib import Path
 
 
 QUESTIONS = {
-    "visibility": "Can you see inside the target produce display? A: clear, including a visibly empty tray. B: hidden by a closed white curtain, shutter, person or other obstruction. C: cannot determine.",
-    "stock": "How stocked is the target display? A: empty, no produce visible. B: partly stocked, substantial space remains. C: full or nearly full. Judge the target only, not adjacent trays.",
+    "visibility": "Is the target shelf interior sufficiently visible to inspect? A: yes, including a visibly empty tray. B: no, a lowered/closed curtain, shutter or other obstruction hides the interior. C: insufficient evidence. A raised/open curtain or a narrow shelf edge does not block inspection when the tray interior is visible. Ignore out-of-image padding identified by the mask.",
+    "presence": "Is any produce visible inside the target area? A: yes, even one item or a small group at the edge inside the target counts. B: no produce at all; the visible tray is empty. C: cannot determine. Ignore produce outside the target.",
+    "stock": "Produce is visible in the target. How stocked is that target display? A: partly stocked, substantial space remains. B: full or nearly full. C: cannot determine. Judge only real visible tray pixels, not masked padding or adjacent trays.",
     "compliance": "Does the visible produce match the expected product {product}? A: matches the product type. B: a different product type is visible. C: no visible produce or insufficient evidence. Printed labels alone are not evidence of the actual product. Do not infer brand or origin from appearance.",
 }
 
@@ -20,6 +21,33 @@ def answer_tokens(tokenizer):
     if any(not group for group in groups) or len(set(sum(groups, []))) != sum(map(len, groups)):
         raise ValueError("Answer codes need distinct single-token encodings")
     return groups
+
+
+def inspect_stages(ask):
+    """Stop before asking questions the image cannot support."""
+    answers = {}
+
+    def choice(name):
+        answers[name] = ask(name)
+        value = answers[name]["choice"]
+        if value not in "ABC" or len(value) != 1:
+            raise ValueError("Invalid answer code")
+        return value
+
+    visibility = choice("visibility")
+    if visibility != "A":
+        return dict(answers=answers, visibility="occluded" if visibility == "B" else "unknown",
+                    observed_stock=None, observed_compliance=None, action="inspect")
+    presence = choice("presence")
+    if presence != "A":
+        return dict(answers=answers, visibility="clear", observed_stock="empty" if presence == "B" else None,
+                    observed_compliance=None, action="restock" if presence == "B" else "inspect")
+    stock = {"A": "half", "B": "full", "C": None}[choice("stock")]
+    compliance = {"A": True, "B": False, "C": None}[choice("compliance")]
+    action = ("inspect" if stock is None or compliance is None else
+              "check_product" if not compliance else "check_stock" if stock == "half" else "ok")
+    return dict(answers=answers, visibility="clear", observed_stock=stock,
+                observed_compliance=compliance, action=action)
 
 
 def main():
@@ -36,7 +64,7 @@ def main():
     for sample in samples:
         digest = hashlib.sha256(Path(__file__).read_bytes() + args.model.encode()
                                 + json.dumps(sample, sort_keys=True).encode())
-        for key in ("context", "crop"):
+        for key in ("context", "crop", "mask"):
             digest.update((args.manifest.parent / sample[key]).read_bytes())
         fingerprint = digest.hexdigest()
         previous = cache.get(sample["sample_id"])
@@ -63,16 +91,18 @@ def main():
     for sample, fingerprint in pending:
         started = time.perf_counter()
         images = [Image.open(args.manifest.parent / sample[key]).convert("RGB")
-                  for key in ("context", "crop")]
+                  for key in ("context", "crop", "mask")]
         result = dict(sample=sample, fingerprint=fingerprint, model=args.model,
                       load_seconds=load_seconds, scores_uncalibrated=True, answers={})
-        for name, question in QUESTIONS.items():
+        def ask(name):
+            question = QUESTIONS[name]
             prompt = ("First image: store camera, target outlined in red. Second image: rectified target crop. "
-                      "Black padding is outside the camera view, not empty shelf. "
+                      "Third image: validity mask aligned with the crop; white means real camera pixels, black means outside the camera view. "
+                      "Ignore those invalid pixels in the crop; they are neither stock nor a physical obstruction. "
                       + question.format(product=sample["product_name"])
                       + " Answer exactly A, B or C.")
             messages = [{"role": "user", "content": [
-                {"type": "image"}, {"type": "image"}, {"type": "text", "text": prompt}]}]
+                {"type": "image"}, {"type": "image"}, {"type": "image"}, {"type": "text", "text": prompt}]}]
             text = proc.apply_chat_template(messages, add_generation_prompt=True, enable_thinking=False)
             inputs = proc(text=[text], images=images, return_tensors="pt").to("cuda")
             with torch.inference_mode():
@@ -80,9 +110,10 @@ def main():
                 scores = torch.stack([torch.logsumexp(logits[group], 0) for group in tokens])
                 probabilities = scores.softmax(0).tolist()
                 mass = (torch.logsumexp(scores, 0) - torch.logsumexp(logits, 0)).exp().item()
-            result["answers"][name] = dict(scores=dict(zip("ABC", probabilities)),
+            return dict(scores=dict(zip("ABC", probabilities)),
                                            choice="ABC"[max(range(3), key=probabilities.__getitem__)],
                                            allowed_token_mass=mass)
+        result.update(inspect_stages(ask))
         torch.cuda.synchronize()
         result["seconds"] = time.perf_counter() - started
         result["peak_vram_gb"] = torch.cuda.max_memory_allocated() / 1e9

@@ -23,7 +23,7 @@ Consequence: remove short-window temporal imputation from the current-data basel
 
 No accuracy or official score measured. Generated all three constant-stock/compliant baselines with complete 1,962-area coverage. App records currently expose the half baseline as a disclosed fallback with unknown visibility; they are not image classifications.
 
-Five synthetic test methods pass, covering the nine stock payoff combinations, compliance penalties, missing-area penalty, expected-score choice, strict value/coverage checks, off-image masks, crop orientation, malformed geometry, ZIP metadata handling, preservation of prior output directories and single-token answer encoding checks.
+Six synthetic test methods pass, covering the nine stock payoff combinations, compliance penalties, missing-area penalty, expected-score choice, strict value/coverage checks, off-image masks, crop orientation, malformed geometry, ZIP metadata handling, preservation of prior output directories single-token answer encoding checks and staged early exits.
 
 ## How measured
 
@@ -45,10 +45,28 @@ Ran `/workspace/models/qwen3.8-27b` on knuth over 12 area observations from 6 ca
 
 Implementation: `ml/infer_sample.py`; rejects conflicting cached inputs/settings and saves after every area. Manifest entries contain `sample_id`, `product_name`, `context` and `crop` filenames relative to the manifest. Local inputs/cache: `data/qwen-sample-v1/{sample,results}.json`. Remote workspace: `/workspace/jx/sensei-sample-v1`. No packages or models were installed/downloaded. Existing PyTorch fallback kernels emitted performance warnings; no environment changes were made.
 
-Reproduce on knuth from the remote workspace:
+Historical v1 reproduction uses the preserved runner in that remote workspace (the current runner requires a mask):
 ```bash
 /workspace/miniconda/envs/jx/bin/python -B -u -m ml.infer_sample data/qwen-sample-v1/sample.json --model /workspace/models/qwen3.8-27b --output data/qwen-sample-v1/results.json
 ```
 Unchanged completed samples return from cache without loading the model. Use a different output filename for a deliberately changed prompt/model experiment.
 
 Next: clarify empty/half and curtain annotation rules; compare a revised visibility/stock prompt on these failure cases plus unchanged controls. Add a verified mismatch case before trusting compliance. At this sample speed, 1,962 areas would take roughly 46 minutes, excluding transfer/preparation and variation in image processing; do not spend that run before checking the failure cases. API/UI and the full-dataset inference/export path remain untested.
+
+
+## Staged diagnostic v2 — 10 October 2026
+
+Same 12 observations, same model, new prompts plus a third image containing the aligned validity mask. Expected product is supplied only for the compliance question. Code gates stages: blocked/unknown visibility skips all other questions; clear views get a presence question; empty/unknown presence skips stock/compliance. Visible produce gets half/full/unknown and match/mismatch/unknown questions. Null observations are diagnostic abstentions, not valid Sensei export fields. No app snapshot or baseline files were overwritten.
+
+- Both closed curtains stop after visibility, with `action: inspect` and no stock/compliance observation.
+- The open cabbage tray is now clear, full and matching. Because prompts and mask input changed together, this does not isolate which change fixed it.
+- Sparse bananas remain incorrectly classified as absent. Do not claim this failure is fixed or publish these diagnostic actions as validated alerts.
+- Median time: 1.956 seconds/area; blocked examples: approximately 0.50 seconds; populated examples: approximately 1.95–2.00 seconds. Peak PyTorch allocated memory: 55.60 GB. Total questions: 36 (same as v1, redistributed by gating). A mostly visible full run may take about 65 minutes; reserve time, but first isolate the sparse-produce error on a smaller sample.
+- Six synthetic test methods pass, including exact early-exit call sequences, empty/unknown abstention and populated-tray actions. Verified a repeated run uses cache without loading the model.
+
+Inputs/results: `data/qwen-sample-v2/{sample,results}.json`; manifest adds `mask`, a filename relative to the manifest. Remote workspace: `/workspace/jx/sensei-staged-v2`. From that workspace:
+```bash
+/workspace/miniconda/envs/jx/bin/python -B -u -m ml.infer_sample data/qwen-sample-v2/sample.json --model /workspace/models/qwen3.8-27b --output data/qwen-sample-v2/results.json
+```
+
+No official labels, accuracy, calibration or verified mismatch test. The selected development cases are not a held-out evaluation. Next experiment should compare tight-crop-only presence against context-plus-crop on the sparse banana case and controls, keeping the same model; do not add another perception model before checking whether context is distracting it.

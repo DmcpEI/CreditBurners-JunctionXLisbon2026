@@ -120,3 +120,9 @@ Camera cards now open the interactive camera map and scroll it into view. Produc
 Cards use softly tinted red/amber/green backgrounds with visible borders. Primary actions are Restock urgently (empty), Restock (half; check the shelf before replenishing) and No restock needed (full). Lists and alerts omit duplicate stock-state badges; simultaneous product mismatches stay visible. Detailed stock states and graph data remain unchanged; fallback/unclear observations stay neutral.
 
 Validation: twelve frontend tests and frontend/Maven builds passed. WebKit checked camera/product opening, crop visibility, camera filter selection, alert navigation, restored list positions, all three tint colors and nonduplicated card labels. Checks covered desktop/mobile and motion enabled/reduced. Mobile screenshots were visually inspected. Physical-phone testing remains outstanding.
+
+## Desktop panel scroll and consistent card backgrounds
+
+Fresh page loads start at the top, including a single-camera URL without an area selection. Explicit evidence links and click navigation still open the requested detail. On desktop, the right-hand evidence panel fits the viewport and scrolls independently with mouse wheel or keyboard; selecting another shelf resets its internal scroll. Mobile retains normal page scrolling. Back to shelves still restores the saved list position.
+
+Shelf cards and alert cards now share the same soft stock backgrounds, with neutral borders rather than coloured outlines. WebKit verified reload position, actual wheel scrolling inside the desktop panel without moving the page, card/alert style consistency and mobile crop visibility. Frontend/Maven builds passed; physical-phone interaction remains unverified.

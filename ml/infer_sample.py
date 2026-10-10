@@ -15,6 +15,9 @@ QUESTIONS = {
 # v2: dev error review showed half->full when many items remain but bare container floor or empty cells are visible.
 STOCK_PROMPTS = {
     "v1": QUESTIONS["stock"],
+    # v3: organiser guidance (10 Oct): empty = customers would not buy what is left; half = staff would take the time
+    # to replenish now; full = not worth replenishing yet; in doubt, choose the lower level.
+    "v3": "Judge stock ONLY inside the supplied target polygon. Ignore shelf space outside the polygon and adjacent trays. Think like the store. A: empty: a customer would not be willing to buy what is left (nothing, or only a few leftover items). B: half: products are still sellable, but a staff member would take the time to replenish this shelf now. C: full: well stocked; a staff member would not bother replenishing it yet. D: insufficient evidence. If you are unsure between two levels, choose the lower one. Ignore black invalid padding.",
     "v2": "Judge stock ONLY inside the supplied target polygon, relative to the capacity for the visible product type. Ignore shelf space outside the polygon and adjacent trays. Look at how much of the container floor inside the target is covered by produce. A: empty or nearly depleted: only a few items remain relative to capacity and most of the floor is bare. B: half: produce is clearly present, but a noticeable part of the floor is bare, or empty cells, cups or gaps where more items would fit are visible (roughly a quarter or more of the target). Many items can still be half. C: full: produce covers essentially the whole target floor, with little or no bare floor or empty cells visible. D: insufficient evidence. Large fruit fills capacity with fewer items: two large melons in a target that fits roughly six can be half, whereas two lemons in a target that fits many can be empty. These are examples, not universal count thresholds. Ignore black invalid padding.",
 }
 
@@ -94,12 +97,18 @@ def main():
     parser.add_argument("--questions", default=",".join(ALL_QUESTIONS),
                         help="Stages to ask, e.g. presence,stock for guaranteed-visible validation without compliance")
     parser.add_argument("--stock-crop-only", action="store_true", help="Stock question sees crop+mask only, no camera context")
+    parser.add_argument("--context-max-side", type=int, default=0,
+                        help="Downscale the camera-context image so its longest side is at most this (0 = original)")
+    parser.add_argument("--batch-size", type=int, default=1,
+                        help="Stock-only runs: answer this many areas per GPU forward pass (left padding)")
     parser.add_argument("--answer-prefix", default="",
                         help='Start the reply with this text (e.g. "Answer: ") for models that explain before answering')
     args = parser.parse_args()
     questions = tuple(q for q in args.questions.split(",") if q)
     if not set(questions) <= set(ALL_QUESTIONS) or "stock" not in questions:
         parser.error("--questions must include stock and only known stages")
+    if args.batch_size > 1 and questions != ("stock",):
+        parser.error("--batch-size > 1 needs --questions stock (no gated stages)")
     answer_cache = json.loads(args.answer_cache.read_text()) if args.answer_cache and args.answer_cache.exists() else {}
     image_keys = ("crop", "mask") if args.crop_presence_only or args.crop_compliance_only else ("context", "crop", "mask")
     samples = json.loads(args.manifest.read_text())
@@ -109,6 +118,7 @@ def main():
     pending = []
     for sample in samples:
         digest = hashlib.sha256(Path(__file__).read_bytes() + args.model.encode() + str((args.crop_presence_only, args.crop_compliance_only, args.stock_prompt, args.answer_prefix)
+                                                                                                + (("context", args.context_max_side) if args.context_max_side else ())
                                                                                                 + ((questions, args.stock_crop_only) if questions != ALL_QUESTIONS or args.stock_crop_only else ())).encode()
                                 + json.dumps(sample, sort_keys=True).encode())
         for key in image_keys:
@@ -135,32 +145,82 @@ def main():
     torch.cuda.synchronize()
     load_seconds = time.perf_counter() - started
     print(f"Loaded in {load_seconds:.1f}s", flush=True)
+
+    def question_key(prompt):
+        # settings that change model input must change the cache key (defaults keep old keys valid)
+        return (prompt + ("\n[answer-prefix]" + args.answer_prefix if args.answer_prefix else "")
+                + (f"\n[context-max-side]{args.context_max_side}" if args.context_max_side else ""))
+
+    def stock_question(sample):
+        keys, prompt = question_input("stock", sample["product_name"], stock_prompt=args.stock_prompt, stock_crop_only=args.stock_crop_only)
+        paths = [args.manifest.parent / sample[key] for key in keys]
+        return prompt, paths, question_fingerprint(args.model, question_key(prompt), paths)
+
+    def load_images(paths):
+        images = [Image.open(path).convert("RGB") for path in paths]
+        if args.context_max_side and len(images) == 3:  # context is first when present
+            images[0].thumbnail((args.context_max_side, args.context_max_side))
+        return images
+
+    def chat_text(prompt, count):
+        messages = [{"role": "user", "content": [*[{"type": "image"} for _ in range(count)], {"type": "text", "text": prompt}]}]
+        return proc.apply_chat_template(messages, add_generation_prompt=True, enable_thinking=False) + args.answer_prefix
+
+    def answer_from(logits, codes):
+        scores = torch.stack([torch.logsumexp(logits[group], 0) for group in tokens[:len(codes)]])
+        probabilities = scores.softmax(0).tolist()
+        mass = (torch.logsumexp(scores, 0) - torch.logsumexp(logits, 0)).exp().item()
+        return dict(scores=dict(zip(codes, probabilities)),
+                    choice=codes[max(range(len(codes)), key=probabilities.__getitem__)], allowed_token_mass=mass)
+
+    batched = {}  # question fingerprint -> (answer, seconds share of its batch)
+    if args.batch_size > 1:
+        proc.tokenizer.padding_side = "left"  # last position = answer position for every row
+        todo = {}
+        for sample, _ in pending:
+            prompt, paths, key = stock_question(sample)
+            if key not in answer_cache:
+                todo.setdefault(key, (prompt, paths))
+        todo = list(todo.items())
+        for start in range(0, len(todo), args.batch_size):
+            chunk = todo[start:start + args.batch_size]
+            began = time.perf_counter()
+            texts = [chat_text(prompt, len(paths)) for _, (prompt, paths) in chunk]
+            images = [load_images(paths) for _, (_, paths) in chunk]
+            inputs = proc(text=texts, images=images, return_tensors="pt", padding=True).to("cuda")
+            with torch.inference_mode():
+                rows = model(**inputs).logits[:, -1].float()
+                answers = [answer_from(row, "ABCD") for row in rows]
+            torch.cuda.synchronize()
+            share = (time.perf_counter() - began) / len(chunk)
+            for (key, _), answer in zip(chunk, answers):
+                batched[key] = (answer, share)
+            print(f"batch {start // args.batch_size + 1}: {len(chunk)} areas, {share:.3f}s/area", flush=True)
+
     for sample, fingerprint in pending:
         started = time.perf_counter()
-        result = dict(sample=sample, fingerprint=fingerprint, model=args.model, stock_prompt=args.stock_prompt, answer_prefix=args.answer_prefix, questions=questions, stock_crop_only=args.stock_crop_only,
+        shares = []
+        result = dict(sample=sample, fingerprint=fingerprint, model=args.model, batch_size=args.batch_size, stock_prompt=args.stock_prompt, answer_prefix=args.answer_prefix, questions=questions, stock_crop_only=args.stock_crop_only,
                       load_seconds=load_seconds, scores_uncalibrated=True,
                       input_mode="crop_mask_presence_only" if args.crop_presence_only else "crop_mask_compliance_only" if args.crop_compliance_only else "staged_crop_presence_compliance", answers={})
         def ask(name):
-            keys, prompt = question_input(name, sample["product_name"], stock_prompt=args.stock_prompt, stock_crop_only=args.stock_crop_only)
-            paths = [args.manifest.parent / sample[key] for key in keys]
-            # the prefix changes model input, so it must change the cache key (empty keeps old keys valid)
-            fingerprint = question_fingerprint(args.model, prompt + ("\n[answer-prefix]" + args.answer_prefix if args.answer_prefix else ""), paths)
+            if name == "stock":
+                prompt, paths, fingerprint = stock_question(sample)
+            else:
+                keys, prompt = question_input(name, sample["product_name"], stock_prompt=args.stock_prompt, stock_crop_only=args.stock_crop_only)
+                paths = [args.manifest.parent / sample[key] for key in keys]
+                fingerprint = question_fingerprint(args.model, question_key(prompt), paths)
             if fingerprint in answer_cache:
                 return {**answer_cache[fingerprint], "cache_hit": True}
-            images = [Image.open(path).convert("RGB") for path in paths]
-            messages = [{"role": "user", "content": [
-                *[{"type": "image"} for _ in images], {"type": "text", "text": prompt}]}]
-            text = proc.apply_chat_template(messages, add_generation_prompt=True, enable_thinking=False) + args.answer_prefix
-            inputs = proc(text=[text], images=images, return_tensors="pt").to("cuda")
             codes = "ABCD" if name == "stock" else "ABC"
-            with torch.inference_mode():
-                logits = model(**inputs).logits[0, -1].float()
-                scores = torch.stack([torch.logsumexp(logits[group], 0) for group in tokens[:len(codes)]])
-                probabilities = scores.softmax(0).tolist()
-                mass = (torch.logsumexp(scores, 0) - torch.logsumexp(logits, 0)).exp().item()
-            answer = dict(scores=dict(zip(codes, probabilities)),
-                                           choice=codes[max(range(len(codes)), key=probabilities.__getitem__)],
-                                           allowed_token_mass=mass)
+            if fingerprint in batched:
+                answer, share = batched[fingerprint]
+                shares.append(share)
+            else:
+                images = load_images(paths)
+                inputs = proc(text=[chat_text(prompt, len(images))], images=images, return_tensors="pt").to("cuda")
+                with torch.inference_mode():
+                    answer = answer_from(model(**inputs).logits[0, -1].float(), codes)
             answer_cache[fingerprint] = answer
             if args.answer_cache:
                 args.answer_cache.parent.mkdir(parents=True, exist_ok=True)
@@ -175,7 +235,7 @@ def main():
         else:
             result.update(inspect_stages(ask, questions))
         torch.cuda.synchronize()
-        result["seconds"] = time.perf_counter() - started
+        result["seconds"] = time.perf_counter() - started + sum(shares)  # batched forward time is shared per area
         result["peak_vram_gb"] = torch.cuda.max_memory_allocated() / 1e9
         cache[sample["sample_id"]] = result
         args.output.parent.mkdir(parents=True, exist_ok=True)

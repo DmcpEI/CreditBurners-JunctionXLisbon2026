@@ -49,11 +49,12 @@ def main():
         questions = statistics.mean(len(r["answers"]) for r in results.values())
         p50 = f"{statistics.median(r['seconds'] for r in timed):.2f}" if timed else "cache"
         for rule in (False, True):
+            # groups the run does not fully cover are skipped (n/a), not failed
             scores = [evaluate(items, {x["id"]: apply_half_rule(results[x["id"]]) if rule else results[x["id"]] for x in items})
-                      for _, items in gs]
+                      if all(x["id"] in results for x in items) else None for _, items in gs]
             print(f"{path.parent.name + '/' + path.stem + (' +rule' if rule else ''):44s}"
-                  + "".join(f"{s['points']:>9}/{s['maximum']:<6}" for s in scores)
-                  + f"{sum(s['points'] for s in scores):>7}{questions:>8.2f}{p50:>7s}")
+                  + "".join(f"{s['points']:>9}/{s['maximum']:<6}" if s else f"{'n/a':>16}" for s in scores)
+                  + f"{sum(s['points'] for s in scores if s):>7}{questions:>8.2f}{p50:>7s}")
 
 
 if __name__ == "__main__":

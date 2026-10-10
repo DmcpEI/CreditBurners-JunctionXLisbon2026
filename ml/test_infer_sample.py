@@ -52,10 +52,11 @@ class AnswerTokenTests(unittest.TestCase):
             ("C", ["visibility"], "inspect", None),
             ("AB", ["visibility", "presence"], "restock", "empty"),
             ("AC", ["visibility", "presence"], "inspect", None),
-            ("AAAA", ["visibility", "presence", "stock", "compliance"], "check_stock", "half"),
-            ("AABA", ["visibility", "presence", "stock", "compliance"], "ok", "full"),
-            ("AABB", ["visibility", "presence", "stock", "compliance"], "check_product", "full"),
-            ("AACC", ["visibility", "presence", "stock", "compliance"], "inspect", None),
+            ("AABA", ["visibility", "presence", "stock", "compliance"], "check_stock", "half"),
+            ("AACA", ["visibility", "presence", "stock", "compliance"], "ok", "full"),
+            ("AACB", ["visibility", "presence", "stock", "compliance"], "check_product", "full"),
+            ("AADC", ["visibility", "presence", "stock", "compliance"], "inspect", None),
+            ("AAAA", ["visibility", "presence", "stock", "compliance"], "restock", "empty"),
         ]
         for codes, expected_calls, action, stock in cases:
             with self.subTest(codes=codes):

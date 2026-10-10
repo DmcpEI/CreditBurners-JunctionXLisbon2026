@@ -1,5 +1,57 @@
 # Results
 
+## Latest evaluation and agent handoff — 10 October 2026
+
+**Use this section as current state; older sections below are experiment history, not current results.** User supplied frozen, human-reviewed local GT. The revised model was evaluated against it, with closed curtains excluded. No further prompt changes were made between development and holdout runs.
+
+| Split | Stock accuracy | Compliance agreement | Local task points | Best constant baseline |
+|---|---|---|---|---|
+| Development | 20/30 (66.7%) | 25/25 (100%) | 16/55 | half: -1/55 |
+| Holdout | 15/26 (57.7%) | 16/18 (88.9%) | -5/44 | half: -6/44 |
+
+Points use Sensei's per-task penalties but only definite local labels, so maximum equals eligible stock labels plus eligible compliance labels. These are NOT the official 289-area score. All definite compliance labels in both splits are true: this reference cannot measure real wrong-product recall. Holdout gain is only one point over the half baseline, not convincing evidence of reliable generalisation. Labels were assistant-prefilled and human-reviewed, not independently blinded.
+
+Exclusions: exactly two human-labelled curtain observations in each split; no stock/product points from them. Uncertain compliance is also excluded independently (five additional visible development cases, eight additional visible holdout cases). Stock has 30/26 eligible labels. Coverage is checked before exclusions; missing prediction records fail evaluation. Predicted abstentions on visible labelled cases are scored with fixed half/true fallbacks and counted, never silently excluded. Development: no fallbacks. Holdout: two stock fallbacks, one eligible compliance fallback.
+
+Development stock confusion (truth → prediction): empty 5 empty; half 1 empty / 3 half / 9 full; full 12 full. Holdout: empty 3 empty / 2 half; half 3 half / 8 full; full 1 empty / 9 full. Primary issue is half→full overestimation. Holdout also exposes two visible empty trays rejected by the visibility stage. Since validation is guaranteed visible, a validation-only bypass is a sensible next controlled experiment; preserve optional visibility handling for arbitrary demo inputs. Do not reinterpret these exposed holdout cases as a fresh test set for further tuning.
+
+### Files and provenance
+
+- Original user export: `sensei-93b9d1c2db63ec53-frozen.json` at repo root (untracked; preserve it).
+- Working GT: `data/ground-truth/human-v2-frozen.json`; 60 items, reviewer Member1, all `sensei-box-capacity-v2`, frozen at `2026-10-10T14:31:37.406Z`.
+- GT SHA256: `1370063e9cb7c7308b92a7933c3b07031abccc644135d1cae6b75c6da5508ab3`.
+- Fixed image set: `data/human-review-v1/manifest.json`; set `93b9d1c2db63ec53`; 32 development / 28 area-disjoint holdout. Local browser labeling remains available at port 8765. Suggestions v1/v2 and saved labels must not be regenerated or overwritten.
+- Model predictions: `data/eval-dev-v1/results.json`, `data/eval-holdout-v1/results.json`.
+- Reproducible metrics including error IDs, confusion matrices, baselines and input hashes: corresponding `metrics.json` files.
+- Prepared inference inputs: corresponding `sample.json` and images/masks. No GT fields are present in these manifests.
+- Local development `answers.json` contains seeds; remote run caches contain newly computed answers too. The prediction records preserve cache-hit flags. Reuse individual question answers only for identical model/prompt/image bytes and unchanged inference environment.
+- Actual model: `/workspace/models/qwen3.8-27b`; Python: `/workspace/miniconda/envs/jx/bin/python`. Remote directories: `/workspace/jx/sensei-eval-dev-v1` and `/workspace/jx/sensei-eval-holdout-v1`, with `run.log`, source runner and `data/` outputs. Both runs finished. No packages, model files or unrelated processes changed.
+- Source implementation: `ml/infer_sample.py`, `ml/evaluate_review.py`; tests `ml/test_infer_sample.py`, `ml/test_evaluate_review.py`; full smoke `bash scripts/smoke_test.sh` (11 test methods).
+
+### Reproduction commands
+
+From repository root; choose new output names because preparation and scoring refuse overwriting prior results:
+```bash
+python3 -m ml.evaluate_review prepare data/ground-truth/human-v2-frozen.json --split development --output data/eval-dev-next
+python3 -m ml.evaluate_review score data/ground-truth/human-v2-frozen.json --split development --predictions data/eval-dev-v1/results.json --output data/eval-dev-v1/metrics-check.json
+python3 -m ml.evaluate_review score data/ground-truth/human-v2-frozen.json --split holdout --predictions data/eval-holdout-v1/results.json --output data/eval-holdout-v1/metrics-check.json
+```
+For inference, copy the chosen input directory and runner to a new directory below `/workspace/jx` on knuth. From that remote directory:
+```bash
+/workspace/miniconda/envs/jx/bin/python -B -u -m ml.infer_sample data/eval-dev-v1/sample.json --model /workspace/models/qwen3.8-27b --output data/eval-dev-v1/results.json --answer-cache data/eval-dev-v1/answers.json
+```
+Use the matching `eval-holdout-v1` paths for the existing holdout run. Existing completed results return from cache; changed code/input settings require a new result file. Do not rerun unchanged GPU questions. Copy result/cache JSON back locally before scoring. Never send ground truth into inference prompts.
+
+Timing: development processing total 37.87 s with 17 cached questions; holdout total 34.37 s, no cached questions, median 1.40 s/example, excluding model load, transfer and preparation. These are small-sample measurements, not public-app latency or a measured full-dataset run.
+
+### Next agent's priorities
+
+1. Work only against development labels for tuning; inspect half→full errors. Stock question now allows A empty / B half / C full / D uncertain even when produce is visible. Product capacity and supplied-polygon semantics are explicit. Scores are uncalibrated: do not apply expected-payoff optimisation as if they were calibrated probabilities.
+2. Evaluate a validation-visible path without the visibility gate; include all required prediction keys and disclose fallback policy. Do not spend time on closed-curtain accuracy.
+3. Finish official-format and app snapshot export from actual model predictions. Current `results.json` is diagnostic, NOT submission format; `data/prepared-v1/snapshots.json` is still the disclosed constant fallback.
+4. Run all 1,962 observations only after export/schema checks and a small measured comparison. Connect API/UI and rehearse the demo. No API/UI, public deployment or complete full-dataset model export was verified here.
+5. Keep current labels frozen; any correction requires an explicit new version. Human assisted labels, small sample size, absent negative compliance cases and exposed holdout constrain claims. Preserve files under ignored `data/`; a fresh clone alone is insufficient to reproduce this run.
+
 ## Dataset inspection — 10 October 2026
 
 Source: local `new_dataset_hackathon_junctionx_10_oct_2026_v2/`, containing the challenge PDF, `planogram.json` and the train/test image ZIP. No ground-truth annotation file is present in the supplied directory or ZIP; the planogram specifies expected products and geometry, not per-image labels. No explicit train/test subdivision appears inside the ZIP.

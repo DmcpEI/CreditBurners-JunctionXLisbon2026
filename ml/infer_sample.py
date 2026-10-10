@@ -9,15 +9,15 @@ from pathlib import Path
 QUESTIONS = {
     "visibility": "Is the target shelf interior sufficiently visible to inspect? A: yes, including a visibly empty tray. B: no, a lowered/closed curtain, shutter or other obstruction hides the interior. C: insufficient evidence. A raised/open curtain or a narrow shelf edge does not block inspection when the tray interior is visible. Ignore out-of-image padding identified by the mask.",
     "presence": "Is any produce visible inside the target area? A: yes, even one item or a small group at the edge inside the target counts. B: no produce at all; the visible tray is empty. C: cannot determine. Ignore produce outside the target.",
-    "stock": "Produce is visible in the target. How stocked is that target display? A: partly stocked, substantial space remains. B: full or nearly full. C: cannot determine. Judge only real visible tray pixels, not masked padding or adjacent trays.",
+    "stock": "Judge stock ONLY inside the supplied target polygon, relative to the capacity for the visible product type. Ignore shelf space outside the polygon and adjacent trays. A: empty or nearly depleted relative to capacity. B: half, an intermediate amount. C: full or nearly full. D: insufficient evidence. Large fruit fills capacity with fewer items: two large melons in a target that fits roughly six can be half, whereas two lemons in a target that fits many can be empty. These are examples, not universal count thresholds. Visible produce can still be nearly depleted. Ignore black invalid padding; do not equate surface coverage alone with pile volume.",
     "compliance": "Does the visible produce match the expected product {product}? A: matches the product type. B: a different product type is visible. C: no visible produce or insufficient evidence. Printed labels alone are not evidence of the actual product. Do not infer brand or origin from appearance.",
 }
 
 
-def answer_tokens(tokenizer):
+def answer_tokens(tokenizer, codes="ABC"):
     groups = [sorted({ids[0] for text in (code, " " + code)
                       if len(ids := tokenizer.encode(text, add_special_tokens=False)) == 1})
-              for code in "ABC"]
+              for code in codes]
     if any(not group for group in groups) or len(set(sum(groups, []))) != sum(map(len, groups)):
         raise ValueError("Answer codes need distinct single-token encodings")
     return groups
@@ -30,7 +30,7 @@ def inspect_stages(ask):
     def choice(name):
         answers[name] = ask(name)
         value = answers[name]["choice"]
-        if value not in "ABC" or len(value) != 1:
+        if value not in ("ABCD" if name == "stock" else "ABC") or len(value) != 1:
             raise ValueError("Invalid answer code")
         return value
 
@@ -42,10 +42,10 @@ def inspect_stages(ask):
     if presence != "A":
         return dict(answers=answers, visibility="clear", observed_stock="empty" if presence == "B" else None,
                     observed_compliance=None, action="restock" if presence == "B" else "inspect")
-    stock = {"A": "half", "B": "full", "C": None}[choice("stock")]
+    stock = {"A": "empty", "B": "half", "C": "full", "D": None}[choice("stock")]
     compliance = {"A": True, "B": False, "C": None}[choice("compliance")]
     action = ("inspect" if stock is None or compliance is None else
-              "check_product" if not compliance else "check_stock" if stock == "half" else "ok")
+              "restock" if stock == "empty" else "check_product" if not compliance else "check_stock" if stock == "half" else "ok")
     return dict(answers=answers, visibility="clear", observed_stock=stock,
                 observed_compliance=compliance, action=action)
 
@@ -57,7 +57,7 @@ def question_input(name, product, crop_compliance=True):
                    "First image: store camera, target outlined in red. Second image: rectified target crop. Third image: ")
     prompt = (description + "validity mask aligned with the crop; white means real camera pixels, black means outside the camera view. "
               "Ignore those invalid pixels in the crop; they are neither stock nor a physical obstruction. "
-              + QUESTIONS[name].format(product=product) + " Answer exactly A, B or C.")
+              + QUESTIONS[name].format(product=product) + (" Answer exactly A, B, C or D." if name == "stock" else " Answer exactly A, B or C."))
     return keys, prompt
 
 
@@ -110,7 +110,7 @@ def main():
 
     started = time.perf_counter()
     proc = AutoProcessor.from_pretrained(args.model, local_files_only=True)
-    tokens = answer_tokens(proc.tokenizer)
+    tokens = answer_tokens(proc.tokenizer, "ABCD")
     model = AutoModelForImageTextToText.from_pretrained(
         args.model, local_files_only=True, dtype=torch.bfloat16, device_map="cuda").eval()
     torch.cuda.synchronize()
@@ -132,13 +132,14 @@ def main():
                 *[{"type": "image"} for _ in images], {"type": "text", "text": prompt}]}]
             text = proc.apply_chat_template(messages, add_generation_prompt=True, enable_thinking=False)
             inputs = proc(text=[text], images=images, return_tensors="pt").to("cuda")
+            codes = "ABCD" if name == "stock" else "ABC"
             with torch.inference_mode():
                 logits = model(**inputs).logits[0, -1].float()
-                scores = torch.stack([torch.logsumexp(logits[group], 0) for group in tokens])
+                scores = torch.stack([torch.logsumexp(logits[group], 0) for group in tokens[:len(codes)]])
                 probabilities = scores.softmax(0).tolist()
                 mass = (torch.logsumexp(scores, 0) - torch.logsumexp(logits, 0)).exp().item()
-            answer = dict(scores=dict(zip("ABC", probabilities)),
-                                           choice="ABC"[max(range(3), key=probabilities.__getitem__)],
+            answer = dict(scores=dict(zip(codes, probabilities)),
+                                           choice=codes[max(range(len(codes)), key=probabilities.__getitem__)],
                                            allowed_token_mass=mass)
             answer_cache[fingerprint] = answer
             if args.answer_cache:

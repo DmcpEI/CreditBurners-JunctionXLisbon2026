@@ -2,6 +2,8 @@
 
 Status: planned; no deployed app, public URL or rehearsed sequence yet.
 
+Challenge allocation is pending. The script below is for Sensei. If assigned Albatroz, use the fallback in `docs/PLAN.md`: show a panorama, its visible clues, an agent-generated question and revised candidate coordinates with the recorded interactions. Explain one failed hypothesis and the result honestly. Rehearse the required unknown-panorama live solve; clearly labelled cached replay is a presentation backup only, not a valid scoring-run substitute.
+
 ## One-sentence pitch
 We turn existing store cameras into a prioritised list of shelf tasks, with visible evidence so staff can decide what to restock or inspect.
 

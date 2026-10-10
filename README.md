@@ -2,6 +2,8 @@
 
 JunctionX Lisbon 2026
 
+Two-person team: Member1 (ML/evaluation) and Member2 (API/UI/deployment). Challenge allocation is pending. Sensei is the provisional choice described below; the [Albatroz fallback](docs/PLAN.md#albatroz-fallback--panorama-location-assistant) reuses the stack for panorama localisation, evidence, agent questions and JSON interaction logs. We will build only the allocated challenge.
+
 ## The idea
 
 A store assistant that uses existing cameras to identify produce shelves needing attention. Staff get a prioritised list of actions, with images explaining each alert.

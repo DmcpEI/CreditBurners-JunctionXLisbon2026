@@ -1,6 +1,8 @@
-# Plan — Sensei: Fresh eyes on fresh produce
+# Plan — Provisional Sensei choice, Albatroz fallback
 
-Challenge: Sensei. Confirmed team: two people, Member1 and Member2. Switch to QuantumTrace (Inspiring Solutions) only for a fundamental blocker (data unusable or crops unreadable), not for "no edge yet". Final validation is only available at the end; that is an expected constraint, not a reason to switch. Otherwise cut scope.
+Challenge allocation is not locked. Sensei is our provisional first choice; if assigned Albatroz, use the fallback at the end of this document instead. Confirmed team: two people, Member1 and Member2. Build only the allocated challenge, not both. For Sensei, final validation is only available at the end; that is an expected constraint, not a reason to switch. Cut scope if progress is slow.
+
+The sections below describe Sensei until the Albatroz fallback section.
 
 ## Objective
 > A store assistant that uses existing cameras to tell staff which produce shelves need attention, why, and what to do next.
@@ -142,3 +144,50 @@ If behind, drop optional laptop benchmarking and fresh inference first, then unp
 - Validation from another day → timeline edge mostly lost; fall back to cost-aware VLM.
 - knuth: `/workspace` only, ~37 GB free at last inspection; never delete pre-existing files. Public hosting/network access still needs testing. Wi-Fi: test SSH over phone hotspot.
 - Phone photos differ from ceiling-camera crops; upload accuracy is unproven. Queue fresh requests and measure latency before promising a response time.
+
+## Albatroz fallback — panorama location assistant
+
+### Goal and demo
+Given a supplied 360-degree panorama, suggest plausible coordinates and explain the visible evidence. The agent may ask a useful multiple-choice question when uncertain. Show the panorama, observed clues, ranked candidates and a replayable interaction log. The presentation story is **image → evidence → question → revised location**, with uncertainty visible rather than invented certainty.
+
+This is the brief's geographic reasoning game, not a validated emergency-location service. Images are mainly from Portugal, with Spain and France also represented; open fields are possible, not just roads. Prioritise a working live solve over public hosting polish: the challenge includes an unknown panorama during the presentation.
+
+### Same team and stack
+- **Member1 (`ml/`):** Python + existing Qwen3.8 on knuth. Start with one permitted input and a direct baseline producing observations, candidate coordinates and a concise evidence summary. Separate visible facts from guesses. If permitted, use automatic perspective views of the panorama to preserve detail; do not rely on a tiny downscaled whole image. No SAM 3, DINOv3 or model training in the core.
+- **Member2 (`api/`, `ui/`):** Spring Boot + React/Tailwind. Start with a synthetic panorama-session fixture, display the image and candidate list, capture agent-generated multiple-choice answers, and export the complete JSON interaction log. A map is optional after the list works.
+- **Together:** confirm input/tool rules first, integrate one real solve, test the log with mentors, and rehearse. Same JSON/file storage and optional HTTPS/QR hosting; no database. Cached sessions are labelled replays and never passed off as an unknown live solve.
+- Sensei's stock schema does not apply. Before parallel implementation, agree the small session format in `docs/CONTRACT.md`: panorama ID and supplied metadata, chronological interactions, evidence summaries, agent questions/answers, candidate lists and penalty events. The final coordinate list contains only up to ten `(lat,lng)` pairs; evidence belongs in the separate log/UI. Confirm the organisers' exact serialisation.
+
+### Smallest useful method and edge
+1. Extract observable clues: terrain, vegetation, road markings, architecture, signs and coastline. Preserve uncertainty and distinguish observation from interpretation.
+2. Generate a few location hypotheses with coordinates and supporting/contradicting clues. The model proposes coordinates; validate numeric ranges but do not mistake syntactic validity for geographic accuracy.
+3. If ambiguity matters, let the agent generate a question with at most four choices. The human answers only through the approved interaction path. Avoid asking questions that merely restate what is already visible.
+4. Revise candidates, export coordinates and the full interaction log. If approved, one targeted map/search lookup may verify a hypothesis; no sprawling search-agent system or new image database.
+
+Our edge is disciplined evidence and useful questions with few penalties, not confident place-name guessing. Keep a direct single-pass baseline and measure whether extra questions actually improve known-location practice cases. When training truth is withheld, report plausibility, latency and valid outputs rather than claiming location accuracy.
+
+### Scoring and rules that affect the design
+- At most ten coordinates, with each rank discounted by `0.95^(rank-1)`. The score sums all entries, not just the best one; repeating a coordinate is explicitly allowed. Do not scatter guesses automatically: consider expected distance score, and confirm how repeated entries are submitted.
+- Human free-text cues are at most 1,000 characters and cost a factor of 0.8 each. Direct or indirect location/site hints are forbidden. Agent-generated multiple-choice questions have at most four options and cost 0.95 each, even when answered incorrectly; the team must not suggest the options.
+- Human conversion of an agent's textual place into coordinates costs 0.5. These interaction penalties apply to subsequent candidate locations, so preserve chronological outputs and penalty events rather than attaching one final penalty to the whole history.
+- Urban and non-urban distance functions differ; use the supplied category. Distances below 10 m count as exact. The identified "Special One" carries a 3x factor, so reserve meaningful solving time for it without abandoning the other panoramas.
+- Every interaction must be recorded in JSON. Keep observed evidence and concise decision summaries, tool results and human inputs; do not fabricate a reasoning history after the run.
+
+### Questions before implementation
+- The brief says only text and multiple-choice clicks may be fed by the team during scoring: how is the initial panorama provided to our model? Are automatic crops/perspective views, OCR and model-initiated web/map lookups permitted? Do not assume image uploads or transformed inputs are allowed until clarified.
+- Which startup prompts and tool interactions count as penalised cues? How must chronology, repeated coordinates and human coordinate conversion be represented in the log? Ask mentors to validate a sample log.
+- Confirm the exact distance formula, coordinate submission format, allotted 60-minute slot, allocation of time between panoramas and the presentation solve. May sample panoramas be published in our demo?
+
+### Two-person schedule and cuts
+| When | Member1 | Member2 / shared checkpoint |
+|---|---|---|
+| First 30 min after allocation | Confirm rules together; inspect one panorama | Agree session/log format and create synthetic UI fixture |
+| Next 2 hours | Direct model baseline → candidate coordinates and evidence | Image + candidate list + interaction log; connect the real baseline |
+| Before Sat 19:00 | Test a small set; inspect failure cases and bound inference time | Validate log with mentors; question/answer flow and export work |
+| Sat 19:00–21:00 | Use the second set for the optional two-hour trial | Time the full workflow, check compliance and capture the demo journey |
+| Overnight / Sun before 10:00 | One measured improvement, then freeze; sleep | Polish evidence view, rehearse an unknown solve, test connection/fallback |
+| Sun 10:00–13:00 | Official solve during our assigned 60-minute window | Operate UI, track time/penalties and verify export; prepare the separate live presentation panorama |
+
+Allocate the official time across all scoring panoramas, the 3x panorama and final export, once the slot rules are confirmed. Cached replay is only a presentation backup, not a substitute for the official unknown-image run.
+
+Cut first: map polish, public upload mode, multi-agent search, extra models and automatic retrieval. Preserve the direct solve, compliant questions, valid coordinates, complete logs and live presentation. Main risks: unclear input rules, confident geographic hallucinations, lack of training ground truth and losing the timed run to network/model latency.

@@ -17,7 +17,7 @@ export const taskDescription = area => {
   if (area.stock_level === 'empty') return 'Shelf appears empty. Check for a restock.';
   if (!area.planogram_compliant) return 'Check the produce against the expected product.';
   if (area.stock_level === 'half') return 'Stock appears partly depleted. Check the shelf.';
-  return 'No stock or product issue flagged.';
+  return area.product_assessed === false ? 'No stock issue flagged. Product match was not assessed.' : 'No stock or product issue flagged.';
 };
 export function areaHref(location, id) {
   const params = new URLSearchParams(location);
@@ -30,6 +30,6 @@ export function assessmentFacts(area) {
   if (area.fallback_used || area.visibility !== 'clear' || (area.prediction_source === 'mock' && !area.manual_preview)) return [];
   return [
     {label: {empty:'Empty', half:'Half stocked', full:'Full'}[area.stock_level], tone: {empty:'restock',half:'low',full:'okay'}[area.stock_level]},
-    {label: area.planogram_compliant ? 'Expected product matches' : 'Product mismatch', tone: area.planogram_compliant ? 'okay' : 'mismatch'}
+    {label: area.product_assessed === false ? 'Product not assessed' : area.planogram_compliant ? 'Expected product matches' : 'Product mismatch', tone: area.product_assessed === false ? 'inspect' : area.planogram_compliant ? 'okay' : 'mismatch'}
   ];
 }

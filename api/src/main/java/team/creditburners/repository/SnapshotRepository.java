@@ -12,10 +12,11 @@ import tools.jackson.databind.json.JsonMapper;
 public class SnapshotRepository {
     private final Map<String, JsonNode> snapshots = new LinkedHashMap<>();
     private final Map<String, Path> assets = new HashMap<>();
-    public SnapshotRepository(@Value("${sensei.data-dir:data/prepared-v1}") String directory) throws IOException {
+    public SnapshotRepository(@Value("${sensei.data-dir:data/prepared-v1}") String directory,
+            @Value("${sensei.snapshots-file:results/qwen3.8-27b-stockonly-half020-full-v1/snapshots.json}") String snapshotsFile) throws IOException {
         Path root = Path.of(directory).toRealPath();
         Path assetRoot = root.resolve("assets").toRealPath();
-        JsonNode data = JsonMapper.builder().build().readTree(root.resolve("snapshots.json").toFile());
+        JsonNode data = JsonMapper.builder().build().readTree(Path.of(snapshotsFile).toFile());
         if (!data.isArray()) throw new IllegalArgumentException("snapshots.json must contain an array");
         for (JsonNode snapshot : data) {
             String id = snapshot.path("snapshot_id").asText();

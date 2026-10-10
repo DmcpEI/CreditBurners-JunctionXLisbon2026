@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import {manualPreview} from './manualPreview';
+import {hasProductAssessment,withAssessmentMetadata} from './assessmentMetadata';
 import useSnapshots from './useSnapshots';
 import ObservationToolbar from './ObservationToolbar';
 import TaskList from './TaskList';
@@ -16,10 +17,9 @@ import {transitionShelf} from './useShelfMotion';
 export default function SnapshotBrowser() {
   const browser = useSnapshots();
   const {snapshot: originalSnapshot, storeSnapshots: originalStoreSnapshots, storeView, summaries, location, mode, navigate, loading, error, selectMode} = browser;
-  // Temporary demo default until Member1 results are integrated; demo=0 shows original records.
-  const demo = mode === 'shelves' && location.demo !== '0';
-  const snapshot = demo ? manualPreview(originalSnapshot) : originalSnapshot;
-  const storeSnapshots = demo ? originalStoreSnapshots.map(manualPreview) : originalStoreSnapshots;
+  const demo = mode === 'shelves' && location.demo === '1';
+  const snapshot = withAssessmentMetadata(demo ? manualPreview(originalSnapshot) : originalSnapshot);
+  const storeSnapshots = originalStoreSnapshots.map(s=>withAssessmentMetadata(demo ? manualPreview(s) : s));
   const area = snapshot?.areas.find(a => a.area_id === location.area);
   const displayedSnapshots = storeView ? storeSnapshots : (snapshot ? [snapshot] : []);
   const displayedAreas = displayedSnapshots.flatMap(s => s.areas.map(a => ({...a, snapshot_id: s.snapshot_id, camera_id: s.camera_id, captured_at: s.captured_at, prediction_source: s.prediction_source})));
@@ -60,6 +60,7 @@ export default function SnapshotBrowser() {
     <header className="app-header"><a className="brand" href="/" aria-label="Sensei home">sensei<span className="brand-divider" aria-hidden="true"/><span className="brand-description">Shelf assistant</span></a><nav className="app-nav" aria-label="Main pages"><button aria-current={mode==='shelves' ? 'page' : undefined} onClick={()=>selectMode('shelves')}>Store view</button><button aria-current={mode==='study' ? 'page' : undefined} onClick={()=>selectMode('study')}>Shelf study</button></nav><div className="header-tools"><span className="recorded-label">Recorded dataset</span>{mode==='shelves' && <AlertsPanel areas={alerts} unavailable={displayedAreas.filter(a => a.fallback_used || (a.prediction_source === 'mock' && !a.manual_preview)).length} busy={loading || !!error || !displayedAreas.length} onOpen={openShelf}/>}</div></header>
     <main id="main-content">
       {demo && <aside className="manual-preview-notice"><strong>Demo · Simulated alerts</strong><p>Manual statuses on real photos. Not model predictions.</p><button onClick={() => navigate({demo:'0'},true)}>Exit preview</button></aside>}
+      {snapshot && !hasProductAssessment(snapshot) && <aside className="baseline-notice"><strong>Saved stock predictions · Product match not assessed</strong><p>This run predicts stock. Product compliance is fixed to true in the export, not verified from the image.</p></aside>}
       <div className="overview-content">
         <div className={`page-heading ${mode==='study' ? 'study-page-heading' : ''}`}><div><p className="section-kicker">Sensei / Produce workspace</p><h1>{mode==='study' ? 'Shelf study.' : <>Fresh eyes.<br/><span>Better shelves.</span></>}</h1><p>{mode==='study' ? 'Explore recorded images and compare shelf observations over time.' : 'Latest recorded images. Find your product and review the evidence.'}</p></div>{snapshot && mode==='shelves' && <figure className="store-preview"><Evidence url={snapshot.image_url} alt={`Recorded store view from camera ${snapshot.camera_id}`}/><figcaption><span>Camera {snapshot.camera_id}</span><span>{timeLabel(snapshot.captured_at)} · Recorded image</span></figcaption></figure>}</div>
         {mode==='shelves' && <ObservationToolbar browser={browser}/>}

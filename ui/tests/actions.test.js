@@ -42,3 +42,11 @@ test('manual preview is explicit and does not mutate saved records', () => {
   assert.deepEqual(preview.areas.map(a=>a.stock_level),original.areas.map(a=>a.stock_level));
   assert.equal(preview.areas.every(a=>a.manual_preview),true);
 });
+
+import {withAssessmentMetadata} from '../src/features/snapshots/assessmentMetadata.js';
+test('stock-only presentation does not claim verified product matches',()=>{
+ const original={run_id:'qwen3.8-27b-stockonly-half020-full-v1',areas:[{stock_level:'full',visibility:'clear',fallback_used:false,planogram_compliant:true}]};
+ const area=withAssessmentMetadata(original).areas[0];
+ assert.deepEqual(assessmentFacts(area).map(fact=>fact.label),['Full','Product not assessed']);
+ assert.equal(original.areas[0].product_assessed,undefined);
+});

@@ -19,3 +19,7 @@ test('explicit preview includes preserved baseline values and never fabricates t
  assert.deepEqual(result.series.map(point=>[point.half,point.unknown]),[[1,0],[1,0]]);
  assert.equal(studyStats([{...snapshots[0],areas:[{...snapshots[0].areas[0],manual_preview:false}]}],{includePreview:true}).assessed,0);
 });
+test('stock-only run counts stock but never treats fixed compliance as assessed',()=>{
+ const result=studyStats([{...frame('2025-06-27T10:00:00Z','empty'),run_id:'qwen3.8-27b-stockonly-half020-full-v1'}]);
+ assert.equal(result.assessed,1);assert.equal(result.empty,1);assert.equal(result.productAssessed,0);assert.equal(result.mismatch,0);
+});

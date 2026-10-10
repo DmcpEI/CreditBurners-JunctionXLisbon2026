@@ -74,13 +74,63 @@ Coverage is not pile volume (removing a top layer barely changes it). The VLM ma
 ## Product (`api/` + `ui/`)
 - **Needs attention:** product, shelf location, observation time, image and suggested action. Start with a declared severity order (empty, mismatch, half); it is not an estimate of euros lost. Obstructed observations visibly require inspection rather than claiming certainty.
 - **Show me why:** large current crop, reference with its own timestamp, short explanation, and visibility limitations. Colour is never the only status indicator.
-- **Watch the day:** camera/time selection and a short replay of actual observations. Label it "Recorded store replay"; show the capture time separately from processing time. Select a real depletion, mismatch or restock sequence after inspecting the data.
+- **Shelf study:** move historical camera/time selection and recorded replay into a separate study page, as specified below. Keep routine store browsing focused on the latest saved image per camera.
 - **Stretch: Analyse now:** fresh inference on an approved store image, with a progress state and measured turnaround. Label saved results as saved, and fresh inference as fresh. Fresh processing of a historical image is not a live camera feed.
 - **Further stretch: Try a photo:** upload/take a photo of one produce tray and select its expected product. No arbitrary whole-store uploads. Stock estimation is experimental without a suitable full-tray reference; no borrowed Sensei planogram or same-day history. Test a physical fruit-tray demo before offering it to judges.
 - Optional "mark checked" is a staff acknowledgement, not proof stock improved. A later actual observation can establish restocking; do not simulate it as a measured result.
 - Keep the mobile interface simple: readable text, large evidence images, clear actions, loading/error states. No chatbot, freshness claims, exact hidden-item counts or unvalidated forecasting.
 - Exact Sensei export and richer app records are separate formats in `docs/CONTRACT.md`. Pitch and fallback behaviour live in `docs/DEMO.md`.
 - **MongoDB only with a confirmed prize:** one ordinary `observations` collection keyed by camera, image, area, run; images/embeddings stay outside; polling, not Change Streams (not supported on time-series collections). Local JSON stays the submission source and offline fallback.
+
+### Two-page app revision — implemented navigation and archive, real inference integration pending
+
+Implementation status: Store view/Shelf study navigation, latest-camera view, historical archive, shared evidence tools and assessment-gated summary logic are implemented. Current data remains baseline-only; real model integration and public hosting are still pending.
+
+Keep the current React/Spring app, visual identity, photo cards, alerts, fullscreen evidence viewer, planogram polygons and mobile previous/next controls. Adapt the existing store overview and replay rather than building a second app. Add two navigation links at the top: **Store view** and **Shelf study**. The PDF's core remains per-area stock and planogram compliance; historical study supports that purpose rather than becoming sales analytics.
+
+**Page 1 — Store view (staff, beginning of shift)**
+- Show exactly one latest saved image per camera, ordered by capture time within that camera, and all its planogram areas. Never retain an old study-frame selection when returning to Store view.
+- Provide camera photo cards and the existing all-area product search/alert filters; selecting a camera opens its full image with clickable polygons and every associated crop. A camera filter may narrow the view but does not expose a historical time picker.
+- Selecting a crop opens evidence and both stock/compliance indicators. Staff can switch areas without leaving the camera, using polygons, selector or previous/next controls.
+- Keep the bell linked to tasks from these latest observations only. Include both issues when a shelf is empty and mismatched; full stock with the wrong product still needs review. Unassessed and illustrative results must not appear to be reliable operational findings.
+- Label this **Latest recorded view**, not a live feed. Each camera may have a different capture time; show its actual date/time, not a single unsupported store-wide timestamp. A later actual live source can use the same layout.
+
+**Page 2 — Shelf study (historical evidence, manager review)**
+- First choose a camera, then show every published image for it in chronological order with its date/time. The current dataset has 181 images, 14 cameras and 12–14 frames per camera, with approximately 60–78 minutes between frames.
+- Opening an image reuses the interactive full-camera map, crop detail and fullscreen viewer. Keep a selected area when changing frames of the same camera if that area exists; otherwise explain its absence. Preserve camera, frame and area in the URL and Back navigation.
+- Reuse manual previous/next frame navigation and the existing optional recorded replay. Move the historical time selector here; do not leave it on Store view.
+- First release is the image archive and area timeline. Once real Member1 outputs are integrated, add only a few per-camera/per-area summaries with drill-down to their source images.
+
+| Study question | Supported presentation | Limit |
+|---|---|---|
+| Which shelves were observed empty? | Number and share of assessed observations marked empty, with timestamps and photos | Sampled observations, not hours empty or exact stockout duration |
+| Where did stock levels change? | Adjacent clear assessed states such as full → half, half → empty, or empty → half/full | Describe observed decreases/increases, not proven purchases or replenishment events; unknown intervals break comparisons |
+| Where did planogram mismatches appear? | Mismatch observations / assessed comparable observations, by area and camera | Not measured model accuracy; one mismatch across several frames may be one unresolved issue |
+| Which areas need repeated review? | Repeated empty/mismatch observations for the same area, with their history | Do not imply independent incidents or duration between captures |
+| How much evidence is usable? | Frames and areas available, missing/unassessed/obstructed observations | Distinguish visibility assessment from ML fallback and missing coverage |
+
+Do not rank cameras by raw alert totals: they have different numbers of areas and frames. Show numerator, denominator and unassessed coverage when comparing rates. Do not aggregate empty/half/full as item counts or treat `stock_value=0.5` as a measured 50% of inventory. Repeated products remain separate areas; optional product grouping must preserve those areas and use exact catalogue identity if available.
+
+**Claims outside the available evidence**
+- No most-purchased products, units sold, revenue, waste, customer footfall, busiest-camera ranking or time-to-empty forecasts from the supplied snapshots alone.
+- Photos may show visible people or changes, but no person tracking or movement metric exists in the current contract. A future explicitly evaluated visual-change measure would be a proxy, not sales or footfall.
+- Charts describe model predictions on sampled images, not ground truth. Do not show accuracy percentages without labels. Exclude mocks/manual preview/fallback records from study statistics; show an unavailable state until enough comparable real predictions exist. Manual preview can demonstrate presentation, never trends or measured conclusions.
+- Disclose retrospective model context wherever applicable. Later-image context is not a historical live decision.
+
+**Mobile layout**
+- Two clear top navigation items. Keep Store view compact: search, tasks and images close to the first screen; keep larger branding treatment on desktop.
+- Camera cards show capture date/time and number of areas. The study camera picker and date/time selection stay accessible without overcrowding the screen.
+- Use a vertical frame archive and stacked study summaries. Avoid wide tables or tiny chart targets; every summary links to readable evidence.
+- Reuse fixed thumb-reachable previous/next shelf controls, stable scroll, touch targets, focus/Back restoration and reduced-motion behavior. Frame controls must be clearly distinguished from shelf controls.
+
+**Delivery order and scope cut**
+1. Adapt navigation and guarantee latest-per-camera Store view; move historical controls to Shelf study. Preserve the existing demo path and no-inference browsing.
+2. Ship the historical image archive using the existing endpoints/cache and shared evidence components. Verify original capture times, same-area frame switching, Back/deep links, errors and mobile widths.
+3. Integrate Member1's complete real snapshots, remove the temporary default manual preview, and check baseline/mock/unknown exclusions.
+4. Add empty/mismatch observation summaries and observed stock transitions only after step 3; test their denominators and unknown-gap behavior. Keep the official scoring/export in Member1's area.
+5. Rehearse latest view → task → camera evidence → historical comparison. Public HTTPS/QR, image-publication permission and laptop fallback remain required work.
+
+The full study/analytics implementation exceeds a 30-minute task. If time is tight, ship steps 1–3 and the archive; cut charts, product ranking and any new inference pipeline. Login, assignment, push notifications and completion tracking remain separate future work. No new API shape or ML output is assumed; coordinate contract changes before introducing additional fields.
 
 ## Stack and hosting
 - **ML:** Python + PyTorch on knuth; Qwen3.8 with SAM 3 / DINOv3 retained only when they improve measured results.
@@ -95,14 +145,14 @@ Coverage is not pile volume (removing a top layer barely changes it). The VLM ma
 
 ## Roles
 - **Member1:** crops, model inference, exact submission export, scorer, labelling, evaluation, error analysis and final validation run. Start with one actual camera image and plain Qwen3.8; deliver every area's prediction in the agreed JSON formats.
-- **Member2:** Spring API, React list/detail/replay, public hosting, QR code, mobile presentation and laptop fallback. Start with a synthetic contract fixture; replace it with Member1's real outputs as soon as available. No database required for the core.
+- **Member2:** Spring API, React Store view/Shelf study with shared list/detail/replay, public hosting, QR code, mobile presentation and laptop fallback. Start with a synthetic contract fixture; replace it with Member1's real outputs as soon as available. No database required for the core.
 - **Together:** inspect the first image/planogram and confirm the contract, answer mentor questions, integrate the first real result, select demo evidence and rehearse. Member1 explains methods/results; Member2 leads the product demonstration.
 - Agents assist only with explicitly assigned bounded tasks, in their own worktrees; no third human or continuously available agent is assumed in the schedule.
 
 ## Two-person scope
-- Must ship: valid Sensei output, a measured baseline, one integrated list/detail flow, a short recorded replay, public QR access and a local fallback.
+- Must ship: valid Sensei output, a measured baseline, latest-per-camera Store view with integrated list/detail, a Shelf study image archive with a short recorded replay, public QR access and a local fallback.
 - One improvement only after the baseline and integration work; choose it from observed errors, not model novelty.
-- Fresh inference on an approved image is the first optional product extension. Phone uploads, physical tray demo, MongoDB, store map and forecasting are deferred.
+- Fresh inference on an approved image is the first optional product extension. Phone uploads, physical tray demo, MongoDB, a floor-plan store map and forecasting are deferred. The existing camera-image polygon overlay stays in scope; study charts depend on integrated real results.
 - Laptop inference remains an optional efficiency experiment after the core is stable. Compare the same held-out examples, score, memory and latency; claim only the hardware actually tested. It must not delay submission or the public demo.
 
 ## Schedule

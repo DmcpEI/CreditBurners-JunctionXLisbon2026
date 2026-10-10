@@ -497,3 +497,7 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .store-preview-mosaic > :first-child { grid-row: span 2; }
 .store-preview-mosaic img { object-fit: cover; min-height: 0; }
 @media (max-width: 760px) { .store-camera-picker { align-items: stretch; flex-direction: column; gap: 14px; padding: 16px 0; margin: 14px 0 20px; }.store-camera-picker strong { font-size: 22px; }.store-camera-picker label { justify-content: space-between; }.store-camera-picker select { flex: 1; min-width: 0; }.store-camera-picker .section-kicker { display: none; } }
+
+.store-camera-picker { border: 0; padding: 0; margin: 18px 0 24px; justify-content: flex-start; }
+.store-camera-picker select { background: #f8f7f4; }
+@media (max-width: 760px) { .store-camera-picker { margin: 14px 0 20px; padding: 0; } }

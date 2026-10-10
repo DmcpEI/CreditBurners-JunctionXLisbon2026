@@ -23,6 +23,13 @@ class AnswerTokenTests(unittest.TestCase):
         self.assertEqual(question_input("stock", "x"), question_input("stock", "x", stock_prompt="v1"))
         self.assertNotEqual(question_input("stock", "x")[1], question_input("stock", "x", stock_prompt="v2")[1])
         self.assertEqual(question_input("presence", "x"), question_input("presence", "x", stock_prompt="v2"))
+        self.assertEqual(question_input("stock", "x", stock_crop_only=True)[0], ("crop", "mask"))
+        self.assertEqual(question_input("stock", "x")[0], ("context", "crop", "mask"))
+        # skipped stages: asked only presence+stock, compliance assumed true
+        asked = []
+        out = inspect_stages(lambda n: asked.append(n) or {"choice": "C" if n == "stock" else "A"}, ("presence", "stock"))
+        self.assertEqual(asked, ["presence", "stock"])
+        self.assertEqual((out["visibility"], out["observed_stock"], out["observed_compliance"]), ("clear", "full", True))
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "image"
             path.write_bytes(b"original")

@@ -41,7 +41,7 @@ def select_samples(index, exposed):
 
 
 PACKAGED = re.compile(r'EMB|(?<![/\d])\d+(?:[.,]\d+)?\s*(?:G|GR|KG)\b')  # weight in name; '73/85 KG' is a loose caliber
-SPLIT_COUNTS = dict(development=50, holdout=20, evaluation=70)
+SPLIT_COUNTS = dict(development=50, holdout=20, fresh=70)  # v2; existing-area pools by split + never-used areas
 
 
 def spread(rows, k):
@@ -54,8 +54,8 @@ def hashed(text):
     return hashlib.sha256(text.encode()).hexdigest()
 
 
-def select_expansion(index, previous_items, exposed, excluded_images, counts=SPLIT_COUNTS):
-    """New observations only. Old areas keep their split; never-used areas form a new evaluation group."""
+def select_expansion(index, previous_items, exposed, excluded_images, counts=SPLIT_COUNTS, fresh_split='evaluation'):
+    """New observations only. Old areas keep their split; never-used areas form the fresh_split group."""
     split = {x['area_id']: x['split'] for x in previous_items}
     for area in exposed - set(split):
         split[area] = 'development'  # used in prompt experiments: never evaluation
@@ -66,8 +66,10 @@ def select_expansion(index, previous_items, exposed, excluded_images, counts=SPL
             continue
         areas[row['area_id']].append(row)
     result = []
-    for name in ('development', 'holdout'):
+    for name in ('development', 'holdout', 'evaluation'):
         pool = sorted((a for a, s in split.items() if s == name), key=hashed)
+        if not counts.get(name):
+            continue
         base, extra = divmod(counts[name], len(pool))
         for i, area in enumerate(pool):
             result += [dict(r, split=name) for r in spread(areas[area], base + (i < extra))]
@@ -75,7 +77,7 @@ def select_expansion(index, previous_items, exposed, excluded_images, counts=SPL
     for area, rows in areas.items():
         if area not in split:
             by_camera[rows[0]['camera_id']].append(area)
-    per_camera, seen_products = counts['evaluation'] // len(by_camera), set()
+    per_camera, seen_products = counts.get('fresh', 0) // max(len(by_camera), 1), set()
     for camera in sorted(by_camera):
         # packaged first, then products not yet chosen, then a stable hash order
         names = sorted(by_camera[camera], key=lambda a: (not PACKAGED.search(areas[a][0]['product_name']),
@@ -90,7 +92,7 @@ def select_expansion(index, previous_items, exposed, excluded_images, counts=SPL
             if frames[j] == 1:
                 target = times[min(len(times)-1, int((j+0.5)*len(times)/len(chosen)))]
                 picks = [r for r in picks if r['area_id'] != area] + [min(areas[area], key=lambda r: abs(int(Path(r['image_file']).stem)-int(Path(target).stem)))]
-        result += [dict(r, split='evaluation') for r in picks]
+        result += [dict(r, split=fresh_split) for r in picks]
     return result
 
 
@@ -151,35 +153,35 @@ def render_page(output, suggestions=None, references=None):
                                      .replace('__REFERENCES__', safe(references or {})))
 
 
-def build_expansion(prepared, dataset, previous_dir, labels, output, excluded_images):
-    """Versioned 140-crop expansion; previous manifest, labels and browser storage stay untouched."""
+def build_expansion(prepared, dataset, previous_dirs, label_paths, output, excluded_images, counts=SPLIT_COUNTS, fresh_split='evaluation'):
+    """Versioned expansion; previous manifests, labels and browser storage stay untouched."""
     if output.exists():
         raise ValueError('Output already exists; preserve this fixed set and choose a new directory')
-    previous = json.loads((previous_dir/'manifest.json').read_text())
-    exposed = set()
-    for sample in prepared.parent.glob('*/sample.json'):
+    previous = [json.loads((d/'manifest.json').read_text()) for d in previous_dirs]
+    exposed = set()  # areas used in prompt/rule experiments (not full-dataset runs, which cover every area)
+    for sample in [*prepared.parent.glob('qwen*/sample.json'), *prepared.parent.glob('eval*/sample.json')]:
         exposed.update(s['area_id'] for s in json.loads(sample.read_text()))
-    rows = select_expansion(json.loads((prepared/'index.json').read_text()), previous['items'], exposed, excluded_images)
+    rows = select_expansion(json.loads((prepared/'index.json').read_text()), [x for m in previous for x in m['items']],
+                            exposed, excluded_images, counts, fresh_split)
     cameras = load_planogram(dataset/'planogram.json')
     assets = output/'assets'
     assets.mkdir(parents=True)
     items = [make_item(row, prepared, cameras, assets) for row in rows]
-    manifest = dict(schema_version=2, previous_set_id=previous['set_id'], protocol=dict(
+    manifest = dict(schema_version=2, previous_set_id=previous[-1]['set_id'], protocol=dict(
         revision='sensei-box-capacity-v3',
         stock='Judge only the supplied polygon, relative to capacity for this product (not the whole physical tray). Empty includes nearly depleted; half is intermediate; full is full/nearly full. Two large fruits may be half while two lemons may be empty; examples, not count thresholds. Uncertain when ambiguous.',
         compliance='Visible product type matches the expected product; no cultivar, brand or origin from appearance. A genuinely empty area is compliant; near-empty stock of a wrong product can be non-compliant.',
-        splits='Areas keep their v1 split (development/holdout); areas used in any experiment are development; never-used areas form the evaluation group. Do not tune on holdout or evaluation.',
+        splits=f'Areas keep their earlier split; areas used in any experiment are development; never-used areas form the {fresh_split} group. Do not tune on holdout or evaluation.',
         exclusions='Closed-curtain images ' + ', '.join(f'{c}/{f}' for c, f in sorted(excluded_images)) + ' excluded.'), items=items)
     manifest['set_id'] = hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()[:16]
     (output/'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
-    review = json.loads(labels.read_text())
     references = defaultdict(list)
-    for item in review['items']:
+    for item in (x for path in label_paths for x in json.loads(path.read_text())['items']):
         references[item['area_id']].append(dict(captured_at=item['captured_at'], split=item['split'], **{
             k: item['label'][k] for k in ('visibility', 'stock_level', 'planogram_compliant', 'notes')}))
     (output/'references.json').write_text(json.dumps(references, indent=2)+'\n')
     render_page(output, {}, references)
-    print(f'{len(items)} observations; ' + '; '.join(f'{sum(x["split"]==s for x in items)} {s}' for s in SPLIT_COUNTS)
+    print(f'{len(items)} observations; ' + '; '.join(f'{sum(x["split"]==s for x in items)} {s}' for s in ('development', 'holdout', 'evaluation'))
           + f'; set {manifest["set_id"]}')
 
 
@@ -188,8 +190,10 @@ if __name__ == '__main__':
     parser.add_argument('--prepared', type=Path, default=Path('data/prepared-v1'))
     parser.add_argument('--dataset', type=Path, default=Path('new_dataset_hackathon_junctionx_10_oct_2026_v2'))
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--expand-from', type=Path, help='Previous review set dir: build the versioned 140-crop expansion')
-    parser.add_argument('--labels', type=Path, default=Path('data/ground-truth/human-v2-frozen.json'))
+    parser.add_argument('--expand-from', type=Path, action='append', help='Previous review set dir(s): build a versioned expansion')
+    parser.add_argument('--labels', type=Path, action='append', help='Frozen labels shown as read-only references')
+    parser.add_argument('--counts', type=json.loads, default=SPLIT_COUNTS, help='JSON: development/holdout/evaluation = new frames of existing areas, fresh = never-used areas')
+    parser.add_argument('--fresh-split', default='evaluation', choices=['development', 'holdout', 'evaluation'])
     parser.add_argument('--exclude-image', action='append', default=[], metavar='CAMERA/FILE',
                         help='Confirmed closed-curtain image to leave out')
     parser.add_argument('--suggestions', type=Path, help='Only re-render index.html of --output with these suggestions')
@@ -198,7 +202,7 @@ if __name__ == '__main__':
         render_page(args.output, json.loads(args.suggestions.read_text()),
                     json.loads((args.output/'references.json').read_text()))
     elif args.expand_from:
-        build_expansion(args.prepared, args.dataset, args.expand_from, args.labels, args.output,
-                        {tuple(x.split('/')) for x in args.exclude_image})
+        build_expansion(args.prepared, args.dataset, args.expand_from, args.labels or [Path('data/ground-truth/human-v2-frozen.json')],
+                        args.output, {tuple(x.split('/')) for x in args.exclude_image}, args.counts, args.fresh_split)
     else:
         build(args.prepared, args.dataset, args.output)

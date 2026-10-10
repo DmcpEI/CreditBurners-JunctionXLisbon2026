@@ -28,8 +28,11 @@ def answer_tokens(tokenizer, codes="ABC"):
     return groups
 
 
-def inspect_stages(ask):
-    """Stop before asking questions the image cannot support."""
+ALL_QUESTIONS = ("visibility", "presence", "stock", "compliance")
+
+
+def inspect_stages(ask, questions=ALL_QUESTIONS):
+    """Stop before asking questions the image cannot support. Skipped stages assume visible / present / compliant."""
     answers = {}
 
     def choice(name):
@@ -39,24 +42,24 @@ def inspect_stages(ask):
             raise ValueError("Invalid answer code")
         return value
 
-    visibility = choice("visibility")
+    visibility = choice("visibility") if "visibility" in questions else "A"
     if visibility != "A":
         return dict(answers=answers, visibility="occluded" if visibility == "B" else "unknown",
                     observed_stock=None, observed_compliance=None, action="inspect")
-    presence = choice("presence")
+    presence = choice("presence") if "presence" in questions else "A"
     if presence != "A":
         return dict(answers=answers, visibility="clear", observed_stock="empty" if presence == "B" else None,
                     observed_compliance=True if presence == "B" else None, action="restock" if presence == "B" else "inspect")
     stock = {"A": "empty", "B": "half", "C": "full", "D": None}[choice("stock")]
-    compliance = {"A": True, "B": False, "C": None}[choice("compliance")]
+    compliance = {"A": True, "B": False, "C": None}[choice("compliance")] if "compliance" in questions else True
     action = ("inspect" if stock is None or compliance is None else
               "restock" if stock == "empty" else "check_product" if not compliance else "check_stock" if stock == "half" else "ok")
     return dict(answers=answers, visibility="clear", observed_stock=stock,
                 observed_compliance=compliance, action=action)
 
 
-def question_input(name, product, crop_compliance=True, stock_prompt="v1"):
-    crop_only = name == "presence" or (name == "compliance" and crop_compliance)
+def question_input(name, product, crop_compliance=True, stock_prompt="v1", stock_crop_only=False):
+    crop_only = name == "presence" or (name == "compliance" and crop_compliance) or (name == "stock" and stock_crop_only)
     keys = ("crop", "mask") if crop_only else ("context", "crop", "mask")
     description = ("First image: rectified target crop. Second image: " if crop_only else
                    "First image: store camera, target outlined in red. Second image: rectified target crop. Third image: ")
@@ -88,9 +91,15 @@ def main():
                        help="Diagnostic ablation: product match using crop and mask only")
     parser.add_argument("--answer-cache", type=Path, help="Reuse identical individual questions across staged runs")
     parser.add_argument("--stock-prompt", choices=sorted(STOCK_PROMPTS), default="v1")
+    parser.add_argument("--questions", default=",".join(ALL_QUESTIONS),
+                        help="Stages to ask, e.g. presence,stock for guaranteed-visible validation without compliance")
+    parser.add_argument("--stock-crop-only", action="store_true", help="Stock question sees crop+mask only, no camera context")
     parser.add_argument("--answer-prefix", default="",
                         help='Start the reply with this text (e.g. "Answer: ") for models that explain before answering')
     args = parser.parse_args()
+    questions = tuple(q for q in args.questions.split(",") if q)
+    if not set(questions) <= set(ALL_QUESTIONS) or "stock" not in questions:
+        parser.error("--questions must include stock and only known stages")
     answer_cache = json.loads(args.answer_cache.read_text()) if args.answer_cache and args.answer_cache.exists() else {}
     image_keys = ("crop", "mask") if args.crop_presence_only or args.crop_compliance_only else ("context", "crop", "mask")
     samples = json.loads(args.manifest.read_text())
@@ -99,7 +108,8 @@ def main():
     cache = json.loads(args.output.read_text()) if args.output.exists() else {}
     pending = []
     for sample in samples:
-        digest = hashlib.sha256(Path(__file__).read_bytes() + args.model.encode() + str((args.crop_presence_only, args.crop_compliance_only, args.stock_prompt, args.answer_prefix)).encode()
+        digest = hashlib.sha256(Path(__file__).read_bytes() + args.model.encode() + str((args.crop_presence_only, args.crop_compliance_only, args.stock_prompt, args.answer_prefix)
+                                                                                                + ((questions, args.stock_crop_only) if questions != ALL_QUESTIONS or args.stock_crop_only else ())).encode()
                                 + json.dumps(sample, sort_keys=True).encode())
         for key in image_keys:
             digest.update((args.manifest.parent / sample[key]).read_bytes())
@@ -127,11 +137,11 @@ def main():
     print(f"Loaded in {load_seconds:.1f}s", flush=True)
     for sample, fingerprint in pending:
         started = time.perf_counter()
-        result = dict(sample=sample, fingerprint=fingerprint, model=args.model, stock_prompt=args.stock_prompt, answer_prefix=args.answer_prefix,
+        result = dict(sample=sample, fingerprint=fingerprint, model=args.model, stock_prompt=args.stock_prompt, answer_prefix=args.answer_prefix, questions=questions, stock_crop_only=args.stock_crop_only,
                       load_seconds=load_seconds, scores_uncalibrated=True,
                       input_mode="crop_mask_presence_only" if args.crop_presence_only else "crop_mask_compliance_only" if args.crop_compliance_only else "staged_crop_presence_compliance", answers={})
         def ask(name):
-            keys, prompt = question_input(name, sample["product_name"], stock_prompt=args.stock_prompt)
+            keys, prompt = question_input(name, sample["product_name"], stock_prompt=args.stock_prompt, stock_crop_only=args.stock_crop_only)
             paths = [args.manifest.parent / sample[key] for key in keys]
             # the prefix changes model input, so it must change the cache key (empty keeps old keys valid)
             fingerprint = question_fingerprint(args.model, prompt + ("\n[answer-prefix]" + args.answer_prefix if args.answer_prefix else ""), paths)
@@ -163,7 +173,7 @@ def main():
         elif args.crop_compliance_only:
             result["answers"]["compliance"] = ask("compliance")
         else:
-            result.update(inspect_stages(ask))
+            result.update(inspect_stages(ask, questions))
         torch.cuda.synchronize()
         result["seconds"] = time.perf_counter() - started
         result["peak_vram_gb"] = torch.cuda.max_memory_allocated() / 1e9

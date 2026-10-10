@@ -23,7 +23,7 @@ class LabelSetTests(unittest.TestCase):
                 for c in ('1', '2') for a in range(1, 6) for t in range(100, 1000, 100)]
         previous = [dict(camera_id=c, area_id=f'{c}_1', image_file='100.jpg', split='development') for c in ('1', '2')] + \
                    [dict(camera_id=c, area_id=f'{c}_2', image_file='100.jpg', split='holdout') for c in ('1', '2')]
-        result = select_expansion(rows, previous, {'1_3'}, {('2', '500.jpg')}, dict(development=6, holdout=4, evaluation=4))
+        result = select_expansion(rows, previous, {'1_3'}, {('2', '500.jpg')}, dict(development=6, holdout=4, fresh=4))
         keys = [(r['camera_id'], r['image_file'], r['area_id']) for r in result]
         self.assertEqual(len(keys), len(set(keys)))
         self.assertFalse({('1', '100.jpg', '1_1'), ('2', '100.jpg', '2_1')} & set(keys))
@@ -34,4 +34,4 @@ class LabelSetTests(unittest.TestCase):
         self.assertEqual(split.get('1_3', 'development'), 'development')  # exposed area never in evaluation
         self.assertFalse({a for a, s in split.items() if s == 'evaluation'} & {'1_1', '1_2', '1_3', '2_1', '2_2'})
         self.assertEqual(result, select_expansion(list(reversed(rows)), previous, {'1_3'}, {('2', '500.jpg')},
-                                                  dict(development=6, holdout=4, evaluation=4)))
+                                                  dict(development=6, holdout=4, fresh=4)))

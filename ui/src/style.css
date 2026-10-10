@@ -483,3 +483,7 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
  .map-shelves span { margin-top: 5px; font-size: 11px; line-height: 1.4; }
  .map-navigation { display: none; }
 }
+
+.map-photo { aspect-ratio: 16 / 9; }
+.mobile-crop-heading { display: none; }
+@media (max-width: 760px) { .mobile-crop-heading { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }.mobile-crop-heading strong { font-size: 22px; font-weight: 500; }.mobile-crop-heading span { font-size: 12px; color: #656d5a; } }

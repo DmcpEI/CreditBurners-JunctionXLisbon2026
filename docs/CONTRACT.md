@@ -93,7 +93,8 @@ Committed in `results/<run_id>/` (deliberately tracked for integration; regenera
 
 | Run | Use |
 |---|---|
-| `qwen3.8-27b-ctx640-half020-emptycheck-full-v1` | **Use for the app (current best).** 640 px context, stock question + half rule 0.20, plus a second "empty check" question (empty when ≥ 70% sure; `reason` says "(empty check)"), every area compliant. 5.75 s per camera image. Update `sensei.snapshots-file` to this folder. |
+| `qwen3.8-27b-ctx640-half020-emptycheck-shared-full-v1` | **Use for the app (current best).** Same method as below, both questions answered from one shared image prefix: 4.8 s per camera image. Update `sensei.snapshots-file` to this folder. |
+| `qwen3.8-27b-ctx640-half020-emptycheck-full-v1` | Superseded (questions computed separately, 5.75 s per image; 97% identical answers). |
 | `qwen3.8-27b-stockonly-ctx640-half020-full-v1` | Superseded (no empty check), 2.9 s per camera image. |
 | `qwen3.8-27b-stockonly-half020-full-v1` | Superseded (1280 px context). |
 | `qwen3.8-27b-stockonly-halfrule-full-v1` | Same with half rule v1 (0.15). Superseded. |

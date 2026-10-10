@@ -1,5 +1,7 @@
 # Contract
 
+Scope: Sensei only, pending challenge allocation. If assigned Albatroz, first agree the panorama-session and interaction-log format outlined in `docs/PLAN.md`; do not reuse the stock prediction schema or implement both interfaces.
+
 Status: planned interface for the first implementation; no endpoints exist yet. Keep the scoring export separate from the richer presentation data. Member1 owns prediction semantics; Member2 owns API/UI integration. Coordinate changes before implementation.
 
 ## Endpoints

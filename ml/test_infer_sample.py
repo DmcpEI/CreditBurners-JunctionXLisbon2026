@@ -19,6 +19,10 @@ class AnswerTokenTests(unittest.TestCase):
         self.assertEqual(question_input("compliance", "apple", False)[0], ("context", "crop", "mask"))
         self.assertIn("apple", question_input("compliance", "apple", True)[1])
         self.assertEqual(question_input("compliance", "apple")[0], ("crop", "mask"))
+        # stock prompt variants change only the stock question; v1 stays the default so old caches still match
+        self.assertEqual(question_input("stock", "x"), question_input("stock", "x", stock_prompt="v1"))
+        self.assertNotEqual(question_input("stock", "x")[1], question_input("stock", "x", stock_prompt="v2")[1])
+        self.assertEqual(question_input("presence", "x"), question_input("presence", "x", stock_prompt="v2"))
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "image"
             path.write_bytes(b"original")

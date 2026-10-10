@@ -2,6 +2,22 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Fixed half rule, holdout test — 10 October 2026
+
+Rule (locked in `ml/decision_rule.py`, commit `97bfa39`, before the holdout run): when a stock answer exists and its B score ≥ 0.15, predict `half`; every other decision and fallback unchanged. Threshold chosen in-sample on development; applied **once** to the cached Qwen3.8-27B v1 holdout outputs; no threshold search afterwards. No GPU, prompts or labels changed.
+
+| Split | Before | With rule | Stock | Stock points | Best constant |
+|---|---|---|---|---|---|
+| Development (tuned here) | 16/55 | **40/55** | 20/30 → 26/30 | −9 → +15 | half −1/55 |
+| Holdout (rule fixed beforehand) | −5/44 | **10/44** | 15/26 → 18/26 | −17 → −2 | half −6/44 |
+
+- Holdout confusion: true half → full drops 8 → 2 (half correct 3 → 9); new cost is 3 true-full areas now predicted half (−2 each). Empty and compliance decisions unchanged (16/18; 2 stock / 1 compliance fallbacks as before).
+- The gain holds out of sample (+15 points on holdout vs +24 in-sample), but the holdout was inspected earlier: useful validation of a fixed rule, not a pristine blind test. 26 stock labels, assisted annotation.
+- This is a **label-tuned decision rule**, not evidence that scores are calibrated probabilities. Describe it that way; ask the mentor about label-tuned thresholds if needed.
+- Processing cost: negligible (post-processing of existing scores).
+
+Files: `data/eval-half-rule-v1/{dev,holdout}-{results,metrics}.json` (local, ignored). Reproduce: `python3 -m ml.decision_rule data/eval-holdout-v1/results.json --output <new>.json`, then `python3 -m ml.evaluate_review score data/ground-truth/human-v2-frozen.json --split holdout --predictions <new>.json --output <new-metrics>.json`.
+
 ## Dev error review, stock prompt v2, smaller VLM — 10 October 2026
 
 Development split only (32 items, 30 stock / 25 compliance labels; frozen GT unchanged). Holdout not used. Inputs copied to `data/eval-dev-stock-v2/` (originals in `data/eval-dev-v1/` untouched); remote `/workspace/jx/sensei-dev-stock-v2` (`run27b.sh`, `run4b.sh`, `runprefix.sh` + logs). Batch size 1, model preloaded, timings exclude load.

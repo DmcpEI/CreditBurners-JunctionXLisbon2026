@@ -2,6 +2,30 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Dev error review, stock prompt v2, smaller VLM — 10 October 2026
+
+Development split only (32 items, 30 stock / 25 compliance labels; frozen GT unchanged). Holdout not used. Inputs copied to `data/eval-dev-stock-v2/` (originals in `data/eval-dev-v1/` untouched); remote `/workspace/jx/sensei-dev-stock-v2` (`run27b.sh`, `run4b.sh`, `runprefix.sh` + logs). Batch size 1, model preloaded, timings exclude load.
+
+**Error review (assistant, from crops + labels; no user notes exported):** all 10 errors are stock on true-half areas: 9 predicted full, 1 (squash `6594_1751001189`) predicted empty. Every half→full case shows visible bare floor/empty cells with many items left (apple trays with empty cups, teal floor between lemons/potatoes, basket weave under peppers/cabbage, cardboard around strawberries). Over-estimation costs −3 each, so these 9 cost 27 of the stock points. Compliance had no errors (all labels positive, still untested on real mismatches).
+
+| Run | Points | Stock | Fallbacks (stock/compl.) | Questions | p50 s/area | Total s | Peak GB |
+|---|---|---|---|---|---|---|---|
+| Qwen3.8-27B, prompt v1 (replay, current code) | 16/55 | 20/30 | 0/0 | 114 (17 cached) | 1.39 | 37.9 | 55.6 |
+| Qwen3.8-27B, stock prompt v2 (no cache) | 15/55 | 20/30 | 0/0 | 114 | 1.46 | 42.7 | 55.7 |
+| Qwen3.8-27B, v1 + `--answer-prefix "Answer: "` | 18/55 | 20/30 | 2/2 | 108 | 1.42 | 40.1 | 55.6 |
+| Qwen3.5-4B, v1 (no prefix) | −1/55 | 13/30 | 30/25 | 45 | 0.17 | 6.9 | 9.8 |
+| Qwen3.5-4B, v1 + answer prefix | 0/55 | 13/30 | 0/0 | 114 | 0.46 | 14.1 | 9.8 |
+| Best constant (half) | −1/55 | 13/30 | — | — | — | — | — |
+
+- **Stock prompt v2 rejected.** v2 defines levels by bare floor/empty cells. It fixed the squash (empty→half) but broke one lemon tray (half→full) and pushed almost every full score to ~1.00: the model does not act on the floor criterion. `--stock-prompt v1` stays the default. Cached vs uncached v2 runs gave identical decisions.
+- **Qwen3.5-4B rejected for scoring.** Without a prefix it starts with "Based on…"/"To determine…", so A/B/C held as little as 5% of next-token mass and every item fell back (= half baseline). With `--answer-prefix "Answer: "` mass ≥ 0.89, no fallbacks, ~3× faster and 5.7× less memory, but stock collapses to 13/30 (9 true-half → empty), 0/55: no better than the constant baseline.
+- **Answer prefix on 27B: not adopted.** +2 points but it introduced 2 fallbacks (letter mass ≈ 0 on those questions); the gain is within noise and partly from fallbacks.
+- **Rough cost per camera image** (serial extrapolation, 10.84 areas/image, not a full-frame measurement): 27B ≈ 15 s, 4B ≈ 5 s.
+
+**Lead for the next experiment (in-sample, not a result):** on the v1 replay, predicting half whenever the stock B score ≥ 0.15 would move dev stock from 20/30 (−9 points) to 26/30 (+15). This threshold was chosen on the same 25 items, so it must be tested on data it was not tuned on (e.g. existing cached holdout answers, no GPU) under a declared protocol, and it is a form of calibration on hand labels (see PLAN mentor question).
+
+Code: `ml/infer_sample.py` adds `--stock-prompt {v1,v2}` (default v1, old cache keys unchanged) and `--answer-prefix` (included in cache keys). knuth: added `/workspace/models/qwen3.5-4b` (9.3 GB); 28 GB free.
+
 ## Latest evaluation and agent handoff — 10 October 2026
 
 **Use this section as current state; older sections below are experiment history, not current results.** User supplied frozen, human-reviewed local GT. The revised model was evaluated against it, with closed curtains excluded. No further prompt changes were made between development and holdout runs.

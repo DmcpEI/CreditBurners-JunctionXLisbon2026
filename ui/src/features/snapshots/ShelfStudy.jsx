@@ -1,5 +1,4 @@
 import React, {useMemo} from 'react';
-import Evidence from './Evidence';
 import {fullTime, productLabel, shelfLabel} from './presentation';
 import {studyStats} from './studyStats';
 import {manualPreview} from './manualPreview';
@@ -20,10 +19,9 @@ export default function ShelfStudy({browser, onOpen}) {
       {preview && <p className="study-note"><strong>Demo graphs · Manual baseline values</strong><br/>Supplied stock/compliance values are preserved across images. These graphs demonstrate the interface; they do not measure shelf conditions or sales. <button className="button secondary" onClick={()=>browser.navigate({demo:'0'},true)}>Show original records</button></p>}
       {studySnapshots.some(s=>s.context_mode==='retrospective') && <p className="study-note">Some predictions use later images as context. This is retrospective analysis, not historical live monitoring.</p>}
       <StudyGraphs stats={stats} selected={selected} browser={browser} preview={preview}/>
-      {stats.transitions.length > 0 && <details className="study-changes"><summary>Observed stock changes · {stats.transitions.length}</summary><ul>{stats.transitions.map(item=><li key={`${item.snapshot_id}:${item.area_id}`}><button onClick={()=>onOpen(item)}><strong>{productLabel(item.product_name)} · {shelfLabel(item)}</strong><span>{item.from} → {item.to} · observed {item.direction}</span><small>{fullTime(item.before_at)} → {fullTime(item.captured_at)}</small><span>Open evidence ↗</span></button></li>)}</ul></details>}
+      {stats.transitions.length > 0 && <section className="study-changes"><h3>Observed stock changes</h3><ul>{stats.transitions.map(item=><li key={`${item.snapshot_id}:${item.area_id}`}><button onClick={()=>onOpen(item)}><strong>{productLabel(item.product_name)} · {shelfLabel(item)}</strong><span>{item.from} → {item.to} · observed {item.direction}</span><small>{fullTime(item.before_at)} → {fullTime(item.captured_at)}</small><span>Open evidence ↗</span></button></li>)}</ul></section>}
     </>}
-    <details className="study-archive"><summary>Explore recorded images <span>{frames.length} images · Camera {browser.current?.camera_id}</span></summary><ObservationToolbar browser={browser} hideCamera/><p>Oldest to newest. Select an image, then explore its shelves below.</p>
-    <ul className="frame-archive">{frames.map((frame,index)=><li key={frame.snapshot_id}><button aria-pressed={location.snapshot===frame.snapshot_id} onClick={()=>selectFrame(frame.snapshot_id)}><Evidence url={frame.image_url} alt={`Camera ${frame.camera_id}, captured ${fullTime(frame.captured_at)}`} thumbnail/><span>Image {index+1}{index===frames.length-1?' · Latest':''}</span><strong>{fullTime(frame.captured_at)}</strong><span>{location.snapshot===frame.snapshot_id?'Selected image':'Explore image ↗'}</span></button></li>)}</ul></details>
-    <details className="study-method"><summary>About these graphs</summary><p>The image summary counts shelves in the selected image. The day timeline compares recorded images; it does not count purchases or hours empty. Gaps between frames are unobserved. Predictions are not ground truth and do not measure purchases or customer traffic. Product compliance is not assessed in the stock-only run.</p>{!preview && <button className="button secondary" onClick={()=>browser.navigate({demo:'1'},true)}>Enable demo graphs</button>}</details>
+    <section className="study-archive"><h3>Recorded images</h3><ObservationToolbar browser={browser} hideCamera/></section>
+    <p className="study-note">Saved predictions on recorded images. Gaps are unobserved; these graphs do not measure sales or customer traffic.</p>
   </section>;
 }

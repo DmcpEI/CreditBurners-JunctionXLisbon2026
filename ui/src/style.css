@@ -457,3 +457,29 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .study-frame-choice > div { display: flex; flex-direction: column; gap: 5px; text-align: center; }.study-frame-choice span { font-size: 12px; color: #626d56; }.study-frame-choice strong { font-size: 14px; font-weight: 500; }
 .study-image-summary { margin: 14px 0 8px; font-size: 13px; color: #626d56; }.study-coverage { grid-column: 1 / -1; border-top: 1px solid #dce1d2; }.study-coverage > summary { min-height: 44px; padding: 16px 0; cursor: pointer; font-size: 16px; font-weight: 500; }.study-coverage > summary span { font-size: 12px; font-weight: 400; color: #626d56; margin-left: 8px; }
 @media(max-width:760px) { .study-frame-choice { padding: 10px; gap: 8px; }.study-frame-choice strong { font-size: 13px; }.study-coverage > summary span { display: block; margin: 6px 0 0 18px; }.study-coverage .study-chart { display: block; }.study-image-summary { font-size: 12px; } }
+
+/* Stock regions retain the photo underneath and a distinct selected outline. */
+.map-region[data-stock="empty"] { --region-color: #bf4141; }
+.map-region[data-stock="half"] { --region-color: #dba632; }
+.map-region[data-stock="full"] { --region-color: #517a50; }
+.map-region[data-stock] { fill: color-mix(in srgb,var(--region-color) 22%,transparent); stroke: var(--region-color); }
+.map-region[data-stock]:is(:hover,:focus-visible,.selected) { fill: color-mix(in srgb,var(--region-color) 40%,transparent); stroke: var(--region-color); stroke-width: 3; }
+.map-region.selected { stroke-dasharray: 6 3; }
+.map-shelves { display: none; }
+@media (max-width: 760px) {
+ .detail-open .shelf-detail { display: flex; flex-direction: column; }
+ .shelf-detail > .camera-map { order: 1; }
+ .shelf-detail > .crop-evidence { order: 2; }
+ .shelf-detail > .mobile-shelf-nav { order: 3; }
+ .map-heading p { display: block; }
+ .map-shelves { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+ .map-shelves button { min-height: 60px; padding: 10px; text-align: left; border: 1px solid #dde1d6; border-radius: 8px; background: #f8f7f4; }
+ .map-shelves button[data-stock="empty"] { background: #fcecea; }
+ .map-shelves button[data-stock="half"] { background: #fcf4d9; }
+ .map-shelves button[data-stock="full"] { background: #edf4e9; }
+ .map-shelves button[aria-pressed="true"] { outline: 2px solid #697a53; outline-offset: 1px; }
+ .map-shelves strong,.map-shelves span { display: block; overflow-wrap: anywhere; }
+ .map-shelves strong { font-size: 13px; font-weight: 500; }
+ .map-shelves span { margin-top: 5px; font-size: 11px; line-height: 1.4; }
+ .map-navigation { display: none; }
+}

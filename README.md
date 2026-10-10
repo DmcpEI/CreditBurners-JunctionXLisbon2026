@@ -19,7 +19,7 @@ Our goal is a phone-friendly app judges can open through a public link and QR co
 
 ## Current status
 
-ML dataset preparation, constant baselines and the Sensei scorer are implemented. Model weights and setup smoke scripts are on knuth; real dataset inference, API/UI and public deployment are not implemented yet. No public demo URL exists yet.
+Real dataset inference and measured evaluation, Spring API and the React Store view/Shelf study are implemented. The app uses the current recommended saved per-shelf stock export; product identity is not assessed. Public deployment/QR and fresh inference through the app are not implemented. Start continuation with the Member2 section in docs/PLAN.md.
 
 - [Plan, roles and milestones](docs/PLAN.md)
 - [Data and API contract](docs/CONTRACT.md)

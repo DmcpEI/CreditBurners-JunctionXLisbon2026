@@ -136,7 +136,7 @@ Coverage is not pile volume (removing a top layer barely changes it). The VLM ma
 
 ## Product (`api/` + `ui/`)
 - **Needs attention:** product, shelf location, observation time, image and suggested action. Start with a declared severity order (empty, mismatch, half); it is not an estimate of euros lost. Obstructed observations visibly require inspection rather than claiming certainty.
-- **Show me why:** large current crop, reference with its own timestamp, short explanation, and visibility limitations. Colour is never the only status indicator.
+- **Show me why:** large current crop, full-camera map and short stock guidance. Optional reference comparison is outside the simplified current UI. Colour is never the only status indicator.
 - **Shelf study:** move historical camera/time selection and recorded replay into a separate study page, as specified below. Keep routine store browsing focused on the latest saved image per camera.
 - **Stretch: Analyse now:** fresh inference on an approved store image, with a progress state and measured turnaround. Label saved results as saved, and fresh inference as fresh. Fresh processing of a historical image is not a live camera feed.
 - **Further stretch: Try a photo:** upload/take a photo of one produce tray and select its expected product. No arbitrary whole-store uploads. Stock estimation is experimental without a suitable full-tray reference; no borrowed Sensei planogram or same-day history. Test a physical fruit-tray demo before offering it to judges.

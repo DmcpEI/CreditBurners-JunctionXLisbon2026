@@ -535,3 +535,15 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .typed-reserve { visibility: hidden; }
 .typed-ink { position: absolute; inset: 0; white-space: nowrap; }
 @media(max-width:760px) { .page-heading h1 .typed-headline::before,.page-heading h1 .typed-headline span::before { content: none; }.typed-headline .typed-line + br + .typed-line { margin-left: .25em; } }
+
+.hero-camera { min-width: 0; margin: 0; border: 1px solid #dde1d6; border-radius: 14px; overflow: hidden; background: #eeefe6; }
+.hero-camera-photo { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+.hero-camera-photo > img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.hero-camera figcaption { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 12px 16px; background: #f8f7f4; }
+.hero-camera-open { border: 0; background: transparent; text-align: left; padding: 0; min-height: 44px; }
+.hero-camera-open strong { display: block; font-weight: 500; font-size: 14px; }
+.hero-camera-open > span { display: block; font-size: 11px; color: #656d5a; margin-top: 5px; }
+.hero-camera-controls { display: flex; gap: 8px; }
+.hero-camera-controls button { width: 44px; height: 44px; border: 1px solid #dde1d6; border-radius: 8px; background: transparent; }
+.hero-camera-controls button:hover { background: #effa8b; }
+@media(max-width:760px) { .hero-camera { display: none; } }

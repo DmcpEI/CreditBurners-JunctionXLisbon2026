@@ -553,3 +553,25 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .hero-camera figcaption { background: transparent; padding: 10px 0 0; }
 .hero-camera-controls button { border: 0; background: transparent; color: #656d5a; }
 .hero-camera-controls button:hover { background: #eeefe6; }
+
+/* Start of shift: tasks first (brief: staff see what to do first) */
+.shift-tasks { margin: 8px auto 30px; }
+.shift-heading h2 { font-size: 26px; letter-spacing: -.6px; margin: 0 0 14px; }
+.shift-counts { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+.shift-count { display: inline-flex; align-items: baseline; gap: 6px; padding: 9px 13px; border-radius: 8px; font-size: 13px; }
+.shift-count strong { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.shift-count.urgent { background: #faeae6; color: #a13a31; }
+.shift-count.low { background: #faf0c9; color: #775511; }
+.shift-list { display: grid; gap: 12px; margin: 0 0 14px; padding: 0; list-style: none; }
+.shift-list .alert-card { width: 100%; text-align: left; display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 12px; }
+.shift-list .alert-card p { margin: 0; font-size: 13px; color: var(--muted); }
+.shift-more { width: 100%; }
+.camera-gallery .camera-tasks { display: flex; flex-wrap: wrap; gap: 6px; }
+.camera-gallery .camera-tasks b { font-weight: 600; font-size: 11px; border-radius: 5px; padding: 3px 7px; }
+.camera-gallery .camera-tasks b.urgent { background: #faeae6; color: #a13a31; }
+.camera-gallery .camera-tasks b.low { background: #faf0c9; color: #775511; }
+.camera-gallery .camera-tasks.none { color: #517a50; }
+.shift-live { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: #a13a31; margin-bottom: 8px; }
+.shift-live i { width: 8px; height: 8px; border-radius: 50%; background: #d0453a; animation: live-pulse 1.6s ease-in-out infinite; }
+@keyframes live-pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .shift-live i { animation: none; } }

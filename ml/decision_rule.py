@@ -9,6 +9,9 @@ import json
 from pathlib import Path
 
 HALF_THRESHOLD = 0.20
+# Empty check (10 Oct): a second stock question with prompt v4 (one purchase left = empty) catches empty shelves
+# that v1 misses; chosen on development with corrected labels (dev 205 vs 201, holdout 38 vs 34, eval 94 vs 85).
+EMPTY_THRESHOLD = 0.70
 
 
 def apply_half_rule(record, threshold=HALF_THRESHOLD):
@@ -19,6 +22,16 @@ def apply_half_rule(record, threshold=HALF_THRESHOLD):
     action = "inspect" if compliance is None else "check_product" if not compliance else "check_stock"
     return {**record, "observed_stock": "half", "action": action,
             "decision_rule": f"half_if_stock_B>={threshold}", "stock_before_rule": record.get("observed_stock")}
+
+
+
+def apply_empty_rule(record, empty_record, threshold=EMPTY_THRESHOLD):
+    """Answer empty when the empty-check answer's A score >= threshold; otherwise keep the record (half rule applied before)."""
+    stock = (empty_record or {}).get("answers", {}).get("stock")
+    if stock is None or stock["scores"]["A"] < threshold:
+        return record
+    return {**record, "observed_stock": "empty", "action": "restock",
+            "empty_rule": f"empty_if_v4_A>={threshold}", "stock_before_empty_rule": record.get("observed_stock")}
 
 
 def main():

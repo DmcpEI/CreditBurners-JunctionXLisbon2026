@@ -1,5 +1,5 @@
 import unittest
-from ml.decision_rule import apply_half_rule
+from ml.decision_rule import apply_empty_rule, apply_half_rule
 
 
 def record(stock, b, compliance=True):
@@ -17,6 +17,14 @@ class HalfRuleTests(unittest.TestCase):
         # no stock answer (gated by visibility/presence): decision and fallback unchanged
         self.assertEqual(apply_half_rule(record(None, None)), record(None, None))
         self.assertEqual(apply_half_rule(record("empty", None)), record("empty", None))
+
+
+    def test_empty_check_overrides_only_when_confident(self):
+        check = lambda a: {"answers": {"stock": {"scores": {"A": a, "B": 0.0, "C": 1 - a, "D": 0.0}}}}
+        self.assertEqual(apply_empty_rule(record("half", 0.3), check(0.70))["observed_stock"], "empty")
+        self.assertEqual(apply_empty_rule(record("half", 0.3), check(0.70))["action"], "restock")
+        self.assertEqual(apply_empty_rule(record("full", 0.0), check(0.69))["observed_stock"], "full")
+        self.assertEqual(apply_empty_rule(record("full", 0.0), None)["observed_stock"], "full")  # no check run: unchanged
 
 
 if __name__ == "__main__":

@@ -24,8 +24,10 @@ if ssh -o ConnectTimeout=15 -o BatchMode=yes "$HOST" "test ! -e $REMOTE && mkdir
   ssh "$HOST" "cd $REMOTE && $RPY -B -m ml.validate $INPUT --references $REFS --output $OUT" 2>&1 | tee "$OUT-prepare.log" | grep -v "^WARNING" | tail -40
   step "inference on $HOST (stock question, Qwen3.8-27B)"
   ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v1 --questions stock --context-max-side 640 --output $OUT/results.json" > "$OUT/inference.log" 2>&1 || ok=0
+  step "empty check on $HOST (second stock question, prompt v4)"
+  ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v4 --questions stock --context-max-side 640 --output $OUT/results-empty.json" >> "$OUT/inference.log" 2>&1 || ok=0
   step "fetch results"
-  for f in expected sample report results; do ssh "$HOST" "cat $REMOTE/$OUT/$f.json" > "$OUT/$f.json" || ok=0; done
+  for f in expected sample report results results-empty; do ssh "$HOST" "cat $REMOTE/$OUT/$f.json" > "$OUT/$f.json" || ok=0; done
 else
   ok=0
   step "!!! $HOST unreachable: preparing locally for a fallback submission"
@@ -35,6 +37,7 @@ fi
 [ -s "$OUT/results.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results.json" 2>/dev/null || { echo '{}' > "$OUT/results.json"; ok=0; }
 [ $ok = 1 ] || echo "!!! INFERENCE INCOMPLETE (see $OUT/inference.log): missing areas use the fallback (half, compliant)"
 
-step "export (half rule v2, always compliant) + coverage check"
-$PY -m ml.export outputs "$OUT/results.json" --prepared "$OUT" --output "$OUT/export" --run-id "val-$NAME" --always-compliant || exit 1
+step "export (half rule 0.20, empty check, always compliant) + coverage check"
+EMPTY=(); [ -s "$OUT/results-empty.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results-empty.json" 2>/dev/null && EMPTY=(--empty-results "$OUT/results-empty.json")
+$PY -m ml.export outputs "$OUT/results.json" --prepared "$OUT" --output "$OUT/export" --run-id "val-$NAME" --always-compliant ${EMPTY[@]+"${EMPTY[@]}"} || exit 1
 step "DONE: $OUT/export/submission.json"

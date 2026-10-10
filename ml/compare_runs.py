@@ -7,14 +7,17 @@ from ml.decision_rule import apply_half_rule
 from ml.evaluate_review import evaluate
 
 LABELS = tuple(Path(f"data/ground-truth/human-v{v}-frozen.json") for v in (2, 3, 4))
+# corrections under the refined stock definition: override only the listed observations (frozen originals untouched)
+CORRECTIONS = (Path("data/ground-truth/human-r2-corrections-frozen.json"),)
 
 
-def groups(paths=LABELS):
+def groups(paths=LABELS, corrections=CORRECTIONS):
+    fixed = {x["id"]: x["label"] for path in corrections if path.exists() for x in json.loads(path.read_text())["items"]}
     result = []
     for path in paths:
         items = json.loads(path.read_text())["items"]
         for split in ("development", "holdout", "evaluation"):
-            chosen = [x for x in items if x["split"] == split]
+            chosen = [{**x, "label": fixed.get(x["id"], x["label"])} for x in items if x["split"] == split]
             if chosen:
                 result.append((f"{path.stem.split('-')[1]} {split}", chosen))
     return result

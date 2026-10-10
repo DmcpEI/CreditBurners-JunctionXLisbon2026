@@ -4,7 +4,7 @@ import json
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from ml.decision_rule import apply_half_rule, HALF_THRESHOLD
+from ml.decision_rule import apply_empty_rule, apply_half_rule, EMPTY_THRESHOLD, HALF_THRESHOLD
 from ml.label_set import outlined_context
 from ml.prepare import load_planogram, write_json
 from ml.scoring import LEVELS, validate_submission
@@ -38,17 +38,18 @@ def reason(record, stock, compliant, fallback, model_mismatch=False):
         return "No model result for this area; fixed fallback (half, compliant) used."
     if record.get("visibility") != "clear":
         return f"Model judged the view {record.get('visibility')}; fixed fallback (half, compliant) used. Inspect."
-    parts = [f"Model stock: {stock}" + (" (half rule applied)" if record.get("decision_rule") else "")]
+    parts = [f"Model stock: {stock}" + (" (empty check)" if record.get("empty_rule") else " (half rule applied)" if record.get("decision_rule") else "")]
     parts.append("expected product type visible" if compliant else "a different product type appears visible")
     hint = " Model also flagged a possible wrong product (not used: unreliable on labelled data); check if convenient." if model_mismatch else ""
     return "; ".join(parts) + (". Some fields use the fixed fallback." if fallback else ".") + hint
 
 
-def build_outputs(prepared, results_path, output, run_id, always_compliant=False):
+def build_outputs(prepared, results_path, output, run_id, always_compliant=False, empty_results_path=None):
     if output.exists():
         raise ValueError("Output exists; choose a new directory")
     expected = json.loads((prepared/"expected.json").read_text())
     results = json.loads(results_path.read_text())
+    empty_results = json.loads(empty_results_path.read_text()) if empty_results_path else None
     processed = datetime.now(timezone.utc).isoformat()
     submission, snapshots, stats = {}, defaultdict(list), Counter()
     seconds = defaultdict(float)
@@ -57,6 +58,9 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
         record = results.get(key)
         if record is not None:
             record = apply_half_rule(record)
+            if empty_results is not None:
+                record = apply_empty_rule(record, empty_results.get(key))
+                seconds[camera, filename] += (empty_results.get(key) or {}).get("seconds", 0)
             seconds[camera, filename] += record.get("seconds", 0)
         stock = record and record.get("observed_stock")
         compliant = record and record.get("observed_compliance")
@@ -67,6 +71,7 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
         stats["missing_result"] += record is None
         stats["stock_fallback"] += stock is None
         stats["compliance_fallback"] += compliant is None
+        stats["empty_rule_changed"] += bool(record and record.get("empty_rule") and record.get("stock_before_empty_rule") != "empty")
         stats["half_rule_changed"] += bool(record and record.get("decision_rule") and record.get("stock_before_rule") != "half")
         stock = stock or FALLBACK_STOCK
         compliant = FALLBACK_COMPLIANT if compliant is None else compliant
@@ -91,6 +96,7 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
     per_image = sorted(seconds.values())
     report = dict(run_id=run_id, areas=len(expected), images=len(snapshots), decision_rule=f"half_if_stock_B>={HALF_THRESHOLD}",
                   compliance="always_true" if always_compliant else "model",
+                  empty_rule=f"empty_if_v4_A>={EMPTY_THRESHOLD}" if empty_results is not None else None,
                   fallback=dict(stock=FALLBACK_STOCK, compliant=FALLBACK_COMPLIANT), counts=dict(stats),
                   seconds_per_image=dict(p50=per_image[len(per_image)//2], p95=per_image[int(0.95*(len(per_image)-1))],
                                          total=sum(per_image)) if per_image else None)
@@ -110,9 +116,10 @@ if __name__ == "__main__":
     b.add_argument("--prepared", type=Path, default=Path("data/prepared-v1"))
     b.add_argument("--output", type=Path, required=True)
     b.add_argument("--run-id", required=True)
+    b.add_argument("--empty-results", type=Path, help="Results of the prompt-v4 empty check (second stock question)")
     b.add_argument("--always-compliant", action="store_true", help="Answer compliant everywhere; model mismatch kept only as an app hint")
     args = parser.parse_args()
     if args.mode == "inputs":
         build_inputs(args.prepared, args.dataset, args.output)
     else:
-        build_outputs(args.prepared, args.results, args.output, args.run_id, args.always_compliant)
+        build_outputs(args.prepared, args.results, args.output, args.run_id, args.always_compliant, args.empty_results)

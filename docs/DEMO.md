@@ -108,3 +108,7 @@ Recorded image selection, replay and thumbnail archive are inside Explore record
 Verification: nine frontend tests and frontend/Maven builds passed. WebKit checked direct/adjacent camera selection, chart persistence, coverage drill-down, sticky controls, archive expansion, same-area frame navigation and reload. Layouts at 320/390/430/768/1440 pixels had no page overflow; mobile/desktop screenshots were inspected. Live API verification passed. Physical-phone interaction is still untested.
 
 The compact mobile summary now shows assessed, empty and full observations; product-match limitations stay in About these graphs and shelf evidence. The camera selector uses an explicit 44px height for WebKit touch targets.
+
+## Updated Member1 handoff
+
+Main updated to `b07b7d0` and merged into the mobile-dashboard branch. App defaults now use `results/qwen3.8-27b-ctx640-half020-emptycheck-full-v1/snapshots.json`, as recommended in CONTRACT.md. This run adds the model’s empty-check question, keeps compliance fixed true, and reuses prepared assets. Product assessment stays unavailable; no inference was rerun.

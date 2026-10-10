@@ -75,7 +75,7 @@ mvn -f api/pom.xml package
 java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=data/prepared-v1 --server.address=127.0.0.1
 ```
 
-Open http://127.0.0.1:8080. The packaged Spring app serves React and the snapshot API from one origin. It reads the recommended `results/qwen3.8-27b-stockonly-half020-full-v1/snapshots.json` at startup, with images from `data/prepared-v1/assets`; restart after changing results. Override the JSON source with `--sensei.snapshots-file=<path>` (for the old baseline: `data/prepared-v1/snapshots.json`). All referenced assets in that prepared folder are served locally; curate an approved subset before public hosting. Unknown asset/snapshot IDs are rejected. No GPU worker is required.
+Open http://127.0.0.1:8080. The packaged Spring app serves React and the snapshot API from one origin. It reads the recommended `results/qwen3.8-27b-ctx640-half020-emptycheck-full-v1/snapshots.json` at startup, with images from `data/prepared-v1/assets`; restart after changing results. Override the JSON source with `--sensei.snapshots-file=<path>` (for the old baseline: `data/prepared-v1/snapshots.json`). All referenced assets in that prepared folder are served locally; curate an approved subset before public hosting. Unknown asset/snapshot IDs are rejected. No GPU worker is required.
 
 With the app running, `python3 api/verify.py` checks real snapshot/detail/assets and frontend delivery. For UI development, `npm run dev --prefix ui` proxies API/assets to port 8080. The default is Member1’s saved stock predictions. Fallback areas remain unassessed, and product match is explicitly unassessed because this run fixes compliance to true. Manual UI preview is opt-in with `?demo=1`.
 

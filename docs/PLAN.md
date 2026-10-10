@@ -125,7 +125,7 @@ Coverage is not pile volume (removing a top layer barely changes it). The VLM ma
 
 ### Two-page app revision — saved stock results integrated
 
-Implementation status: Store view/Shelf study navigation, latest-camera view, historical archive, shared evidence tools and assessment-gated summary logic and mobile study graphs are implemented. Store tasks and study graphs now use Member1’s recommended saved stock run `qwen3.8-27b-stockonly-half020-full-v1` by default; camera coverage uses actual image counts. Its fixed compliance is disclosed as product match not assessed. Fallback areas are excluded from assessed statistics. Public hosting remains pending.
+Implementation status: Store view/Shelf study navigation, latest-camera view, historical archive, shared evidence tools and assessment-gated summary logic and mobile study graphs are implemented. Store tasks and study graphs now use Member1’s recommended saved stock run `qwen3.8-27b-ctx640-half020-emptycheck-full-v1` by default; camera coverage uses actual image counts. Its fixed compliance is disclosed as product match not assessed. Fallback areas are excluded from assessed statistics. Public hosting remains pending.
 
 Keep the current React/Spring app, visual identity, photo cards, alerts, fullscreen evidence viewer, planogram polygons and mobile previous/next controls. Adapt the existing store overview and replay rather than building a second app. Add two navigation links at the top: **Store view** and **Shelf study**. The PDF's core remains per-area stock and planogram compliance; historical study supports that purpose rather than becoming sales analytics.
 

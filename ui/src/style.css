@@ -528,21 +528,3 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .brand-symbol { padding: 4px; background: #effa8b; border-radius: 10px; color: inherit; }
 
 .brand { color: #42633d; }
-.app-startup { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; background: #f8f7f4; color: #42633d; animation: startup-appear 200ms ease-out; }
-.startup-mark { margin-bottom: 14px; animation: startup-cart 1.8s ease-in-out infinite; }
-.startup-mark .brand-symbol { width: 84px; height: 84px; padding: 15px; border-radius: 24px; }
-.app-startup strong { font-size: 23px; font-weight: 500; letter-spacing: -.5px; }
-.app-startup > span { color: #656d5a; font-size: 13px; }
-.startup-progress { width: 130px; height: 3px; background: #e0e6d5; overflow: hidden; border-radius: 4px; margin-top: 12px; }
-.startup-progress i { display: block; height: 100%; width: 45%; background: #42633d; animation: startup-progress 1.3s ease-in-out infinite; }
-@keyframes startup-cart { 0%,100% { transform: translateX(-5px) rotate(-3deg); } 50% { transform: translateX(5px) rotate(3deg); } }
-@keyframes startup-progress { from { transform: translateX(-100%); } to { transform: translateX(325%); } }
-@keyframes startup-appear { from { opacity: 0; } to { opacity: 1; } }
-@media(prefers-reduced-motion:reduce) { .app-startup,.startup-mark,.startup-progress i { animation: none; } }
-
-.brand-intro { position: fixed; right: 24px; bottom: 24px; z-index: 19; pointer-events: none; display: flex; align-items: center; gap: 12px; padding: 14px 20px; border: 1px solid #dce3ce; border-radius: 16px; background: #f8f7f4; color: #42633d; box-shadow: 0 8px 30px #29351c12; animation: brand-intro 1.8s ease both; }
-.brand-intro .brand-symbol { width: 48px; height: 48px; animation: startup-cart 1s ease-in-out infinite; }
-.brand-intro span { font-size: 15px; font-weight: 500; }
-@keyframes brand-intro { 0% { opacity: 0; transform: translateY(14px); } 15%,80% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-6px); } }
-@media(max-width:760px) { .brand-intro { right: 16px; bottom: max(20px,env(safe-area-inset-bottom)); } }
-@media(prefers-reduced-motion:reduce) { .brand-intro,.brand-intro .brand-symbol { animation: none; } }

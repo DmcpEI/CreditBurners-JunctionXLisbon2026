@@ -41,7 +41,7 @@ def inspect_stages(ask):
     presence = choice("presence")
     if presence != "A":
         return dict(answers=answers, visibility="clear", observed_stock="empty" if presence == "B" else None,
-                    observed_compliance=None, action="restock" if presence == "B" else "inspect")
+                    observed_compliance=True if presence == "B" else None, action="restock" if presence == "B" else "inspect")
     stock = {"A": "empty", "B": "half", "C": "full", "D": None}[choice("stock")]
     compliance = {"A": True, "B": False, "C": None}[choice("compliance")]
     action = ("inspect" if stock is None or compliance is None else

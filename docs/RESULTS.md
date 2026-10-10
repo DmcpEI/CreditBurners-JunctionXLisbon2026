@@ -1,5 +1,7 @@
 # Results
 
+Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
+
 ## Latest evaluation and agent handoff — 10 October 2026
 
 **Use this section as current state; older sections below are experiment history, not current results.** User supplied frozen, human-reviewed local GT. The revised model was evaluated against it, with closed curtains excluded. No further prompt changes were made between development and holdout runs.
@@ -217,3 +219,10 @@ Reconsidered all 60 visual suggestions under this rule. Examples 4 (sparse banan
 Local suggestions updated in `data/human-review-v1/suggestions.json`; old suggestions preserved as `suggestions-v1.json`. Image membership and split are unchanged. UI protocol revision `sensei-box-capacity-v2` uses a separate browser storage key and imports prior labels without overwriting the previous storage. Earlier labels remain visible and must be resaved under the revised protocol. A Use revised suggestion button loads the new proposal; it does not confirm it. Exports state the revised rule and revision on each confirmed label.
 
 Existing VLM stock prompts still use the earlier presence/fill semantics; these must be aligned with the clarified near-empty definition before the next benchmark. No model was rerun or trained during this annotation revision.
+
+
+## Last-session state for the next agent
+
+User authorised further work but requested prioritising documentation before agent credits run out. Completed: empty-area compliance rule in code and its regression assertion; generated local development error review at `data/human-review-v1/errors.html` (10 errors, notes export, no GT changes); researched official small-VLM model cards and standard YOLO class scope; read-only knuth inventory. GPU was idle at inspection. No models downloaded, packages installed, GPU benchmark rerun, or ground-truth labels changed in this session.
+
+The error-review page is a generated local artifact and not in Git. Labels, images, cached outputs and review pages live in ignored `data/`; original user frozen JSON remains untracked at repo root. Switching agents in this workspace preserves them; a new clone alone does not. Existing local annotation HTTP server is on port 8765; restart command is in the handoff above. Save user-exported error notes in `data/` and record their path before prompt changes.

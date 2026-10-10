@@ -68,7 +68,9 @@ class AnswerTokenTests(unittest.TestCase):
                 self.assertEqual(calls, expected_calls)
                 self.assertEqual(result["action"], action)
                 self.assertEqual(result["observed_stock"], stock)
-                if len(codes) < 4:
+                if codes == "AB":
+                    self.assertIs(result["observed_compliance"], True)
+                elif len(codes) < 4:
                     self.assertIsNone(result["observed_compliance"])
 
     def test_multitoken_variants_excluded_and_collisions_rejected(self):

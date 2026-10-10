@@ -55,3 +55,8 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 - Closed white refrigeration curtains conceal shelves on early 6383/6386 frames; do not call them empty. Hour-scale frame gaps prevent claims about exactly when shelves changed or how quickly stock sold.
 - Phone-photo accuracy, browser latency and concurrent use are untested.
 - Knuth project/hosting use is authorised. Public image permission, public URL and domain/tunnel setup remain to be confirmed.
+
+
+## New efficiency criterion
+
+Pitch must include estimated cost per analysed source image, alongside accuracy/points. Measure all areas in an image, not a single crop, and distinguish warm computation, cold load and cached replay. State hardware, precision, image/area counts, throughput and the tariff assumption. Current provisional extrapolation is ~15.2 seconds per source image, or 0.00422×hourly machine rate per image; it is not a direct full-frame measurement. Do not claim donated knuth access makes computation free or use cached UI response time as inference time. Smaller models and YOLO are candidates, not demonstrated savings. Exact new judging weights remain unspecified.

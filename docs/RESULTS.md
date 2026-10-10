@@ -2,6 +2,17 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Labelled reference crops in the stock question — 10 October 2026
+
+Four human-labelled development crops shown before the target (`--references data/references-v1/refs.json`): full tomatoes `6443_1751001244_6443_1`, half apples with empty cups `6385_1751051814_6385_1`, half sweet potatoes with bare floor `6591_1751013255_6591_6`, empty single banana bunch `6215_1751001268_6215_1`. Prompt v1, 640 px, all 298 labelled areas; empty check from the existing answers; reference areas excluded from development for both versions (141 development observations).
+
+| | Dev (best threshold) | Holdout | Eval | s/area (stock question) |
+|---|---|---|---|---|
+| current (no references) | **183** (0.20) | **41** | 91 | 0.24 |
+| with references | 140 (no rule) | 20 | 77 | 0.42 |
+
+**Not adopted.** With references the model calls even more shelves full (half recall 17/71 vs 40/71), and it is 75% slower. Together with the bare-floor wording, product names and the organiser-wording prompts, prompt-side changes have not beaten the cost-justified half rule on development. Files: `data/labelled-v2/refs-v1.json`.
+
 ## Astra review fixes, conditional empty check — 10 October 2026
 
 - **Independent check (Astra):** current export on corrected labels: stock 240/294 (82%; empty 25/30, half 43/75, full 172/189), 349/575 points vs 128/575 for always full + compliant. Main weakness: 32 half→full errors.

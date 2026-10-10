@@ -93,13 +93,15 @@ Committed in `results/<run_id>/` (deliberately tracked for integration; regenera
 
 | Run | Use |
 |---|---|
-| `qwen3.8-27b-ctx640-half020-emptycheck-shared-full-v1` | **Use for the app (current best).** Same method as below, both questions answered from one shared image prefix: 4.8 s per camera image. Update `sensei.snapshots-file` to this folder. |
+| `qwen3.8-27b-ctx640-half020-emptycheck-shared-full-v1` | **Use for the app (current best).** Same method as below, both questions answered from one shared image prefix, empty check only when the stock answer is under 50% full: 3.8 s per camera image. Update `sensei.snapshots-file` to this folder. |
 | `qwen3.8-27b-ctx640-half020-emptycheck-full-v1` | Superseded (questions computed separately, 5.75 s per image; 97% identical answers). |
 | `qwen3.8-27b-stockonly-ctx640-half020-full-v1` | Superseded (no empty check), 2.9 s per camera image. |
 | `qwen3.8-27b-stockonly-half020-full-v1` | Superseded (1280 px context). |
 | `qwen3.8-27b-stockonly-halfrule-full-v1` | Same with half rule v1 (0.15). Superseded. |
 | `qwen3.8-27b-v1-halfrule-alwayscompliant-full-v1` | Previous recommendation: 4 questions per area; keeps a soft "Model also flagged a possible wrong product…" hint at the end of `reason` that the UI can show as "check product". |
 | `qwen3.8-27b-v1-halfrule-full-v1` | Same stock, with the model's compliance answers (250 mismatches, many false alarms). Comparison only. |
+
+**Product check (all current runs): not assessed.** Every area is answered compliant by policy; the model's product question was dropped because it produced more false alarms than real catches. Snapshots now carry `product_check: "not_assessed"` (or `"model"` when a run really asks), and `reason` says "product identity not checked (answered compliant by policy)". Do not show "Expected product matches" for these runs; prefer this field over parsing `run_id` (the run id also contains `alwayscompliant`). The API default `sensei.snapshots-file` should point to the current-best folder above.
 
 Each run folder has:
 - `snapshots.json`: array of 181 app snapshots (one per camera image, 1,962 areas), exactly the App snapshot format above. `prediction_source: "saved"`, `context_mode: "current_image_only"`, `reference: null`, `visibility` is `clear`/`occluded`/`unknown`, `fallback_used: true` when an answer used the fixed half/compliant fallback. Load the whole file; it is the snapshot index.

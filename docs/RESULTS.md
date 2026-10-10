@@ -2,6 +2,19 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Speed with the empty check: batching vs shared prefix — 10 October 2026
+
+All 298 labelled areas, 640 px, both questions (v1 stock + v4 empty check), corrected labels:
+
+| Option | Both questions per area | Dev | Holdout | Eval | Unchanged answers v1 / v4 |
+|---|---|---|---|---|---|
+| unbatched (previous) | 0.581 s | 205 | 38 | 94 | — |
+| batch 4 / 8 / 16 | 0.483 / 0.499 / 0.512 s | 209 / 205 / 205 | 38 / 37 / 37 | 91 / 94 / 94 | 292 / 289 at batch 4 |
+| **shared prefix** (`--paired-prompt v4 --paired-output …`) | **0.482 s** | 217 | 41 | 91 | 296 / 292 |
+
+- Shared prefix: the images and description text are prefilled once; each question continues from a deep copy of the cache (positions continue from the cache length + stored M-RoPE offset, no attention mask on the continuation). Adopted: same speed-up as the best batch, closest to the original answers, no score loss; one model load per run. Score differences across options are borderline numeric noise.
+- **Full dataset:** p50 **4.82 s per camera image** (p95 7.77; was 5.75), corrected labels 217 / 41 / 91; 1,897/1,962 final answers identical to the separately computed export. Export `results/qwen3.8-27b-ctx640-half020-emptycheck-shared-full-v1/` (165 empty / 498 half / 1,299 full, 15 fallbacks). `scripts/run_validation.sh` uses one paired call: rehearsal 26 images / 281 areas in **2 min 36 s**, identical to the full export 281/281.
+
 ## Corrected labels, empty check — final pipeline v4 — 10 October 2026
 
 - **Corrections:** Member1 confirmed the 27-flag re-check under the refined definition: 24 suggestions accepted, 3 old labels kept (#13 2–3 banana bunches stay empty, #51 ~3 apple bags stay empty, #72 single kiwi bag stays full). Frozen as `data/ground-truth/human-r2-corrections-frozen.json` (SHA256 `e010889783db…`, protocol `sensei-replenish-v5`); `ml/compare_runs.py` overlays it on the v2–v4 frozen labels (originals untouched).

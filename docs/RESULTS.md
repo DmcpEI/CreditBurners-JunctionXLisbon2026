@@ -2,6 +2,18 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## English product name in the stock prompt — 10 October 2026
+
+Prompts `v1n` / `v4n` = v1 / v4 plus "The planogram product for this area is {English name}" (`ml/products_en.json`). Shared-prefix runs on the 298 labelled areas, 640 px, corrected labels, half 0.20 / empty 0.70:
+
+| Variant | Dev | Holdout | Eval | All | s/area (both q) |
+|---|---|---|---|---|---|
+| current (no name) | **217** | **41** | 91 | **349** | 0.482 |
+| name in both questions | 207 | 24 | 107 | 338 | 0.492 |
+| name in stock question only | 207 | 24 | 107 | 338 | 0.494 |
+
+Best re-tuned thresholds on development: 209 (half 0.15, empty 0.9) vs 217 for the current pipeline. **Not adopted** (worse on development and holdout; the evaluation gain is not used for selection). The name does not change the empty check's decisions. Files: `data/labelled-v2/names-*.json`.
+
 ## Speed with the empty check: batching vs shared prefix — 10 October 2026
 
 All 298 labelled areas, 640 px, both questions (v1 stock + v4 empty check), corrected labels:

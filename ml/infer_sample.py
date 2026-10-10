@@ -20,8 +20,15 @@ STOCK_PROMPTS = {
     "v3": "Judge stock ONLY inside the supplied target polygon. Ignore shelf space outside the polygon and adjacent trays. Think like the store. A: empty: a customer would not be willing to buy what is left (nothing, or only a few leftover items). B: half: products are still sellable, but a staff member would take the time to replenish this shelf now. C: full: well stocked; a staff member would not bother replenishing it yet. D: insufficient evidence. If you are unsure between two levels, choose the lower one. Ignore black invalid padding.",
     # v4: team refinement of the organiser definition: about one purchase left (single pack/bag/bunch) = empty.
     "v4": "Judge stock ONLY inside the supplied target polygon. Ignore shelf space outside the polygon and adjacent trays. Think like the store manager. A: empty: nothing left, or only about one purchase left (a single package, bag or bunch, or a couple of loose items); staff must replenish urgently. B: half: more than one purchase left, but a staff member would take the time to replenish this shelf now. C: full: well stocked; a staff member would not bother replenishing it yet. D: insufficient evidence. If you are unsure between two levels, choose the lower one. Ignore black invalid padding.",
+    # v1n / v4n: v1 / v4 plus the planogram product's English name, to help judge capacity (two melons vs two lemons).
+    "v1n": QUESTIONS["stock"].replace("relative to the capacity for the visible product type.",
+                                      "relative to the capacity for the visible product type. The planogram product for this area is {english}."),
     "v2": "Judge stock ONLY inside the supplied target polygon, relative to the capacity for the visible product type. Ignore shelf space outside the polygon and adjacent trays. Look at how much of the container floor inside the target is covered by produce. A: empty or nearly depleted: only a few items remain relative to capacity and most of the floor is bare. B: half: produce is clearly present, but a noticeable part of the floor is bare, or empty cells, cups or gaps where more items would fit are visible (roughly a quarter or more of the target). Many items can still be half. C: full: produce covers essentially the whole target floor, with little or no bare floor or empty cells visible. D: insufficient evidence. Large fruit fills capacity with fewer items: two large melons in a target that fits roughly six can be half, whereas two lemons in a target that fits many can be empty. These are examples, not universal count thresholds. Ignore black invalid padding.",
 }
+
+STOCK_PROMPTS["v4n"] = STOCK_PROMPTS["v4"].replace("Think like the store manager.",
+                                                   "The planogram product for this area is {english}. Think like the store manager.")
+ENGLISH = json.loads(Path(__file__).with_name("products_en.json").read_text())
 
 
 def answer_tokens(tokenizer, codes="ABC"):
@@ -71,7 +78,7 @@ def question_input(name, product, crop_compliance=True, stock_prompt="v1", stock
     question = STOCK_PROMPTS[stock_prompt] if name == "stock" else QUESTIONS[name]
     prompt = (description + "validity mask aligned with the crop; white means real camera pixels, black means outside the camera view. "
               "Ignore those invalid pixels in the crop; they are neither stock nor a physical obstruction. "
-              + question.format(product=product) + (" Answer exactly A, B, C or D." if name == "stock" else " Answer exactly A, B or C."))
+              + question.format(product=product, english=ENGLISH.get(product, product)) + (" Answer exactly A, B, C or D." if name == "stock" else " Answer exactly A, B or C."))
     return keys, prompt
 
 

@@ -1,6 +1,6 @@
 # Demo
 
-Status: no deployed app, public URL or rehearsed sequence yet. Local preparation provides real images/crops with constant-baseline records for integration; these are explicitly marked as fallbacks, not model predictions.
+Status: local Spring/React list, evidence detail and recorded replay implemented; no public deployment, URL or rehearsed sequence yet. Local preparation provides real images/crops with constant-baseline records for integration; these are explicitly marked as fallbacks, not model predictions.
 
 Challenge confirmed: Sensei. The script below demonstrates the shelf assistant and its measured results.
 
@@ -50,8 +50,24 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 - Verify saved browsing without the worker and the laptop fallback without internet. Only stop processes started for this test, with team coordination.
 
 ## Known failures
-- Application and hosting are not yet implemented; model smoke tests do not verify the demo path.
+- Public hosting is not implemented. Local API integration checks are in `api/verify.py`; ML smoke checks remain separate.
 - Small/occluded crops and hidden pile depth limit visual stock estimates.
 - Closed white refrigeration curtains conceal shelves on early 6383/6386 frames; do not call them empty. Hour-scale frame gaps prevent claims about exactly when shelves changed or how quickly stock sold.
 - Phone-photo accuracy, browser latency and concurrent use are untested.
 - Public image permission, publication permission for knuth, public URL and domain/tunnel setup remain to be confirmed.
+
+## Local verification — Member2
+
+Built React and packaged Spring with 181 prepared snapshots. `python3 api/verify.py` passes snapshot/detail, capture-time consistency, images, bundled frontend, repeated requests, unknown IDs and traversal rejection. WebKit browser checks passed area selection, camera switching, frame navigation and automatic replay; evidence loaded and a 390px viewport had no horizontal overflow. Constant-baseline fallback labels were visible. The four ML smoke tests also pass with `PYTHON=.venv/bin/python`. Public mobile-data access, approved publication subset, real model predictions and the disconnected-laptop rehearsal remain unverified.
+
+## Staff-first frontend verification
+
+The landing gallery uses the latest saved snapshot per camera (14 cameras, 152 areas). Camera/time selection and recorded replay are secondary. On a phone, selecting a shelf opens evidence directly; Back restores the checklist URL, focus and scroll. Product titles hide retail metadata for readability; original labels remain in observation details. Baseline/mock/fallback and retrospective labels remain explicit.
+
+Earlier checklist builds passed WebKit checks for store totals, first-screen shelf visibility at 375px, mobile evidence, Back URL/focus/scroll, search/no-match recovery, camera filtering, all-camera return, replay advance/pause, pause on keyboard focus and reduced-motion behavior. Separate checks passed desktop split view, landscape width, reloaded deep links, missing images, API failure/retry and empty gallery recovery. API integration checks still pass. Browser network failures were test-only simulations, not model evaluation. Public access and the physical-phone/offline rehearsal remain unverified.
+
+Frontend motion: shelf cards reveal on entering the viewport; hover/press feedback and image fades support browsing. Detail navigation uses native view transitions when supported and ordinary navigation otherwise. Reduced-motion preference disables animated transitions. Verified WebKit mobile detail/back, no horizontal overflow, reduced motion, frontend build and live API/assets. No inference is triggered by these effects.
+
+Evidence inspection: open a shelf and select Enlarge image. Switch between Shelf crop and Full camera, zoom up to 300%, scroll to inspect and use Fit to reset. Escape or Close returns focus to the opener. Verified desktop/mobile zoom scrolling, image switching, reset, Escape, focus restoration and body-scroll restoration. Enlargement adds no detail and browsing does not run inference.
+
+Interactive camera view: shelf details include the full recorded camera image with clickable planogram polygons. Select another area by touch, pointer, keyboard, Previous/Next or dropdown without leaving the camera. Geometry is bundled from the supplied planogram at frontend build time; rebuild if that planogram changes. Verified nine regions on camera 6462, polygon selection, next navigation, Enter activation and mobile width. General alignment across every camera and timeline selection persistence still need a broader visual review.

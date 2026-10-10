@@ -53,3 +53,20 @@ python3 -m ml.scoring data/labels.json data/prepared-v1/baseline-half.json
 ```
 
 `scripts/smoke_test.sh` tests synthetic preparation, geometry, coverage and scoring. It does not yet exercise model inference or the API/UI. No accuracy metric exists without ground truth.
+
+## Member2 local app
+
+Prepare the dataset above first. From the repository root:
+
+```bash
+npm ci --prefix ui
+npm run build --prefix ui
+mvn -f api/pom.xml package
+java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=data/prepared-v1 --server.address=127.0.0.1
+```
+
+Open http://127.0.0.1:8080. The packaged Spring app serves React and the snapshot API from one origin. It reads snapshots at startup; restart after replacing prepared outputs. All referenced assets in that prepared folder are served locally; curate an approved subset before public hosting. Unknown asset/snapshot IDs are rejected. No GPU worker is required.
+
+With the app running, `python3 api/verify.py` checks real snapshot/detail/assets and frontend delivery. For UI development, `npm run dev --prefix ui` proxies API/assets to port 8080. Current constant-baseline records visibly require inspection; they are not model classifications.
+
+For a phone on the same trusted Wi-Fi, start with `--server.address=0.0.0.0` and open `http://<Mac-LAN-IP>:8080`. Obtain that IP with `ipconfig getifaddr en0`. This exposes the prepared gallery to reachable devices; public hosting still requires an approved asset subset. The Java package uses `controller`, `service`, `repository` and `dto` layers under `team.creditburners`.

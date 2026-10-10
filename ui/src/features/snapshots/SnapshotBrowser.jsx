@@ -1,5 +1,5 @@
 import BrandSymbol from './BrandSymbol';
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {manualPreview} from './manualPreview';
 import {withAssessmentMetadata} from './assessmentMetadata';
 import useSnapshots from './useSnapshots';
@@ -19,6 +19,8 @@ import {scrollToContent} from './scrollToContent';
 
 export default function SnapshotBrowser() {
   const browser = useSnapshots();
+  const [showIntro,setShowIntro]=useState(true);
+  useEffect(()=>{const timer=window.setTimeout(()=>setShowIntro(false),1800);return ()=>window.clearTimeout(timer);},[]);
   const {snapshot: originalSnapshot, storeSnapshots: originalStoreSnapshots, storeView, summaries, location, mode, navigate, loading, error, selectMode} = browser;
   const demo = mode === 'shelves' && location.demo === '1';
   const snapshot = withAssessmentMetadata(demo ? manualPreview(originalSnapshot) : originalSnapshot);
@@ -66,6 +68,7 @@ export default function SnapshotBrowser() {
     previousScope.current = location.scope;
   }, [location.area, mode, loading, location.scope, browser.current?.camera_id]);
   return <div className={`app-shell ${area ? 'detail-open' : 'gallery-view'} ${mode==='study'?'study-page':''}`}>
+    {showIntro && !error && <div className="brand-intro" aria-hidden="true"><BrandSymbol/><span>Shelf assistant</span></div>}
     {loading && !snapshot && !error && <div className="app-startup" role="status"><div className="startup-mark"><BrandSymbol/></div><strong>Getting your shelves ready</strong><span>Loading recorded images</span><div className="startup-progress" aria-hidden="true"><i/></div></div>}
     <a className="skip-link" href="#main-content">Skip to shelf checklist</a>
     <header className="app-header"><a className="brand" href="/" aria-label="Sensei home"><BrandSymbol/>sensei<span className="brand-divider" aria-hidden="true"/><span className="brand-description">Shelf assistant</span></a><nav className="app-nav" aria-label="Main pages"><button aria-current={mode==='shelves' ? 'page' : undefined} onClick={()=>selectMode('shelves')}>Store view</button><button aria-current={mode==='study' ? 'page' : undefined} onClick={()=>selectMode('study')}>Shelf study</button></nav><div className="header-tools"><span className="recorded-label">Recorded dataset</span>{mode==='shelves' && <AlertsPanel areas={alerts} unavailable={displayedAreas.filter(a => a.fallback_used || (a.prediction_source === 'mock' && !a.manual_preview)).length} busy={loading || !!error || !displayedAreas.length} onOpen={openShelf}/>}</div></header>

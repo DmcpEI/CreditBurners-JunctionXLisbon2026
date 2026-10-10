@@ -108,6 +108,9 @@ def main():
     parser.add_argument("--stock-crop-only", action="store_true", help="Stock question sees crop+mask only, no camera context")
     parser.add_argument("--context-max-side", type=int, default=0,
                         help="Downscale the camera-context image so its longest side is at most this (0 = original)")
+    parser.add_argument("--adapter", type=Path, help="LoRA adapter directory (needs peft; experiment)")
+    parser.add_argument("--save-hidden", type=Path,
+                        help="Save the stock answer-position hidden states (last and 2/3-depth layer) to this .npz")
     parser.add_argument("--references", type=Path,
                         help="JSON list of {crop, level, note}: labelled reference crops shown before the target (stock question)")
     parser.add_argument("--paired-prompt", choices=sorted(STOCK_PROMPTS),
@@ -161,6 +164,9 @@ def main():
     tokens = answer_tokens(proc.tokenizer, "ABCD")
     model = AutoModelForImageTextToText.from_pretrained(
         args.model, local_files_only=True, dtype=torch.bfloat16, device_map="cuda").eval()
+    if args.adapter:
+        from peft import PeftModel
+        model = PeftModel.from_pretrained(model, args.adapter).eval()
     torch.cuda.synchronize()
     load_seconds = time.perf_counter() - started
     print(f"Loaded in {load_seconds:.1f}s", flush=True)
@@ -168,7 +174,8 @@ def main():
     def question_key(prompt):
         # settings that change model input must change the cache key (defaults keep old keys valid)
         return (prompt + ("\n[answer-prefix]" + args.answer_prefix if args.answer_prefix else "")
-                + (f"\n[context-max-side]{args.context_max_side}" if args.context_max_side else ""))
+                + (f"\n[context-max-side]{args.context_max_side}" if args.context_max_side else "")
+                + (f"\n[adapter]{args.adapter}" if args.adapter else ""))
 
     references = json.loads(args.references.read_text()) if args.references else []
 
@@ -228,6 +235,7 @@ def main():
                 batched[key] = (answer, share)
             print(f"batch {start // args.batch_size + 1}: {len(chunk)} areas, {share:.3f}s/area", flush=True)
 
+    hidden = {}
     if args.paired_prompt:
         # Both prompts share the images and the description text; only the question differs. Run the shared
         # prefix once (vision encoder + prefill), then each question from a copy of that cache.
@@ -256,8 +264,12 @@ def main():
                     # first question works on a copy so the prefix cache stays clean for the second
                     kv = copy.deepcopy(out.past_key_values) if i == 0 else out.past_key_values
                     # no attention mask: positions continue from the cache length + stored M-RoPE image offset
-                    rest = model(input_ids=token_ids[None, shared:], past_key_values=kv, use_cache=True)
+                    rest = model(input_ids=token_ids[None, shared:], past_key_values=kv, use_cache=True,
+                                 output_hidden_states=bool(args.save_hidden and i == 0))
                     answers.append(answer_from(rest.logits[0, -1].float(), "ABCD"))
+                    if args.save_hidden and i == 0:  # main stock question: answer-position states for the probe
+                        layers = rest.hidden_states
+                        hidden[sample["sample_id"]] = torch.stack([layers[-1][0, -1], layers[(2 * len(layers)) // 3][0, -1]]).float().cpu().numpy()
             torch.cuda.synchronize()
             asked = sum(a is not None for a in answers)
             share = (time.perf_counter() - started) / asked  # one forward prefix serves the questions asked
@@ -278,6 +290,10 @@ def main():
                 temporary.replace(path)
             print(sample["sample_id"], answers[0]["choice"], answers[1]["choice"] if answers[1] else "-",
                   f"{asked * share:.2f}s", flush=True)
+        if args.save_hidden and hidden:
+            import numpy as np
+            np.savez_compressed(args.save_hidden, ids=np.array(list(hidden)), states=np.stack(list(hidden.values())))
+            print(f"saved hidden states for {len(hidden)} samples to {args.save_hidden}", flush=True)
         return
 
     for sample, fingerprint in pending:
@@ -303,7 +319,11 @@ def main():
                 images = load_images(paths)
                 inputs = proc(text=[chat_text(prompt, len(images))], images=images, return_tensors="pt").to("cuda")
                 with torch.inference_mode():
-                    answer = answer_from(model(**inputs).logits[0, -1].float(), codes)
+                    out = model(**inputs, output_hidden_states=bool(args.save_hidden and name == "stock"))
+                    answer = answer_from(out.logits[0, -1].float(), codes)
+                    if args.save_hidden and name == "stock":
+                        layers = out.hidden_states
+                        hidden[sample["sample_id"]] = torch.stack([layers[-1][0, -1], layers[(2 * len(layers)) // 3][0, -1]]).float().cpu().numpy()
             answer_cache[fingerprint] = answer
             if args.answer_cache:
                 args.answer_cache.parent.mkdir(parents=True, exist_ok=True)
@@ -327,6 +347,10 @@ def main():
         temporary.replace(args.output)
         print(sample["sample_id"], {k: v["choice"] for k, v in result["answers"].items()},
               f'{result["seconds"]:.2f}s', flush=True)
+    if args.save_hidden and hidden:
+        import numpy as np
+        np.savez_compressed(args.save_hidden, ids=np.array(list(hidden)), states=np.stack(list(hidden.values())))
+        print(f"saved hidden states for {len(hidden)} samples to {args.save_hidden}", flush=True)
 
 
 if __name__ == "__main__":

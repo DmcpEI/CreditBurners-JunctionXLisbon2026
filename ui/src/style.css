@@ -530,3 +530,8 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .brand { color: #292d25; }
 .brand-symbol { color: #292d25; }
 
+
+.typed-headline .typed-line { position: relative; display: inline-block; }
+.typed-reserve { visibility: hidden; }
+.typed-ink { position: absolute; inset: 0; white-space: nowrap; }
+@media(max-width:760px) { .page-heading h1 .typed-headline::before,.page-heading h1 .typed-headline span::before { content: none; }.typed-headline .typed-line + br + .typed-line { margin-left: .25em; } }

@@ -527,7 +527,6 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 
 .brand-symbol { padding: 4px; background: #effa8b; border-radius: 10px; color: inherit; }
 
-.brand { color: #effa8b; }
+.brand { color: #292d25; }
 .brand-symbol { color: #292d25; }
 
-.brand-name { color: #effa8b; background: #292d25; padding: 1px 9px 4px; border-radius: 7px; line-height: 1; }

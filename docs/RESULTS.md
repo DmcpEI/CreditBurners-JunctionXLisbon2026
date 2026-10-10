@@ -88,3 +88,25 @@ Runner option: `--crop-presence-only`. It deliberately produces only presence an
 Verified all ten outputs contain only presence, exactly one answer changed, both empty controls remain absent, and repeated execution uses cache without loading the model. Seven synthetic test methods now pass, including the diagnostic CLI's empty-input and missing-mask handling.
 
 Next: integrate crop-plus-mask presence into the visibility-gated flow, then assess stock/compliance for the newly admitted sparse case and check fresh examples before broad inference. Do not claim stock classification is fixed: this experiment tested only presence.
+
+
+## Integrated crop-presence pipeline — 10 October 2026
+
+Default staged inference now uses crop+mask for presence while retaining context+crop+mask for visibility, fill and compliance. Tested 20 observations across all 14 cameras: previous 12 cases plus one mid-day first-area observation from each of eight previously unseen cameras. This sample was chosen for coverage, not class balance.
+
+- Reused 36 identical question answers from v2 and the presence comparison; ran only 34 new questions. Per-question cache keys include model path, exact prompt and ordered image bytes. Keep model contents/environment fixed when reusing this cache; use a separate cache after replacing model weights or changing inference settings.
+- Sparse bananas now pass presence and are classified half; product match is uncertain, so the diagnostic action is inspect. Both closed curtains still stop after visibility; the open cabbage tray remains inspectable.
+- All eight added crops are classified visible and populated, consistent with provisional visual inspection. Stock agrees with six non-ambiguous provisional visual judgments; lemons and potatoes remain ambiguous half/full cases and were not assigned a reference level.
+- Product identification is now the main observed weakness: both new apple examples and the packaged strawberry example receive mismatch answers despite visually plausible product-type matches. Apricot identity is uncertain on visual review. These are suspected false alarms, not authoritative cultivar/brand labels.
+- New complete four-stage examples took approximately 1.68–1.71 seconds each; cached examples' near-zero times are cache retrieval, not inference throughput.
+
+Inputs/results: `data/qwen-integrated-v3/{sample,results}.json`; the per-question seed cache is `answers.json`. Provisional visual review: `visual-review.json`, authored by the assistant, not a human or Sensei, covering eight new cases plus sparse bananas. These checks are for development, not supervised training/calibration. The eight new crops were reviewed before reading their model outputs. A team member should review uncertain labels; never silently turn these into official truth.
+
+Remote workspace: `/workspace/jx/sensei-integrated-v3`:
+```bash
+/workspace/miniconda/envs/jx/bin/python -B -u -m ml.infer_sample data/qwen-integrated-v3/sample.json --model /workspace/models/qwen3.8-27b --output data/qwen-integrated-v3/results.json --answer-cache data/qwen-integrated-v3/answers.json
+```
+
+Eight synthetic test methods pass, including input selection, expected-product isolation and cache identity. API/UI and full-dataset submission remain separate unfinished steps. Next: isolate product-match false alarms using the same input-comparison approach, preserving visibility gates and cached answers.
+
+Clarification from the supplied brief: shared train/test images have no annotations; only the hidden final validation has `annotations.json`. The JSON shown in the PDF illustrates its format, not labels for all supplied images. We are not waiting for more labels: proceed with the planogram, image inspection and a small provisional development reference set. The final competition score will come from Sensei at the end as planned.

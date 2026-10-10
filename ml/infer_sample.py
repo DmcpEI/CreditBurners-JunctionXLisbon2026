@@ -50,6 +50,25 @@ def inspect_stages(ask):
                 observed_compliance=compliance, action=action)
 
 
+def question_input(name, product):
+    keys = ("crop", "mask") if name == "presence" else ("context", "crop", "mask")
+    description = ("First image: rectified target crop. Second image: " if name == "presence" else
+                   "First image: store camera, target outlined in red. Second image: rectified target crop. Third image: ")
+    prompt = (description + "validity mask aligned with the crop; white means real camera pixels, black means outside the camera view. "
+              "Ignore those invalid pixels in the crop; they are neither stock nor a physical obstruction. "
+              + QUESTIONS[name].format(product=product) + " Answer exactly A, B or C.")
+    return keys, prompt
+
+
+def question_fingerprint(model, prompt, paths):
+    digest = hashlib.sha256((model + "\n" + prompt).encode())
+    for path in paths:
+        data = path.read_bytes()
+        digest.update(len(data).to_bytes(8, "big"))
+        digest.update(data)
+    return digest.hexdigest()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", type=Path)
@@ -57,7 +76,9 @@ def main():
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--crop-presence-only", action="store_true",
                         help="Diagnostic ablation: presence only, using crop and mask without camera context")
+    parser.add_argument("--answer-cache", type=Path, help="Reuse identical individual questions across staged runs")
     args = parser.parse_args()
+    answer_cache = json.loads(args.answer_cache.read_text()) if args.answer_cache and args.answer_cache.exists() else {}
     image_keys = ("crop", "mask") if args.crop_presence_only else ("context", "crop", "mask")
     samples = json.loads(args.manifest.read_text())
     if len({s["sample_id"] for s in samples}) != len(samples):
@@ -93,19 +114,16 @@ def main():
     print(f"Loaded in {load_seconds:.1f}s", flush=True)
     for sample, fingerprint in pending:
         started = time.perf_counter()
-        images = [Image.open(args.manifest.parent / sample[key]).convert("RGB")
-                  for key in image_keys]
         result = dict(sample=sample, fingerprint=fingerprint, model=args.model,
                       load_seconds=load_seconds, scores_uncalibrated=True,
-                      input_mode="crop_mask_presence_only" if args.crop_presence_only else "staged_context_crop_mask", answers={})
+                      input_mode="crop_mask_presence_only" if args.crop_presence_only else "staged_crop_presence", answers={})
         def ask(name):
-            question = QUESTIONS[name]
-            description = ("First image: rectified target crop. Second image: " if args.crop_presence_only else
-                           "First image: store camera, target outlined in red. Second image: rectified target crop. Third image: ")
-            prompt = (description + "validity mask aligned with the crop; white means real camera pixels, black means outside the camera view. "
-                      "Ignore those invalid pixels in the crop; they are neither stock nor a physical obstruction. "
-                      + question.format(product=sample["product_name"])
-                      + " Answer exactly A, B or C.")
+            keys, prompt = question_input(name, sample["product_name"])
+            paths = [args.manifest.parent / sample[key] for key in keys]
+            fingerprint = question_fingerprint(args.model, prompt, paths)
+            if fingerprint in answer_cache:
+                return {**answer_cache[fingerprint], "cache_hit": True}
+            images = [Image.open(path).convert("RGB") for path in paths]
             messages = [{"role": "user", "content": [
                 *[{"type": "image"} for _ in images], {"type": "text", "text": prompt}]}]
             text = proc.apply_chat_template(messages, add_generation_prompt=True, enable_thinking=False)
@@ -115,9 +133,16 @@ def main():
                 scores = torch.stack([torch.logsumexp(logits[group], 0) for group in tokens])
                 probabilities = scores.softmax(0).tolist()
                 mass = (torch.logsumexp(scores, 0) - torch.logsumexp(logits, 0)).exp().item()
-            return dict(scores=dict(zip("ABC", probabilities)),
+            answer = dict(scores=dict(zip("ABC", probabilities)),
                                            choice="ABC"[max(range(3), key=probabilities.__getitem__)],
                                            allowed_token_mass=mass)
+            answer_cache[fingerprint] = answer
+            if args.answer_cache:
+                args.answer_cache.parent.mkdir(parents=True, exist_ok=True)
+                temporary = args.answer_cache.with_suffix(".tmp")
+                temporary.write_text(json.dumps(answer_cache, indent=2) + "\n")
+                temporary.replace(args.answer_cache)
+            return {**answer, "cache_hit": False}
         if args.crop_presence_only:
             result["answers"]["presence"] = ask("presence")
         else:

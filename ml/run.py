@@ -4,7 +4,8 @@
 
 Steps: prepare crops for every planogram area of every image (ml.validate), ask the stock question and the
 conditional empty check from one shared image prefix (ml.infer_sample), export with per-shelf half thresholds and
-always-compliant (ml.export). If inference fails, the export still writes a complete fallback submission.
+always-compliant (ml.export); the stock decision comes from the probe on the model's hidden state
+(ml/probe.npz) with per-shelf thresholds, falling back to the per-shelf half rule if hidden states are missing. If inference fails, the export still writes a complete fallback submission.
 """
 import argparse
 import subprocess
@@ -37,7 +38,7 @@ def main():
     results, empty = args.output / "results.json", args.output / "results-empty.json"
     command = [sys.executable, "-B", "-u", "-m", "ml.infer_sample", str(args.output / "sample.json"), "--model", args.model,
                "--stock-prompt", "v1", "--paired-prompt", "v4", "--paired-output", str(empty), "--paired-only-if-full-below", "0.5",
-               "--questions", "stock", "--context-max-side", "640", "--output", str(results)]
+               "--questions", "stock", "--context-max-side", "640", "--save-hidden", str(args.output / "hidden.npz"), "--output", str(results)]
     status = subprocess.run(command, cwd=ROOT).returncode
     if status != 0 or not results.exists():
         print(f"!!! inference failed (exit {status}); missing areas get the fallback answer (half, compliant)", flush=True)
@@ -45,7 +46,9 @@ def main():
             results.write_text("{}\n")
 
     build_outputs(args.output, results, args.output / "export", f"credit-burners-{args.output.name}", always_compliant=True,
-                  empty_results_path=empty if empty.exists() else None, area_thresholds_path=ROOT / "ml/area_thresholds.json")
+                  empty_results_path=empty if empty.exists() else None, area_thresholds_path=ROOT / "ml/area_thresholds.json",
+                  probe_path=ROOT / "ml/probe.npz" if (args.output / "hidden.npz").exists() else None,
+                  hidden_path=args.output / "hidden.npz")
     print(f"DONE in {time.perf_counter() - started:.0f}s: {args.output / 'export/submission.json'}", flush=True)
 
 

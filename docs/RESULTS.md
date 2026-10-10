@@ -2,6 +2,15 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Hidden-state probe adopted — final pipeline v6 — 10 October 2026
+
+- **Point-loss analysis** (all 344 labels, per-shelf thresholds learned leave-one-out): 474/674 points (70%); lost: full→half 75 (38%), half→full 68 (34%), missed wrong products 30 (15%), missed empties 24 (12%). Worst products tomatoes (34) and citrus (28), mostly narrow packaged areas on cameras 6443/6376.
+- **Probe** (`ml/probe.py`): the frozen Qwen3.8-27B's last-layer hidden state at the answer position (saved with `--save-hidden`, also in shared-prefix mode; cosine ≥ 0.997 vs a plain forward), standardised → PCA 16 + the four answer log-scores → logistic regression (C = 0.05). Decision: empty if P(empty) ≥ 0.5, else half if P(half) ≥ the shelf's threshold (default chosen on labels, per-shelf where strictly better), else full; then the production empty check. No extra GPU work.
+- **Cross-validation, stock points (344 labels):** unseen timestamps (random 5-fold) 167–179 vs 163 for per-shelf thresholds on the answer scores; unseen shelves (area-grouped) 106–135 vs 101 (ranges: plain vs production-path vectors).
+- **Blind 50, probe fitted without them:** **75/99 points (76%)**, stock 44/50 (half 6/8, full 36/39, empty 2/3) vs 60/99 for per-shelf thresholds and 52/99 for the global rule.
+- **Adopted.** Final probe fitted on all 344 labels → `ml/probe.npz` + `ml/probe.json` (default half threshold 0.5 on probe probabilities, 20 per-shelf thresholds). Export `results/qwen3.8-27b-ctx640-probe-emptycheck-shared-alwayscompliant-full-v1/`: 206 empty / 429 half / 1,327 full; 240 decisions differ from the per-shelf export (134 half→full, 58 full→half, 44 →empty). `ml.run` and `scripts/run_validation.sh` save hidden states and use the probe (fallback: per-shelf half rule). Cost unchanged: 3.8 s per camera image.
+- **Fine-tuning (LoRA)** experiment running (`ml/finetune.py`, peft in `jx-fast` only); **Claude Haiku/Sonnet/Opus** comparison on the blind 50 running via isolated agents.
+
 ## Blind final check and per-shelf thresholds adopted — final pipeline v5 — 10 October 2026
 
 - **Blind set labelled** by Member1 (`data/ground-truth/human-final-frozen.json`, SHA256 `cccc3310ffd2…`): 50 random observations, 39 full / 8 half / 3 empty, 1 mismatch. Scored **once**, per-area thresholds fitted on the earlier 298 labels only:

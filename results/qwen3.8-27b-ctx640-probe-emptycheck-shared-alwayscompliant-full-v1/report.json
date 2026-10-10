@@ -1,0 +1,33 @@
+{
+  "run_id": "qwen3.8-27b-ctx640-probe-emptycheck-shared-alwayscompliant-full-v1",
+  "areas": 1962,
+  "images": 181,
+  "decision_rule": "half_if_stock_B>=0.2",
+  "compliance": "always_true",
+  "empty_rule": "empty_if_v4_A>=0.7",
+  "area_thresholds": 0,
+  "probe": "ml/probe.npz",
+  "fallback": {
+    "stock": "half",
+    "compliant": true
+  },
+  "counts": {
+    "probe_decisions": 1962,
+    "product_checked": 0,
+    "missing_result": 0,
+    "stock_fallback": 0,
+    "compliance_fallback": 0,
+    "empty_rule_changed": 11,
+    "half_rule_changed": 1962,
+    "stock_empty": 206,
+    "non_compliant": 0,
+    "model_mismatch_suppressed": 0,
+    "stock_full": 1327,
+    "stock_half": 429
+  },
+  "seconds_per_image": {
+    "p50": 3.812378037982853,
+    "p95": 6.4746521200286224,
+    "total": 769.6570645001193
+  }
+}

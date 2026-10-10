@@ -2,6 +2,14 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Final-validation command rehearsed — 10 October 2026
+
+`scripts/run_validation.sh <images> <name>` (+ `ml/validate.py`). Rehearsed on 26 supplied images, 1–2 per camera, all 14 cameras, curtain and camera-reference frames excluded (mock of the 26-image validation set):
+- **Camera folders:** 281 areas, complete submission, no fallbacks, **2 min 58 s end to end** (upload, prepare and inference on knuth, fetch, export); model time 151 s, 5.5 s per image. Decisions identical to the full-dataset export for all 281 areas.
+- **Flat ZIP (no camera folders):** cameras inferred from the closest reference view, 25/25 correct (worst correct distance 25.9 vs nearest wrong ≥ 35.4). Two cameras share a filename timestamp, so a flat layout can collide; the real set is most likely in camera folders (annotation keys start with camera).
+- **knuth unreachable:** local preparation + complete fallback submission (half, compliant everywhere) in 3 s, with `!!!` warnings. Validated coverage 281/281.
+- Outputs: `data/val-<name>/` (`report.json` lists each image's camera and how it was found; `inference.log`; `export/`). Remote: `/workspace/jx/val-<name>`.
+
 ## Batch v3 labels, uncached cost, half rule v2 — 10 October 2026
 
 - **Labels:** batch v3 frozen by Member1 (blind, no suggestions): `data/ground-truth/human-v4-frozen.json` (copy of root export `sensei-6e5566ba3be1f7ba-frozen.json`), SHA256 `252f37ff7e74…`, 98 items, all visible. Development 78 (6 empty / 12 half / 60 full, 1 mismatch); evaluation 20 (1 / 2 / 17, 2 mismatches). Labelled total now 298 observations.

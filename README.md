@@ -28,6 +28,16 @@ ML dataset preparation, constant baselines and the Sensei scorer are implemented
 
 ## How to run
 
+### Final validation (one command)
+
+When Sensei releases the validation images (folder or ZIP; camera folders or flat):
+
+```bash
+scripts/run_validation.sh <images-folder-or-zip> <name>     # e.g. scripts/run_validation.sh ~/Downloads/validation.zip final
+```
+
+Uploads only the raw images to knuth, prepares and runs the current pipeline there (Qwen3.8-27B, stock question only, half rule v2, always compliant), fetches results and writes `data/val-<name>/export/submission.json`, checked to cover every planogram area of every image. Check the printed camera for each image when the input is flat. If knuth or the model fails it still writes a complete fallback submission and prints `!!!`. Rehearsed: 26 images / 281 areas in 2 min 58 s; see `docs/RESULTS.md`.
+
 From the repository root, with Python 3.10+ and Pillow installed (`python3 -m pip install -r ml/requirements.txt` if needed):
 
 ```bash

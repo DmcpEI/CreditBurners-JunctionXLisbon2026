@@ -2,6 +2,23 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Fewer questions, SAM 3 coverage, review batch v3 — 10 October 2026
+
+All on the 200 labelled observations (`data/labelled-v1/sample.json`, subset of the full-run inputs, built with `python3 -m ml.compare_runs --make-manifest data/full-v1/sample.json data/labelled-v1`), uncached, batch 1. Decisions made on development (v2+v3 dev), checked on holdouts; evaluation reported last. Scored with `python3 -m ml.compare_runs <results.json>…`. All variants answer compliant when compliance is not asked.
+
+| Pipeline (+ half rule) | Dev | Holdouts | Evaluation | Total | Questions/area | p50 s/area |
+|---|---|---|---|---|---|---|
+| 4 questions (full-v1) | 96 | 23 | 11 | 130 | 3.74 | 1.58 |
+| presence + stock | 99 | 43 | 41 | 183 | 1.87 | 0.72 |
+| **stock only** | **108** | 39 | 50 | **197** | 1.00 | **0.55** |
+| presence + stock, crop only | 78 | 8 | 43 | 129 | 1.87 | 0.39 |
+| stock only, crop only | 67 | −6 | 54 | 115 | 1.00 | 0.20 |
+
+- **Adopted: stock only + half rule + always compliant** (`--questions stock`). Best on development, ~3× cheaper (≈ 6 s per camera image extrapolated). Camera context matters for stock: crop-only is cheaper but clearly worse on development and holdout. Without the half rule stock-only scores 73 / 13 / 59: the rule still helps development and holdout but costs 9 points on evaluation.
+- **SAM 3 coverage not adopted.** `ml/coverage.py` (English prompts in `ml/products_en.json`, union of product name + "produce" (+ "bag" if packaged) at threshold 0.3, valid pixels only): 0.13 s per crop. Median coverage by human label ≈ 0 empty / 0.45–0.55 half / 0.6–0.76 full, with overlap and some 0.0 misses on packaged full areas. On stock-only answers: "full → half if coverage < t" scored ≤ 88 on dev; "half rule only if coverage < t" ≤ 107 on dev (vs 108 without coverage) and worse on holdouts. It looked better on evaluation (59–61 vs 50) but choosing it for that would be tuning on evaluation. Files: `data/labelled-v1/coverage.json`.
+- **Full stock-only export:** `results/qwen3.8-27b-stockonly-halfrule-full-v1/` (now the recommended app data; contract updated). 1,726 stock answers reused from the full-run cache, 236 new; scores identical to the labelled run (197). 15 stock fallbacks; 120 empty / 806 half / 1,036 full. An uncached full stock-only run for a clean per-image cost is running (`run-stockonly-fresh.log` on knuth).
+- **Review batch v3** (blind, no suggestions): `data/human-review-v3/`, set `6e5566ba3be1f7ba`, served on port 8767. 98 crops: 78 **development** from 48 never-used areas (fresh areas go to development this time to widen tuning beyond 15 areas) + 20 new frames of evaluation areas. 13 cameras (6386 has no unused areas), 50 products, 21 packaged; no duplicates, no split changes, curtain frames excluded. Built with `python3 -m ml.label_set --expand-from data/human-review-v1 --expand-from data/human-review-v2 --labels data/ground-truth/human-v2-frozen.json --labels data/ground-truth/human-v3-frozen.json --output data/human-review-v3 --exclude-image 6383/1751001156.jpg --exclude-image 6386/1751001156.jpg --counts '{"evaluation": 20, "fresh": 80}' --fresh-split development`. The generalised selection reproduces v2 exactly.
+
 ## Full Sensei export (Qwen3.8-27B, prompt v1, half rule) — 10 October 2026
 
 - **Run:** all 181 images / 1,962 areas on knuth (`/workspace/jx/sensei-full-v1`, `run.sh`, `run.log`); `ml/export.py inputs` then `ml.infer_sample --stock-prompt v1`, batch 1, bf16, model preloaded (load 4.5 s). Local copy: `data/full-v1/{sample,results,answers}.json`.

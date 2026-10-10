@@ -19,7 +19,7 @@ Our goal is a phone-friendly app judges can open through a public link and QR co
 
 ## Current status
 
-Planning scaffold; model weights and setup smoke scripts are on knuth. The application, public deployment and end-to-end smoke test are not implemented yet. No public demo URL exists yet.
+ML dataset preparation, constant baselines and the Sensei scorer are implemented. Model weights and setup smoke scripts are on knuth; real dataset inference, API/UI and public deployment are not implemented yet. No public demo URL exists yet.
 
 - [Plan, roles and milestones](docs/PLAN.md)
 - [Data and API contract](docs/CONTRACT.md)
@@ -28,4 +28,26 @@ Planning scaffold; model weights and setup smoke scripts are on knuth. The appli
 
 ## How to run
 
-Application commands will be added when the first runnable version exists. `scripts/smoke_test.sh` is currently a placeholder, not evidence that the app works.
+From the repository root, with Python 3.10+ and Pillow installed (`python3 -m pip install -r ml/requirements.txt` if needed):
+
+```bash
+python3 -m ml.prepare new_dataset_hackathon_junctionx_10_oct_2026_v2 --output data/prepared-v1
+bash scripts/smoke_test.sh
+```
+
+Choose a new output directory for each preparation run; existing outputs are not overwritten. The original ZIP is read directly, ignoring macOS metadata, without extracting arbitrary archive paths.
+
+Outputs in the ignored `data/prepared-v1/` directory:
+- `assets/`: original images, rectified shelf crops and validity masks (black = outside the image, not empty shelf).
+- `index.json`: each crop's identity, dimensions and visible fraction; `expected.json`: required camera/image/area keys.
+- `baseline-empty.json`, `baseline-half.json`, `baseline-full.json`: complete constant submissions, always compliant. These are not model predictions.
+- `snapshots.json`: contract-shaped records for Member2's integration, using the half baseline with `fallback_used: true`, unknown visibility and an explicit constant-baseline explanation. Assets are local files; `/assets/...` URLs need Member2's server to resolve.
+- `report.json`: dataset counts and off-image areas.
+
+When permitted labels exist, score only their annotated areas (extra predictions are ignored):
+
+```bash
+python3 -m ml.scoring data/labels.json data/prepared-v1/baseline-half.json
+```
+
+`scripts/smoke_test.sh` tests synthetic preparation, geometry, coverage and scoring. It does not yet exercise model inference or the API/UI. No accuracy metric exists without ground truth.

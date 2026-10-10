@@ -2,6 +2,8 @@
 
 Challenge confirmed: Sensei. Team: two people, Member1 and Member2. Final validation is only available at the end; reserve time for inference and submission. Cut scope if progress is slow.
 
+Dataset received: 181 images at 1280×720, 14 cameras, 152 areas and 1,962 area observations; no ground-truth labels supplied. Same-camera frames are 60–78 minutes apart. Preparation, validity masks, complete constant baselines and scorer now run locally; results and limitations are in `docs/RESULTS.md`. Next: current-image Qwen inference on a representative sample. Member2 can use the explicitly disclosed baseline app records for integration now.
+
 ## Objective
 > A store assistant that uses existing cameras to tell staff which produce shelves need attention, why, and what to do next.
 
@@ -14,7 +16,7 @@ Two prizes, two targets, planned from hour 0:
 ## Our edge
 1. **Per-area timeline from the same day.** Several clear frames per area are evidence, not truth: the planogram says what *should* be there, not that the morning shelf was full or compliant.
    - Reference = a clear, representative observation, optionally selected using robust high coverage. Highest observed coverage is not proof the shelf was full. Later-frame references are retrospective and require permission.
-   - Occluded frame → nearest clear frame only within a short window, keep its timestamp, never across a restock.
+   - The supplied frames are 60–78 minutes apart: do not replace an occluded/curtained frame with its neighbour. References are context only; keep timestamps and do not infer unchanged stock across a gap.
    - Appearance change alone can't tell depletion from rearrangement, lighting or a wrong product; combine with the VLM.
 2. **Cost-aware answers** from calibrated probabilities (below). Never skip an area (missing = −5).
 3. **Proof.** Local copy of the scoring function, held-out evaluation, every component compared against baselines.

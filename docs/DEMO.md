@@ -1,6 +1,6 @@
 # Demo
 
-Status: planned; no deployed app, public URL or rehearsed sequence yet.
+Status: no deployed app, public URL or rehearsed sequence yet. Local preparation provides real images/crops with constant-baseline records for integration; these are explicitly marked as fallbacks, not model predictions.
 
 Challenge confirmed: Sensei. The script below demonstrates the shelf assistant and its measured results.
 
@@ -40,6 +40,7 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 - **Local app fails:** show the recorded walkthrough and say it is a recording.
 - **Photo mode unreliable or unfinished:** omit it. The store replay remains the main product.
 - No invented model results or impact metrics. Any development fixture must say "Illustrative mock" and must not enter evaluation results.
+- Current integration data: `data/prepared-v1/snapshots.json` contains a constant compliant/half baseline, unknown visibility and `fallback_used: true` on every area. Display its explanation. Do not present these records as image analysis or use their alerts as proof of product accuracy.
 
 ## Acceptance checks before judging
 - Public URL and QR code work from a phone on mobile data; list, detail and replay work on a narrow screen.
@@ -51,5 +52,6 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 ## Known failures
 - Application and hosting are not yet implemented; model smoke tests do not verify the demo path.
 - Small/occluded crops and hidden pile depth limit visual stock estimates.
+- Closed white refrigeration curtains conceal shelves on early 6383/6386 frames; do not call them empty. Hour-scale frame gaps prevent claims about exactly when shelves changed or how quickly stock sold.
 - Phone-photo accuracy, browser latency and concurrent use are untested.
 - Public image permission, publication permission for knuth, public URL and domain/tunnel setup remain to be confirmed.

@@ -15,7 +15,12 @@ export default function useSnapshots() {
   const [storeLoading, setStoreLoading] = useState(true);
   const [storeError, setStoreError] = useState('');
   const cache = useRef(new Map());
-  const storeView = location.scope !== 'camera' && location.view !== 'replay';
+  const mode = ['study','replay'].includes(location.view) ? 'study' : 'shelves';
+  const storeView = location.scope !== 'camera' && mode === 'shelves';
+  const [studySnapshots, setStudySnapshots] = useState([]);
+  const [studyLoading, setStudyLoading] = useState(false);
+  const [studyError, setStudyError] = useState('');
+  const [notice, setNotice] = useState('');
   const loadSnapshot = useCallback(id => {
     if (!cache.current.has(id)) {
       const request = fetch(`/api/snapshots/${encodeURIComponent(id)}`).then(response => {
@@ -79,18 +84,32 @@ export default function useSnapshots() {
   const current = summaries.find(s => s.snapshot_id === location.snapshot);
   const frames = useMemo(() => sortFrames(summaries.filter(s => s.camera_id === current?.camera_id)), [summaries, current?.camera_id]);
   const position = frames.findIndex(s => s.snapshot_id === location.snapshot);
-  const mode = location.view === 'replay' ? 'replay' : 'shelves';
+  useEffect(() => {
+    if (mode !== 'shelves' || !current || !frames.length) return;
+    if (current.snapshot_id !== frames.at(-1).snapshot_id) navigate({snapshot:frames.at(-1).snapshot_id}, true);
+  }, [mode, current, frames, navigate]);
+
+  useEffect(() => {
+    if (mode !== 'study' || !current) return;
+    let cancelled = false;
+    setStudyLoading(true); setStudyError(''); setStudySnapshots([]);
+    Promise.all(frames.map(frame => loadSnapshot(frame.snapshot_id)))
+      .then(data => {if (!cancelled) {setStudySnapshots(data); setStudyLoading(false);}})
+      .catch(error => {if (!cancelled) {setStudyError(error.message); setStudyLoading(false);}});
+    return () => {cancelled = true;};
+  }, [mode, current?.camera_id, summaries, retry, loadSnapshot]);
 
   useEffect(() => {
     if (!location.snapshot || !summaries.length) return;
+    if (mode === 'shelves' && current && current.snapshot_id !== frames.at(-1)?.snapshot_id) return;
     let cancelled = false;
     setLoading(true);
     setError('');
     loadSnapshot(location.snapshot)
-      .then(data => { if (!cancelled) { setSnapshot(data); setLoading(false); } })
+      .then(data => { if (!cancelled) { setSnapshot(data); setLoading(false); if (location.area && !data.areas.some(area => area.area_id === location.area)) {setNotice('The selected shelf is not available in this image. Choose another shelf.'); navigate({area:null},true);} } })
       .catch(e => { if (!cancelled) { setError(e.message); setLoading(false); setPlaying(false); } });
     return () => { cancelled = true; };
-  }, [location.snapshot, summaries, retry, loadSnapshot]);
+  }, [location.snapshot, summaries, retry, loadSnapshot, mode]);
 
   useEffect(() => {
     if (!summaries.length || !storeView) return;
@@ -106,11 +125,11 @@ export default function useSnapshots() {
   }, [summaries, storeView, retry, loadSnapshot]);
 
   useEffect(() => {
-    if (!playing || loading || !frames.length) return;
+    if (mode !== 'study' || !playing || loading || !frames.length) return;
     if (position >= frames.length - 1) { setPlaying(false); return; }
-    const timer = setTimeout(() => navigate({snapshot: frames[position + 1].snapshot_id, area: null}, true), 3500);
+    const timer = setTimeout(() => navigate({snapshot: frames[position + 1].snapshot_id}, true), 3500);
     return () => clearTimeout(timer);
-  }, [playing, loading, frames, position, navigate]);
+  }, [playing, loading, frames, position, navigate, mode]);
 
   const pauseReplay = () => setPlaying(false);
   const selectCamera = camera => {
@@ -119,16 +138,16 @@ export default function useSnapshots() {
     const latest = sortFrames(summaries.filter(s => s.camera_id === camera)).at(-1);
     if (latest) navigate({snapshot: latest.snapshot_id, area: null, scope: 'camera'});
   };
-  const selectFrame = id => { setPlaying(false); navigate({snapshot: id, area: null}); };
-  const selectMode = view => { setPlaying(false); navigate({view: view === 'shelves' ? null : view, scope: view === 'shelves' ? null : 'camera', area: null}); };
+  const selectFrame = id => { setPlaying(false); setNotice(''); navigate({snapshot: id}); };
+  const selectMode = view => { setPlaying(false); setNotice(''); const latest = view === 'shelves' ? frames.at(-1) : current; navigate({view:view === 'shelves' ? null : 'study',scope:view === 'shelves' ? null : 'camera',snapshot:latest?.snapshot_id || location.snapshot,area:null,filter:null,q:null}); };
   const toggleReplay = () => {
     if (reducedMotion) return;
-    if (!playing && position === frames.length - 1 && frames.length) navigate({snapshot: frames[0].snapshot_id, area: null}, true);
+    if (!playing && position === frames.length - 1 && frames.length) navigate({snapshot: frames[0].snapshot_id}, true);
     setPlaying(value => !value);
   };
 
   return {
-    summaries, snapshot, storeSnapshots, storeView, current, frames, position, mode, location, loading: listLoading || (summaries.length > 0 && storeView ? storeLoading : loading) || Boolean(location.area && loading),
+    summaries, snapshot, storeSnapshots, studySnapshots, studyLoading, studyError, notice, storeView, current, frames, position, mode, location, loading: Boolean(mode === 'shelves' && current && current.snapshot_id !== frames.at(-1)?.snapshot_id) || listLoading || (summaries.length > 0 && storeView ? storeLoading : loading) || Boolean(location.area && loading),
     error: storeView ? (storeError || error) : error, playing, reducedMotion, navigate, selectCamera, selectFrame, selectMode, toggleReplay, pauseReplay,
     retry: () => { cache.current.clear(); setRetry(value => value + 1); },
   };

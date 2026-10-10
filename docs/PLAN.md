@@ -8,6 +8,12 @@ We work with the supplied images and planogram now. The brief explicitly reserve
 
 Human review is ready at `http://127.0.0.1:8765` while the local server is running: 60 fixed examples (32 development, 28 held-out), blank human labels, draft export and freeze. See `docs/RESULTS.md` for restart/build commands. Collect those labels next; do not tune against held-out results.
 
+## Confirmed guidance — 10 October
+
+User relayed organiser guidance: self-annotation of empty/half/full is appropriate; final validation images will have products visible, without the closed white refrigeration curtains. Exclude confirmed closed-curtain observations from development stock/product scoring and calibration. Retain them only as documented excluded data or optional robustness examples; never label them empty and never discard an entire camera or a frame merely because it contains white packaging. The existing review page keeps these examples to preserve work: mark Blocked / curtain, leaving stock and compliance null. Report exclusion counts when scoring. Final export must still cover every requested validation area; a model visibility error must not cause a missing entry.
+
+Knuth is authorised for project use, including required setup and hosting. Continue to use `/workspace`, preserve unrelated files/processes, and check network/disk availability. Public image redistribution remains a separate question. Focus further experiments on visible shelves and the human-reviewed stock reference rather than tuning curtain detection.
+
 ## Objective
 > A store assistant that uses existing cameras to tell staff which produce shelves need attention, why, and what to do next.
 
@@ -61,7 +67,7 @@ Build order: plain Qwen on one real image → complete JSON export → API/UI in
 3. **Timeline (sampled frames, expand where useful):** DINOv3 patch features, SAM 3 produce coverage, person/hand flag.
    - Candidate SAM 3 prompt strategy = union of masks for the English names of **all products on that camera** (not only the expected one, or a wrong product looks empty) + "produce" at threshold 0.3. Reported Fri on a banana image: "banana" covers 0.76, "produce" 0.97 at 0.3 but 0.20 at 0.5, "fruit"/"food"/"vegetable" ≈ 0. Translate the Portuguese names once. Inspect masks for background inclusion and reproduce the threshold comparison on store crops before adopting it.
 4. **VLM judge (implemented diagnostic):** visibility and stock use tight crop + outlined camera context + aligned validity mask; presence and compliance use only crop + mask to avoid surrounding-scene distraction. Ask visibility first without the expected product; blocked/uncertain → stop and inspect. Then ask produce presence; empty → skip product identification, uncertain → inspect. Only visible produce proceeds to half/full and product-match questions. Expected product appears only in the match question. Raw answer scores are uncalibrated; unavailable observations remain null in diagnostics. This is not yet the mandatory scoring export. Reference crops remain a separate optional experiment.
-5. **Calibration / fusion** over [VLM probs, coverage vs reference, patch distance]. Only if the mentor allows hand-label calibration (it is supervised, the brief stresses no labels).
+5. **Calibration / fusion** over [VLM probs, coverage vs reference, patch distance]. Self-annotation is confirmed. Any fitting uses only development labels; keep held-out labels for evaluation. Calibration is optional and must demonstrate benefit over the plain model.
 6. **Decision** with the rule above.
 7. **Local scorer** on every change; numbers to `docs/RESULTS.md`.
 
@@ -90,7 +96,7 @@ Coverage is not pile volume (removing a top layer barely changes it). The VLM ma
 - **ML:** Python + PyTorch on knuth; Qwen3.8 with SAM 3 / DINOv3 retained only when they improve measured results.
 - **API:** Java / Spring Boot. **UI:** React + Tailwind; serve the built UI and API from one origin.
 - **Core integration:** Python writes JSON results and image files; Spring serves them to React. No database or separate Python web server required for browsing/replay.
-- **Public deployment:** app on knuth, exposed through Cloudflare Tunnel to an HTTPS URL and QR code, subject to server publication permission and outbound connectivity. Expose only the web app; keep inference and filesystem access private. Hosting is planned, not deployed.
+- **Public deployment:** app on knuth, exposed through Cloudflare Tunnel to an HTTPS URL and QR code, with server use authorised; outbound connectivity and public access still need testing. Expose only the web app; keep inference and filesystem access private. Hosting is planned, not deployed.
 - For fresh analysis, Spring accepts bounded jobs and hands them to one persistent local Python worker. Poll job status; limit concurrency and queue length. No Redis/Celery or additional GPU rental for this scope.
 - Only publish an approved subset of challenge images; confirm image-sharing permission with Sensei. Use team-owned produce photos if public redistribution is not allowed. Keep validation images and labels out of the public gallery.
 - If uploads are built, validate decoded image type, byte size and dimensions, use generated file names, and delete temporary uploads after processing. Restrict gallery requests to known IDs; never accept arbitrary server paths or remote fetch URLs.
@@ -138,7 +144,7 @@ If behind, drop optional laptop benchmarking and fresh inference first, then unp
 - Are the supplied images raw original-resolution frames or annotated/overlaid versions? Are cameras fixed, what is the sampling interval, and do polygons align with the delivered image dimensions?
 - Final validation is only at the end: exactly when are images released, how long can inference run, when is submission due, and are retries allowed?
 - Does an empty area count as compliant? How are partly visible areas annotated?
-- Is calibrating on our own hand labels allowed?
+- Self-annotation of stock levels is confirmed; retain the fixed development/holdout split.
 - May we use other frames from the same day (including later ones) as context?
 - Are validation images from the same day/cameras as train/test?
 - Are cloud VLM APIs allowed? How is the general prize judged?

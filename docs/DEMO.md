@@ -19,7 +19,7 @@ The core demo works from saved results. Label it "Recorded store replay" and sho
 - **0:00–0:20 — Problem:** staff discover shelf problems by walking the store; explain the cost of missing an empty shelf or raising an unnecessary alert.
 - **0:20–1:20 — Product:** show a real recorded shelf change, the resulting task, and the evidence detail. Let the judge scan the QR code. If the sequence contains an actual restock, show the later observation resolving the stock issue.
 - **1:20–2:00 — Journey and proof:** explain one assumption the real images challenged, one method kept/dropped and why, then show the measured score against the baseline. Name the sample size and distinguish local labels from official validation results. If the official result is not available yet, say so; do not make the pitch depend on it.
-- **2:00–2:30 — Trust:** show an obstructed/uncertain case, the observation age and why staff should check it. Optional fresh inference only if it has been tested and fits the time.
+- **2:00–2:30 — Journey:** explain that early images included closed refrigeration curtains, so we excluded those from stock evaluation instead of treating hidden stock as empty. Organisers confirmed final validation contains visible products. Show the human annotation process and one measured visible-shelf improvement; curtain handling is a robustness example, not a scored challenge advantage.
 - **2:30–3:00 — Opportunity:** explain how existing cameras could support more stores. Reduced waste, recovered sales and saved staff time are potential benefits, not measured claims unless evaluated.
 
 Confirm the actual General/Peer pitch format with organisers. Rehearse three times; adjust the timings to their limit.
@@ -54,4 +54,4 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 - Small/occluded crops and hidden pile depth limit visual stock estimates.
 - Closed white refrigeration curtains conceal shelves on early 6383/6386 frames; do not call them empty. Hour-scale frame gaps prevent claims about exactly when shelves changed or how quickly stock sold.
 - Phone-photo accuracy, browser latency and concurrent use are untested.
-- Public image permission, publication permission for knuth, public URL and domain/tunnel setup remain to be confirmed.
+- Knuth project/hosting use is authorised. Public image permission, public URL and domain/tunnel setup remain to be confirmed.

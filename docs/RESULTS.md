@@ -136,3 +136,12 @@ Build with `python3 -m ml.label_set --output data/human-review-v1` (refuses over
 Keep holdout results out of prompt tuning; compare development results first. Score stock and compliance separately on definite labels and report the number excluded as uncertain. Do not use partially labelled references as an official competition score. Review is for evaluation, not fine-tuning or fitting a calibration model.
 
 Nine Python test methods pass, including deterministic area-disjoint sampling and exclusion of exposed areas. Browser checks cover blank initial answers, blocked-view gating, save/reload, null export values and mobile layout. Synthetic browser test labels are isolated and are not part of the review dataset.
+
+
+## Confirmed evaluation scope — 10 October 2026
+
+User relayed organiser guidance: create our own empty/half/full annotations; closed-white-curtain images should be discarded from task evaluation because the final validation will show products unobstructed. No additional training labels are expected. This resolves the earlier uncertainty about including curtained shelves in the benchmark.
+
+Preserve the in-progress review set and browser labels. Mark confirmed curtain examples Blocked / curtain; their stock and compliance remain null, and they must be excluded from stock/product metric denominators and any calibration, with exclusion counts reported. Retain images as provenance/optional robustness examples rather than deleting source data. No automatic broad white-colour filter: packaging and pale shelves are valid inputs. Final submission still requires every requested area, including fallback predictions if the visibility model is mistaken.
+
+Knuth use is authorised for the project. No server environment or hosting changes were made in this update. Next priority is collecting the human stock reference and testing visible-shelf errors, not further curtain tuning.

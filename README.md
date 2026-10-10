@@ -1,68 +1,70 @@
-# Credit Burners
+# Credit Burners — Fresh eyes on fresh produce
 
-JunctionX Lisbon 2026
+JunctionX Lisbon 2026 · Sensei challenge · Two-person team: Member1 (ML/evaluation) and Member2 (API/UI/deployment).
 
-Challenge confirmed: Sensei. Two-person team: Member1 (ML/evaluation) and Member2 (API/UI/deployment).
+Existing ceiling cameras → for every planogram area: **is the shelf empty, half or full?** → a prioritised task list for store staff, with the photo as evidence. An open vision-language model (Qwen3.8-27B) runs on one GPU; decisions follow Sensei's own cost table (calling stock too high costs 3, too low costs 2).
 
-## The idea
+## Results (our labelled data, not the official score)
 
-A store assistant that uses existing cameras to identify produce shelves needing attention. Staff get a prioritised list of actions, with images explaining each alert.
+| | Stock correct | Points (% of max) |
+|---|---|---|
+| **Blind random check** (50 shelves, labelled without seeing predictions) | **78%** | **61%** |
+| Previous pipeline on the same 50 | 74% | 53% |
+| "Always full" baseline | 78% | 53% |
 
-Our goal is a phone-friendly app judges can open through a public link and QR code: explore a recorded store day, inspect shelf alerts and their evidence, and see measured results. Fresh analysis and single-tray photo uploads are stretch features.
+- Processing cost: **3.8 s per camera image** on one NVIDIA RTX PRO 6000 (≈11 shelf areas per image), down from 16 s earlier in the day.
+- Product identity is **not** assessed: every area is answered compliant (a product check produced more false alarms than catches on our labels).
+- Labels are our own (348 observations); the official score comes only from Sensei's hidden validation. Every experiment, kept or rejected, is in [`docs/RESULTS.md`](docs/RESULTS.md).
 
-## Planned stack
+## How it decides
 
-- Python / PyTorch on knuth: Qwen3.8-27B, with SAM 3 and DINOv3 evaluated as supporting signals.
-- Java / Spring Boot API; React + Tailwind interface.
-- JSON results and image files; Cloudflare Tunnel for public HTTPS access, subject to permission and connectivity.
-- Saved results for immediate browsing and a laptop demo fallback.
+1. **Crop** each planogram area from the camera image (perspective-corrected, out-of-view pixels masked).
+2. **Ask** Qwen3.8-27B one multiple-choice question per area — empty / half / full — showing the camera view (640 px, area outlined), the crop and the mask. We read the answer probabilities, not generated text.
+3. **Cost rule:** answer *half* unless the model is confident enough that the shelf is full. Sensei charges 3 for over-estimating and 2 for under-estimating, so half is the cheaper answer whenever P(really half) ≥ 3/7; on our labels that crossing sits at a model half-score of 0.20. Each shelf area gets its own threshold where our labels of that shelf show it is judged more or less strictly (`ml/area_thresholds.json`, no timestamps used).
+4. **Empty check:** a second question encoding the stock definition (*empty = about one purchase left*) is asked only when the first answer is not confidently full, reusing the same image prefix; it overrides to empty when ≥ 70% sure.
+5. **Never skip an area:** if anything fails, the area gets the fixed fallback (half, compliant) — a missing area costs 5.
 
-## Current status
+## Run it on the validation images
 
-Real dataset inference and measured evaluation, Spring API and the React Store view/Shelf study are implemented. The app uses the current recommended saved per-shelf stock export; product identity is not assessed. Public deployment/QR and fresh inference through the app are not implemented. Start continuation with the Member2 section in docs/PLAN.md.
+### Requirements
+- Linux with an NVIDIA GPU with ≥ 64 GB memory (tested on RTX PRO 6000 Blackwell, 96 GB), Python 3.11, PyTorch with CUDA, `transformers` ≥ 5.19, `accelerate`, Pillow.
+- The model: `hf download Qwen/Qwen3.8-27B --local-dir models/qwen3.8-27b` (≈ 55 GB).
+- Images at 1280×720 in camera-id folders (`6215/1751052241.jpg`, …) or flat (cameras are then matched to the supplied images; run `python3 -m ml.prepare new_dataset_hackathon_junctionx_10_oct_2026_v2 --output data/prepared-v1` first). A ZIP works too.
 
-- [Plan, roles and milestones](docs/PLAN.md)
-- [Data and API contract](docs/CONTRACT.md)
-- [Demo script and fallbacks](docs/DEMO.md)
-- [Measured results](docs/RESULTS.md)
-
-## How to run
-
-### Final validation (one command)
-
-When Sensei releases the validation images (folder or ZIP; camera folders or flat):
-
+### One command (any GPU machine)
 ```bash
-scripts/run_validation.sh <images-folder-or-zip> <name>     # e.g. scripts/run_validation.sh ~/Downloads/validation.zip final
+python -m ml.run <validation-images-folder-or-zip> --output out/final --model models/qwen3.8-27b
 ```
+Writes `out/final/export/submission.json` in Sensei's exact format (camera → image → area → `planogram_compliant`, `stock_level`, `stock_value`), checked to cover every planogram area of every image, plus `snapshots.json` for the app and `crops-sheet.jpg` for a visual check. It stops with a clear error on images that are not 1280×720 or whose camera cannot be identified (`--allow-other-size`, `--trust-inferred-cameras` override after checking the crops sheet). If the model cannot run, a complete fallback submission is still written. 26 images take about 2 minutes.
 
-Uploads only the raw images to knuth, prepares and runs the current pipeline there (Qwen3.8-27B, 640 px context, stock question + half rule 0.20, empty check, always compliant), fetches results and writes `data/val-<name>/export/submission.json`, checked to cover every planogram area of every image. Check the printed camera for each image when the input is flat. If knuth or the model fails it still writes a complete fallback submission and prints `!!!`. Rehearsed: 26 images / 281 areas in 2 min 14 s. A crops contact sheet opens during inference: if crops look wrong (wrong camera or resolution), press Ctrl-C; see `docs/RESULTS.md`.
+### Team shortcut (laptop → knuth)
+```bash
+scripts/run_validation.sh <images-folder-or-zip> <name>    # → data/val-<name>/export/submission.json
+```
+Uploads only the raw images to our GPU server, runs the same pipeline there, opens the crops sheet during inference (Ctrl-C if crops look wrong) and fetches the result. Rehearsed: 26 images / 281 areas in 2 min 11 s; if the server is unreachable it writes a complete fallback submission and prints `!!!`.
 
-From the repository root, with Python 3.10+ and Pillow installed (`python3 -m pip install -r ml/requirements.txt` if needed):
+## Reproduce our evaluation
 
 ```bash
+python3 -m pip install -r ml/requirements.txt
 python3 -m ml.prepare new_dataset_hackathon_junctionx_10_oct_2026_v2 --output data/prepared-v1
-bash scripts/smoke_test.sh
+bash scripts/smoke_test.sh                                   # synthetic checks of preparation, geometry, scoring
+python3 -m ml.compare_runs <results.json> …                  # score runs on our frozen labels (labels stay local)
 ```
+Full-dataset predictions of the current pipeline: `results/qwen3.8-27b-ctx640-perarea-emptycheck-shared-alwayscompliant-full-v1/` (`submission.json`, `snapshots.json`, `report.json`). Experiment log with exact commands: [`docs/RESULTS.md`](docs/RESULTS.md).
 
-Choose a new output directory for each preparation run; existing outputs are not overwritten. The original ZIP is read directly, ignoring macOS metadata, without extracting arbitrary archive paths.
+## Repository map
 
-The supplied dataset ZIP, planogram and challenge PDF are tracked at the team's request. Extracted duplicates, generated crops/results and model weights stay outside Git.
-
-Outputs in the ignored `data/prepared-v1/` directory:
-- `assets/`: original images, rectified shelf crops and validity masks (black = outside the image, not empty shelf).
-- `index.json`: each crop's identity, dimensions and visible fraction; `expected.json`: required camera/image/area keys.
-- `baseline-empty.json`, `baseline-half.json`, `baseline-full.json`: complete constant submissions, always compliant. These are not model predictions.
-- `snapshots.json`: contract-shaped records for Member2's integration, using the half baseline with `fallback_used: true`, unknown visibility and an explicit constant-baseline explanation. Assets are local files; `/assets/...` URLs need Member2's server to resolve.
-- `report.json`: dataset counts and off-image areas.
-
-When permitted labels exist, score only their annotated areas (extra predictions are ignored):
-
-```bash
-python3 -m ml.scoring data/labels.json data/prepared-v1/baseline-half.json
-```
-
-`scripts/smoke_test.sh` tests synthetic preparation, geometry, coverage and scoring. It does not yet exercise model inference or the API/UI. Measured comparisons against frozen human labels are documented in `docs/RESULTS.md`; these are not official validation results.
+| Path | What |
+|---|---|
+| `ml/run.py` | One-command validation run (prepare → infer → export) |
+| `ml/prepare.py`, `ml/validate.py` | Crops, masks, expected keys; validation input handling and guards |
+| `ml/infer_sample.py` | Qwen inference, cached per question; shared-prefix paired questions |
+| `ml/decision_rule.py`, `ml/area_thresholds.py` | Cost-based half rule, empty check, per-shelf thresholds |
+| `ml/export.py` | Sensei submission + app snapshots |
+| `ml/label_set.py`, `ml/label_review.html`, `ml/evaluate_review.py`, `ml/compare_runs.py` | Annotation pages and scoring on our labels |
+| `api/`, `ui/` | Spring Boot API and React app (see below) |
+| `docs/` | Plan, contract, demo script, results |
 
 ## Member2 local app
 

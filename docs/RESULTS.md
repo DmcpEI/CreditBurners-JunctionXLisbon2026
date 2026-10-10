@@ -2,6 +2,23 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Full Sensei export (Qwen3.8-27B, prompt v1, half rule) — 10 October 2026
+
+- **Run:** all 181 images / 1,962 areas on knuth (`/workspace/jx/sensei-full-v1`, `run.sh`, `run.log`); `ml/export.py inputs` then `ml.infer_sample --stock-prompt v1`, batch 1, bf16, model preloaded (load 4.5 s). Local copy: `data/full-v1/{sample,results,answers}.json`.
+- **Export:** `python3 -m ml.export outputs data/full-v1/results.json --output data/full-v1/export --run-id qwen3.8-27b-v1-halfrule-full-v1` → `submission.json` (exact Sensei format, validated: all 1,962 keys, consistent level/value), `snapshots.json` (contract app records, `prediction_source: saved`), `report.json`. Fallbacks (half / compliant) used for 41 stock and 186 compliance answers; half rule changed 449 stock decisions. Output: 247 empty / 738 half / 977 full; 250 non-compliant.
+- **Measured processing cost (model time only):** median **16.0 s per camera image** (p95 25.0 s; 10.8 areas/image), 2,925 s for 181 images, 56 GB GPU memory on one RTX PRO 6000 Blackwell. Not included: model load (4.5 s once) and input preparation (~20 min CPU for 1,962 outlined context JPEGs, avoidable). At a hypothetical rate R per GPU-hour: ≈ 0.0044 R per image. No real tariff known.
+- **Scored against all human labels (same run):** reproduces earlier dev numbers exactly (16/55 → 40/55 with rule).
+
+| Policy | v2 dev | v2 hold | v3 dev | v3 hold | v3 evaluation (fresh areas) | Total |
+|---|---|---|---|---|---|---|
+| model | 16/55 | −5/44 | 49/100 | −4/40 | 19/140 | 75 |
+| model + half rule (**exported**) | 40/55 | 10/44 | 56/100 | 13/40 | 11/140 | 130 |
+| model + half rule, always compliant | 40/55 | 16/44 | 56/100 | 19/40 | 41/140 | 172 |
+| constant full, compliant | −17/55 | −20/44 | 36/100 | 4/40 | 34/140 | 37 |
+
+- **On the 70 fresh evaluation areas the exported pipeline loses to the constant "full + compliant" (11 vs 34).** Causes: compliance false alarms (13 of 64 compliant flagged; only 3 of 6 real mismatches caught) and the half rule turning true full into half (5 → 14 errors) on areas that are mostly full (48/70). The half rule still helps on dev/holdout areas.
+- "Always compliant" is best on every group, but it was identified after seeing the evaluation results (no longer a clean test for that choice) and gives up mismatch detection. Decision pending.
+
 ## Human review set v2 (140 more crops) — 10 October 2026
 
 Versioned expansion to bring reviewed observations to 200. `data/human-review-v1/`, the 60 frozen labels, their browser storage and all cached predictions are untouched.

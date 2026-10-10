@@ -93,7 +93,8 @@ Committed in `results/<run_id>/` (deliberately tracked for integration; regenera
 
 | Run | Use |
 |---|---|
-| `qwen3.8-27b-ctx640-half020-emptycheck-shared-full-v1` | **Use for the app (current best).** Same method as below, both questions answered from one shared image prefix, empty check only when the stock answer is under 50% full: 3.8 s per camera image. Update `sensei.snapshots-file` to this folder. |
+| `qwen3.8-27b-ctx640-perarea-emptycheck-shared-alwayscompliant-full-v1` | **Use for the app (current best).** As below, plus per-shelf half thresholds learned from our labels (`ml/area_thresholds.json`, no timestamps used). 3.8 s per camera image. Point `sensei.snapshots-file` here. |
+| `qwen3.8-27b-ctx640-half020-emptycheck-shared-full-v1` | Superseded (global half threshold 0.20, 3.8 s per image). |
 | `qwen3.8-27b-ctx640-half020-emptycheck-full-v1` | Superseded (questions computed separately, 5.75 s per image; 97% identical answers). |
 | `qwen3.8-27b-stockonly-ctx640-half020-full-v1` | Superseded (no empty check), 2.9 s per camera image. |
 | `qwen3.8-27b-stockonly-half020-full-v1` | Superseded (1280 px context). |

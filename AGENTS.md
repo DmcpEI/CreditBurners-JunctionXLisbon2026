@@ -36,7 +36,7 @@
 - Never `git push --force`, `git reset --hard`, `git checkout .` or `git clean` without asking. A teammate's work may be in the tree.
 - Merge conflicts: never resolve by taking one side blindly. If it's someone else's file, ask the owner. Lockfile conflicts: regenerate, don't hand-merge.
 - One working tree per agent. For parallel work use `git worktree`. Never run two agents in the same folder.
-- Don't commit data, model weights, `.env`, notebook outputs or build artifacts. Commit `.env.example`.
+- Don't commit data, model weights, `.env`, notebook outputs or build artifacts. Commit `.env.example`. Exceptions: the supplied dataset archive and `results/<run_id>/` JSON for integration.
 - Commit message: `<area>: <what> — <why>`, one line.
 
 ## Tracking work

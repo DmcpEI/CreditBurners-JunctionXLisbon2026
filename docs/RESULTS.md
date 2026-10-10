@@ -2,6 +2,21 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Claude models (agents) on the blind 50; LoRA fine-tuning — 10–11 October 2026
+
+**Claude Haiku / Sonnet / Opus**, via isolated Claude Code agents (two per model, 25 items each) given only our exact stock prompt v1 and the anonymised images (640 px camera view with outline, crop, mask) of the blind 50; no repo context, no labels. Mimics an API call (not identical: agent harness, self-reported probabilities). Product answered compliant for all.
+
+| Blind 50 | Stock correct | Points | Half | Full | Empty |
+|---|---|---|---|---|---|
+| Claude Haiku | 33/50 | 38/99 | 2/8 | 29/39 | 2/3 |
+| Claude Sonnet | 37/50 | 53/99 | 4/8 | 30/39 | 3/3 |
+| Claude Opus | 43/50 | 72/99 | 5/8 | 35/39 | 3/3 |
+| our probe pipeline (fitted without the blind 50) | 44/50 | 75/99 | 6/8 | 36/39 | 2/3 |
+
+Applying the cost formula to the agents' self-reported probabilities lowered every model (Opus 66/99). Opus zero-shot ≈ our probe pipeline (difference within ±5 noise); Haiku is below "always full" (52/99). Not adopted: no gain, per-image API cost, open questions on cloud APIs and sending store images to a third party. The blind 50 have now been used for several comparisons; further choices must not be made on them.
+
+**LoRA fine-tuning** (`ml/finetune.py`, peft only in env `jx-fast`): rank 8 on the language model's attention projections (`q/k/v/o_proj`, `in_proj_qkv`, `out_proj`), target = answer letter, 2 epochs, lr 1e-4, accumulation 8, same inputs as production; 275 training labels, 7 minutes on the RTX PRO 6000. Held-out fold 0 (69 labels: 16 half, 46 full, 7 empty), stock points: global rule 16, per-shelf thresholds 20, probe + per-shelf 27, LoRA raw 23, **LoRA + empty check with half threshold 0.4 chosen on the training labels 32**. Second fold running before any adoption.
+
 ## Hidden-state probe adopted — final pipeline v6 — 10 October 2026
 
 - **Point-loss analysis** (all 344 labels, per-shelf thresholds learned leave-one-out): 474/674 points (70%); lost: full→half 75 (38%), half→full 68 (34%), missed wrong products 30 (15%), missed empties 24 (12%). Worst products tomatoes (34) and citrus (28), mostly narrow packaged areas on cameras 6443/6376.

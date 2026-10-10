@@ -2,6 +2,15 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Astra review fixes, conditional empty check — 10 October 2026
+
+- **Independent check (Astra):** current export on corrected labels: stock 240/294 (82%; empty 25/30, half 43/75, full 172/189), 349/575 points vs 128/575 for always full + compliant. Main weakness: 32 half→full errors.
+- **Half→full errors cluster by area:** of 19 on development, 14 come from 5 areas labelled half all day while the model says full all day: purple cabbage basket `6386_3` (5), lemons `6376_1` (3), red pepper basket `6383_5` (2), Gala tray `6373_1` (2), mango box `6462_3` (2) (`data/labelled-v1/dev-half-full-errors.json`). Candidate next step: a few human-approved reference examples for half vs full; not run yet.
+- **Honest product status:** export `reason` now says "product identity not checked (answered compliant by policy)"; snapshots carry `product_check: "not_assessed"`; run id contains `alwayscompliant`. Submission unchanged.
+- **Validation guards:** non-1280×720 images and unclear camera matches (next/best distance < 1.3; rehearsal minimum 1.69) now stop the run; `crops-sheet.jpg` of all crops is written and opened during inference; `VALIDATE_FLAGS` for deliberate overrides.
+- **Conditional empty check** (`--paired-only-if-full-below 0.5`, screened on cached answers first: thresholds 0.5–0.99 lost no empty overrides on all 1,962 areas): empty check asked for 381/1,962 areas; **final submission identical** to the always-on export; **3.81 s per camera image** (p95 6.54; was 4.82). Validation rehearsal 26 images in **2 min 14 s**, identical 281/281.
+- No truly fresh test areas remain (~6 unused); holdout and evaluation have been seen in many comparisons, so report them as such.
+
 ## English product name in the stock prompt — 10 October 2026
 
 Prompts `v1n` / `v4n` = v1 / v4 plus "The planogram product for this area is {English name}" (`ml/products_en.json`). Shared-prefix runs on the 298 labelled areas, 640 px, corrected labels, half 0.20 / empty 0.70:
@@ -31,7 +40,7 @@ All 298 labelled areas, 640 px, both questions (v1 stock + v4 empty check), corr
 
 - **Corrections:** Member1 confirmed the 27-flag re-check under the refined definition: 24 suggestions accepted, 3 old labels kept (#13 2–3 banana bunches stay empty, #51 ~3 apple bags stay empty, #72 single kiwi bag stays full). Frozen as `data/ground-truth/human-r2-corrections-frozen.json` (SHA256 `e010889783db…`, protocol `sensei-replenish-v5`); `ml/compare_runs.py` overlays it on the v2–v4 frozen labels (originals untouched).
 - **Prompts on corrected labels (640 px; best threshold chosen on development):** v1 at 0.20: dev 201 / holdout 34 / eval 85; v3 at 0.40: 201 / 33 / 82; v4 (refined rule) at 0.40: 183 / 18 / 81. v1 kept. Calibration on corrected dev labels: P(really half) 31% for B 0.15–0.20, **46% for 0.20–0.30** (crosses 3/7), so 0.20 still follows from the cost table.
-- **Empty check adopted:** prompt v4 catches empty shelves v1 misses (empty recall 28/30 vs 23/30) but is worse on half/full. Rule: answer empty when the v4 answer's empty score A ≥ 0.70, otherwise v1 + half rule (`ml/decision_rule.py apply_empty_rule`, chosen on development): **dev 205 / holdout 38 / eval 94 (all 337) vs 201 / 34 / 85 (320)**, gains on every group. Cost: two stock questions per area, ~5.8 s per camera image (v1 alone 2.9 s).
+- **Empty check adopted:** prompt v4 on its own catches more empty shelves (28/30 vs 23/30 for v1 alone; the released v1 + rules + empty-check pipeline catches 25/30) but is worse on half/full. Rule: answer empty when the v4 answer's empty score A ≥ 0.70, otherwise v1 + half rule (`ml/decision_rule.py apply_empty_rule`, chosen on development): **dev 205 / holdout 38 / eval 94 (all 337) vs 201 / 34 / 85 (320)**, gains on every group. Cost: two stock questions per area, ~5.8 s per camera image (v1 alone 2.9 s).
 - **Built and verified:** full-dataset prompt v4 run matches the labelled run (298/298 decisions); export `results/qwen3.8-27b-ctx640-half020-emptycheck-full-v1/` scores exactly 205 / 38 / 94 on corrected labels; 166 empty / 498 half / 1,298 full, 27 decisions changed by the empty check, 16 fallbacks. **Measured cost: 5.75 s per camera image** (p95 9.3 s), both questions, model time only. `scripts/run_validation.sh` asks both questions: rehearsal 26 images / 281 areas in **3 min 16 s**, identical to the full export 281/281; offline fallback still writes a complete submission.
 
 ## Final pipeline v3: 640 px context; label re-check under organiser definition — 10 October 2026

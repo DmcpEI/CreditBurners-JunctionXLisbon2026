@@ -36,7 +36,7 @@ When Sensei releases the validation images (folder or ZIP; camera folders or fla
 scripts/run_validation.sh <images-folder-or-zip> <name>     # e.g. scripts/run_validation.sh ~/Downloads/validation.zip final
 ```
 
-Uploads only the raw images to knuth, prepares and runs the current pipeline there (Qwen3.8-27B, 640 px context, stock question + half rule 0.20, empty check, always compliant), fetches results and writes `data/val-<name>/export/submission.json`, checked to cover every planogram area of every image. Check the printed camera for each image when the input is flat. If knuth or the model fails it still writes a complete fallback submission and prints `!!!`. Rehearsed: 26 images / 281 areas in 2 min 36 s (two stock questions per area from one shared image prefix); see `docs/RESULTS.md`.
+Uploads only the raw images to knuth, prepares and runs the current pipeline there (Qwen3.8-27B, 640 px context, stock question + half rule 0.20, empty check, always compliant), fetches results and writes `data/val-<name>/export/submission.json`, checked to cover every planogram area of every image. Check the printed camera for each image when the input is flat. If knuth or the model fails it still writes a complete fallback submission and prints `!!!`. Rehearsed: 26 images / 281 areas in 2 min 14 s. A crops contact sheet opens during inference: if crops look wrong (wrong camera or resolution), press Ctrl-C; see `docs/RESULTS.md`.
 
 From the repository root, with Python 3.10+ and Pillow installed (`python3 -m pip install -r ml/requirements.txt` if needed):
 

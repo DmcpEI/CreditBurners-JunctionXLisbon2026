@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {dateLabel, timeLabel} from './presentation';
 
-export default function ObservationToolbar({browser}) {
+export default function ObservationToolbar({browser,hideCamera=false}) {
   const {current, summaries, frames, position, mode, playing, selectCamera, selectFrame, toggleReplay, loading, reducedMotion, pauseReplay, storeView} = browser;
   const [expanded, setExpanded] = useState(false);
   const finishSelection = callback => { callback(); setExpanded(false); };
@@ -11,7 +11,7 @@ export default function ObservationToolbar({browser}) {
       <span><strong>{storeView ? 'Store overview' : current ? `Camera ${current.camera_id}` : 'Choose an observation'}{current && !storeView && <span className="capture-time"> · {timeLabel(current.captured_at)}</span>}</strong><small>{storeView ? `Latest recorded image · ${cameras.length} cameras` : `${current ? dateLabel(current.captured_at) : 'Recorded store images'} · Saved observation`}</small></span><span className="change-label">{expanded ? 'Close' : 'Change'}</span>
     </button>
     <div id="observation-fields" className={`picker-fields ${expanded ? 'expanded' : ''}`}>
-    <div className="observation-picker">
+    {!hideCamera && <div className="observation-picker">
       <label htmlFor="camera">Camera</label>
       <select id="camera" name="camera" value={storeView ? 'all' : current?.camera_id || ''} disabled={!cameras.length}
         onChange={e => finishSelection(() => selectCamera(e.target.value))}>
@@ -19,7 +19,7 @@ export default function ObservationToolbar({browser}) {
         {!current && <option value="">Choose a camera</option>}
         {cameras.map(id => <option value={id} key={id}>Camera {id}</option>)}
       </select>
-    </div>
+    </div>}
     {mode==='study' && <div className={`observation-picker time-picker ${mode !== 'study' ? 'store-time-picker' : ''}`} aria-hidden={mode !== 'study'}>
       <label htmlFor="capture">Recorded image</label>
       <select id="capture" name="capture" value={current?.snapshot_id || ''} disabled={!frames.length}

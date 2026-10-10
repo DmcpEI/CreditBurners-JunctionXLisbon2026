@@ -5,6 +5,7 @@ import useSnapshots from './useSnapshots';
 import ObservationToolbar from './ObservationToolbar';
 import TaskList from './TaskList';
 import ShelfStudy from './ShelfStudy';
+import StudyCameraControls from './StudyCameraControls';
 import StoreCameras from './StoreCameras';
 import ShelfDetail from './ShelfDetail';
 import Evidence from './Evidence';
@@ -55,21 +56,21 @@ export default function SnapshotBrowser() {
     previousArea.current = location.area;
     previousPage.current = mode;
   }, [location.area, mode]);
-  return <div className={`app-shell ${area ? 'detail-open' : 'gallery-view'}`}>
+  return <div className={`app-shell ${area ? 'detail-open' : 'gallery-view'} ${mode==='study'?'study-page':''}`}>
     <a className="skip-link" href="#main-content">Skip to shelf checklist</a>
     <header className="app-header"><a className="brand" href="/" aria-label="Sensei home">sensei<span className="brand-divider" aria-hidden="true"/><span className="brand-description">Shelf assistant</span></a><nav className="app-nav" aria-label="Main pages"><button aria-current={mode==='shelves' ? 'page' : undefined} onClick={()=>selectMode('shelves')}>Store view</button><button aria-current={mode==='study' ? 'page' : undefined} onClick={()=>selectMode('study')}>Shelf study</button></nav><div className="header-tools"><span className="recorded-label">Recorded dataset</span>{mode==='shelves' && <AlertsPanel areas={alerts} unavailable={displayedAreas.filter(a => a.fallback_used || (a.prediction_source === 'mock' && !a.manual_preview)).length} busy={loading || !!error || !displayedAreas.length} onOpen={openShelf}/>}</div></header>
     <main id="main-content">
       {demo && <aside className="manual-preview-notice"><strong>Demo · Simulated alerts</strong><p>Manual statuses on real photos. Not model predictions.</p><button onClick={() => navigate({demo:'0'},true)}>Exit preview</button></aside>}
-      {snapshot && !hasProductAssessment(snapshot) && <aside className="baseline-notice"><strong>Saved stock predictions · Product match not assessed</strong><p>This run predicts stock. Product compliance is fixed to true in the export, not verified from the image.</p></aside>}
+      {mode==='shelves' && snapshot && !hasProductAssessment(snapshot) && <aside className="baseline-notice"><strong>Saved stock predictions · Product match not assessed</strong><p>This run predicts stock. Product compliance is fixed to true in the export, not verified from the image.</p></aside>}
       <div className="overview-content">
         <div className={`page-heading ${mode==='study' ? 'study-page-heading' : ''}`}><div><p className="section-kicker">Sensei / Produce workspace</p><h1>{mode==='study' ? 'Shelf study.' : <>Fresh eyes.<br/><span>Better shelves.</span></>}</h1><p>{mode==='study' ? 'Explore recorded images and compare shelf observations over time.' : 'Latest recorded images. Find your product and review the evidence.'}</p></div>{snapshot && mode==='shelves' && <figure className="store-preview"><Evidence url={snapshot.image_url} alt={`Recorded store view from camera ${snapshot.camera_id}`}/><figcaption><span>Camera {snapshot.camera_id}</span><span>{timeLabel(snapshot.captured_at)} · Recorded image</span></figcaption></figure>}</div>
         {mode==='shelves' && <ObservationToolbar browser={browser}/>}
-        {mode === 'study' && <p className="replay-explanation">Step through the recorded day. Hour-long gaps between images mean the exact time of a change is unknown.</p>}
-        {fallback && <aside className="baseline-notice"><span className="notice-symbol" aria-hidden="true">i</span><div><strong>{allFallback ? 'Images ready · Assessments unavailable' : 'Some results use fallback values'}</strong><details className="baseline-help"><summary>About these results</summary><p>{allFallback ? 'These are real recorded images. The expected products come from the planogram. Model assessments are not available in this run; no stock or product-match alerts can be confirmed.' : 'Some observations use default values rather than model predictions. Check the evidence for those shelves before acting.'}</p></details></div></aside>}
+            {fallback && <aside className="baseline-notice"><span className="notice-symbol" aria-hidden="true">i</span><div><strong>{allFallback ? 'Images ready · Assessments unavailable' : 'Some results use fallback values'}</strong><details className="baseline-help"><summary>About these results</summary><p>{allFallback ? 'These are real recorded images. The expected products come from the planogram. Model assessments are not available in this run; no stock or product-match alerts can be confirmed.' : 'Some observations use default values rather than model predictions. Check the evidence for those shelves before acting.'}</p></details></div></aside>}
         {displayedSnapshots.some(s => s.prediction_source === 'mock') && <aside className="baseline-notice"><strong>Illustrative mock — not model output.</strong></aside>}
         {displayedSnapshots.some(s => s.context_mode === 'retrospective') && <aside className="baseline-notice"><strong>Retrospective analysis</strong><p>Later frames were used as context. This is not live monitoring.</p></aside>}
       </div>
-      {mode==='study' && <div className="study-toolbar"><ObservationToolbar browser={browser}/></div>}
+      {mode==='study' && <div className="study-toolbar"><StudyCameraControls browser={browser}/></div>}
+      {mode==='study' && area && <div className="study-detail-controls"><ObservationToolbar browser={browser} hideCamera/></div>}
       {browser.notice && <p className="study-note" role="status">{browser.notice}</p>}
       {error && <section className="error-state" role="alert"><h2>Observation unavailable</h2><p>{error}</p><button className="button primary" onClick={browser.retry}>Try again</button>{summaries.length > 0 && <button className="button secondary" onClick={() => browser.selectFrame(summaries.at(-1).snapshot_id)}>Open latest recorded image</button>}</section>}
       {loading && <div className="loading-state" role="status"><span>Loading shelf observations…</span><div className="skeleton-row"/><div className="skeleton-row"/><div className="skeleton-row"/></div>}

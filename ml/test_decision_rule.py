@@ -9,9 +9,10 @@ def record(stock, b, compliance=True):
 
 class HalfRuleTests(unittest.TestCase):
     def test_threshold_and_untouched_cases(self):
-        self.assertEqual(apply_half_rule(record("full", 0.15))["observed_stock"], "half")
-        self.assertEqual(apply_half_rule(record("full", 0.15))["action"], "check_stock")
-        self.assertEqual(apply_half_rule(record("full", 0.14))["observed_stock"], "full")
+        self.assertEqual(apply_half_rule(record("full", 0.15), 0.15)["observed_stock"], "half")  # v1 still reproducible
+        self.assertEqual(apply_half_rule(record("full", 0.20))["observed_stock"], "half")
+        self.assertEqual(apply_half_rule(record("full", 0.20))["action"], "check_stock")
+        self.assertEqual(apply_half_rule(record("full", 0.19))["observed_stock"], "full")
         self.assertEqual(apply_half_rule(record("full", 0.3, compliance=None))["action"], "inspect")
         # no stock answer (gated by visibility/presence): decision and fallback unchanged
         self.assertEqual(apply_half_rule(record(None, None)), record(None, None))

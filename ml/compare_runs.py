@@ -6,7 +6,7 @@ from pathlib import Path
 from ml.decision_rule import apply_half_rule
 from ml.evaluate_review import evaluate
 
-LABELS = (Path("data/ground-truth/human-v2-frozen.json"), Path("data/ground-truth/human-v3-frozen.json"))
+LABELS = tuple(Path(f"data/ground-truth/human-v{v}-frozen.json") for v in (2, 3, 4))
 
 
 def groups(paths=LABELS):

@@ -1,13 +1,14 @@
-"""Fixed label-tuned stock rule: predict half when a stock answer exists and its B score >= 0.15.
+"""Label-tuned stock rule: predict half when a stock answer exists and its B score >= HALF_THRESHOLD.
 
-Threshold chosen on the development split (10 Oct, in-sample); not a calibrated probability.
-Every other decision and fallback is left unchanged.
+v1 (0.15) was chosen on 15 development areas and did not transfer to new areas. v2 (0.20) was chosen on
+160 development observations from 63 areas (raw and area-weighted points), stock-only answers, 10 Oct.
+Not a calibrated probability. Every other decision and fallback is left unchanged.
 """
 import argparse
 import json
 from pathlib import Path
 
-HALF_THRESHOLD = 0.15
+HALF_THRESHOLD = 0.20
 
 
 def apply_half_rule(record, threshold=HALF_THRESHOLD):

@@ -141,6 +141,7 @@ Keep the current React/Spring app, visual identity, photo cards, alerts, fullscr
 - Opening an image reuses the interactive full-camera map, crop detail and fullscreen viewer. Keep a selected area when changing frames of the same camera if that area exists; otherwise explain its absence. Preserve camera, frame and area in the URL and Back navigation.
 - Reuse manual previous/next frame navigation and the existing optional recorded replay. Move the historical time selector here; do not leave it on Store view.
 - The image archive now includes stock distribution, a clickable per-frame stock timeline and camera coverage graphs. Default graphs use saved stock results and exclude mock/fallback observations. Manual preview is opt-in (`demo=1`), preserving supplied values and clearly labelling them as illustrative. Product mismatch rates remain unavailable for the stock-only run.
+- Mobile dashboard: keep the camera selector and previous/next camera controls at the top while scrolling. Show one graph at a time (Stock, Timeline, Coverage), persist its selection in the URL, and keep replay/archive and observed changes in expandable sections. Desktop retains simultaneous charts. Coverage drill-down returns directly to the selected camera’s stock view.
 
 | Study question | Supported presentation | Limit |
 |---|---|---|

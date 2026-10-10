@@ -98,3 +98,11 @@ Merged `origin/main` at `620f40b` into `feat/interactive-shelf-explorer`, preser
 The complete export contains 181 images and 1,962 areas: 130 empty, 656 half and 1,176 full values, including 15 fallback areas. UI labels those fallback areas unassessed and excludes them from graph assessment counts. Product compliance is fixed true by this run, so product badges/details say not assessed and mismatch statistics are unavailable. Stock predictions are model estimates, not ground truth or proof of purchases.
 
 Validation: nine frontend tests, thirteen ML smoke tests, frontend/Maven builds and live API verification passed. WebKit checked all 181 served run IDs and stock counts, latest 152-shelf coverage, saved-data default, absence of false product-match badges, timeline navigation, and a 390px layout without page overflow. Real-data mobile screenshots were inspected. Physical-phone testing, public access and fresh inference remain unverified. Changes are local commits; no push or merge into main was performed.
+
+## Mobile study dashboard
+
+Camera selection now stays accessible above the graphs while scrolling, with direct selection and previous/next camera buttons. Mobile shows one chart at a time: Stock, Timeline or Coverage. The selected chart survives camera changes and reloads through the `chart` URL parameter. Tapping a coverage bar returns to that camera’s stock chart. Desktop still shows all three charts.
+
+Recorded image selection, replay and thumbnail archive are inside Explore recorded images; observed changes and graph limitations have expandable sections. Opening shelf evidence retains frame selection controls and the camera selector. Saved predictions, fallback exclusions and product-match limitations remain unchanged.
+
+Verification: nine frontend tests and frontend/Maven builds passed. WebKit checked direct/adjacent camera selection, chart persistence, coverage drill-down, sticky controls, archive expansion, same-area frame navigation and reload. Layouts at 320/390/430/768/1440 pixels had no page overflow; mobile/desktop screenshots were inspected. Live API verification passed. Physical-phone interaction is still untested.

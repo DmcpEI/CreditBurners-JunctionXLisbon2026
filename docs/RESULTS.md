@@ -2,6 +2,14 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Wrong-product check retried — not adopted — 11 October 2026
+
+- **Labels:** 10 wrong products in 330 labelled observations (3%), 9 areas, mostly category swaps (bananas in a citrus area, onions in a potato area, kiwi packs where orange nets belong); the same area is often compliant at other times. Flagging gains 3 per catch and costs 3 per false alarm, so it pays only above 50% precision; even perfect detection would add ≈ 24 points over 289 areas.
+- **Question** (`ml/product_check.py`, base model): "is it clearly a different kind of fruit or vegetable?" with the English product name; variety, brand, pack size and labels explicitly do not count. 160 s for 330 observations, both image modes.
+- **Ranking is good, precision is not:** camera view + crop AUC 0.90, crop only 0.88. Best net on the same labels: −12 (camera view, P(B) ≥ 0.95: 1 caught, 5 false alarms) and +3 (crop only, P(B) ≥ 0.95: 2 caught, 1 false alarm) — a threshold picked on the evaluation data itself, within noise. False alarms repeat on the same areas (apples `6385_9`, onions `6594_13`, bananas `6468_11`).
+- **Per-area anomaly** (P(B) minus the area's median over other labelled times): AUC 0.70 / 0.55, worse; 4 of the 10 wrong products have no other labelled time of the same area.
+- **Decision:** submission stays always compliant. Too few positives (10) to fine-tune a product check.
+
 ## LoRA adopted — final pipeline v7 — 11 October 2026
 
 - **Final adapter** `lora-stock-v1` trained on all 344 labels (same settings as the folds, 8 minutes); half threshold 0.4 (`ml/lora_thresholds.json`, no per-shelf thresholds); the empty check (prompt v4, empty if A ≥ 0.7, asked when C < 0.5) runs on the base model with the adapter disabled, as evaluated.

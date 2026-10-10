@@ -185,6 +185,39 @@ def build_expansion(prepared, dataset, previous_dirs, label_paths, output, exclu
           + f'; set {manifest["set_id"]}')
 
 
+REPLENISH_PROTOCOL = dict(
+    revision='sensei-replenish-v4',
+    stock='Organiser definition: empty = a customer would not be willing to buy what is left; half = still sellable, but staff would take the time to replenish now; full = not worth replenishing yet. In case of doubt, choose the lower level. Judge only the supplied polygon.',
+    compliance='Visible product type matches the expected product; a genuinely empty area is compliant.')
+
+
+def build_revision(prepared, dataset, flags_path, label_paths, output):
+    """Re-check page for flagged labels under the organiser definition; old labels shown read-only, never edited."""
+    if output.exists():
+        raise ValueError('Output already exists; choose a new directory')
+    flags = json.loads(flags_path.read_text())
+    labelled = {x['id']: x for path in label_paths for x in json.loads(path.read_text())['items']}
+    index = {f"{r['camera_id']}_{Path(r['image_file']).stem}_{r['area_id']}": r for r in json.loads((prepared/'index.json').read_text())}
+    cameras = load_planogram(dataset/'planogram.json')
+    (output/'assets').mkdir(parents=True)
+    items = [make_item(dict(index[f['id']], split=labelled[f['id']]['split']), prepared, cameras, output/'assets') for f in flags]
+    manifest = dict(schema_version=2, protocol=REPLENISH_PROTOCOL, revises=[str(p) for p in label_paths], items=items)
+    manifest['set_id'] = hashlib.sha256(json.dumps(manifest, sort_keys=True).encode()).hexdigest()[:16]
+    (output/'manifest.json').write_text(json.dumps(manifest, indent=2)+'\n')
+    old = {f['id']: labelled[f['id']]['label'] for f in flags}
+    suggestions = {f['id']: dict(visibility='clear', stock_level=f['suggested'], planogram_compliant=old[f['id']]['planogram_compliant'],
+                                 notes=f"Old label: {f['old']}. {f['reason']}", needs_attention=f['strength'] != 'strong',
+                                 candidate_stock_levels=sorted({f['old'], f['suggested']}), source='assistant_replenish_review_v4',
+                                 confirmed=False, protocol_revision=REPLENISH_PROTOCOL['revision']) for f in flags}
+    (output/'suggestions.json').write_text(json.dumps(suggestions, indent=2)+'\n')
+    references = defaultdict(list)
+    for x in labelled.values():
+        references[x['area_id']].append(dict(captured_at=x['captured_at'], split=x['split'], **{k: x['label'][k] for k in ('visibility', 'stock_level', 'planogram_compliant', 'notes')}))
+    (output/'references.json').write_text(json.dumps(references, indent=2)+'\n')
+    render_page(output, suggestions, references)
+    print(f'{len(items)} flagged observations; set {manifest["set_id"]}')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--prepared', type=Path, default=Path('data/prepared-v1'))
@@ -197,8 +230,11 @@ if __name__ == '__main__':
     parser.add_argument('--exclude-image', action='append', default=[], metavar='CAMERA/FILE',
                         help='Confirmed closed-curtain image to leave out')
     parser.add_argument('--suggestions', type=Path, help='Only re-render index.html of --output with these suggestions')
+    parser.add_argument('--revision-flags', type=Path, help='Build a re-check page for flagged labels (organiser definition)')
     args = parser.parse_args()
-    if args.suggestions:
+    if args.revision_flags:
+        build_revision(args.prepared, args.dataset, args.revision_flags, args.labels, args.output)
+    elif args.suggestions:
         render_page(args.output, json.loads(args.suggestions.read_text()),
                     json.loads((args.output/'references.json').read_text()))
     elif args.expand_from:

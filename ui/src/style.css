@@ -524,3 +524,5 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
 .attention-track { display: flex; height: 12px; background: #e7eadf; border-radius: 4px; overflow: hidden; }
 .attention-count { font-size: 12px; text-align: right; }
 @media(max-width:760px) { .brand-symbol { width: 32px; height: 32px; }.study-attention button { grid-template-columns: 1fr auto; gap: 10px; }.attention-track { grid-column: 1 / -1; grid-row: 2; }.attention-count { grid-column: 2; grid-row: 1; } }
+
+.brand-symbol { padding: 4px; background: #effa8b; border-radius: 10px; color: inherit; }

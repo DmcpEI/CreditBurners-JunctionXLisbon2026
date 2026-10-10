@@ -121,9 +121,9 @@ Coverage is not pile volume (removing a top layer barely changes it). The VLM ma
 - Exact Sensei export and richer app records are separate formats in `docs/CONTRACT.md`. Pitch and fallback behaviour live in `docs/DEMO.md`.
 - **MongoDB only with a confirmed prize:** one ordinary `observations` collection keyed by camera, image, area, run; images/embeddings stay outside; polling, not Change Streams (not supported on time-series collections). Local JSON stays the submission source and offline fallback.
 
-### Two-page app revision — implemented navigation and archive, real inference integration pending
+### Two-page app revision — saved stock results integrated
 
-Implementation status: Store view/Shelf study navigation, latest-camera view, historical archive, shared evidence tools and assessment-gated summary logic and mobile study graphs are implemented. Demo graphs use the preserved manual baseline; camera coverage uses actual image counts. Current data remains baseline-only; real model integration and public hosting are still pending.
+Implementation status: Store view/Shelf study navigation, latest-camera view, historical archive, shared evidence tools and assessment-gated summary logic and mobile study graphs are implemented. Store tasks and study graphs now use Member1’s recommended saved stock run `qwen3.8-27b-stockonly-half020-full-v1` by default; camera coverage uses actual image counts. Its fixed compliance is disclosed as product match not assessed. Fallback areas are excluded from assessed statistics. Public hosting remains pending.
 
 Keep the current React/Spring app, visual identity, photo cards, alerts, fullscreen evidence viewer, planogram polygons and mobile previous/next controls. Adapt the existing store overview and replay rather than building a second app. Add two navigation links at the top: **Store view** and **Shelf study**. The PDF's core remains per-area stock and planogram compliance; historical study supports that purpose rather than becoming sales analytics.
 
@@ -138,7 +138,7 @@ Keep the current React/Spring app, visual identity, photo cards, alerts, fullscr
 - First choose a camera, then show every published image for it in chronological order with its date/time. The current dataset has 181 images, 14 cameras and 12–14 frames per camera, with approximately 60–78 minutes between frames.
 - Opening an image reuses the interactive full-camera map, crop detail and fullscreen viewer. Keep a selected area when changing frames of the same camera if that area exists; otherwise explain its absence. Preserve camera, frame and area in the URL and Back navigation.
 - Reuse manual previous/next frame navigation and the existing optional recorded replay. Move the historical time selector here; do not leave it on Store view.
-- The image archive now includes stock distribution, a clickable per-frame stock timeline and camera coverage graphs. Default demo graphs use preserved half/compliant baseline values with explicit labels; original-record mode excludes mock/fallback observations. Replace the temporary demo default when Member1 outputs arrive.
+- The image archive now includes stock distribution, a clickable per-frame stock timeline and camera coverage graphs. Default graphs use saved stock results and exclude mock/fallback observations. Manual preview is opt-in (`demo=1`), preserving supplied values and clearly labelling them as illustrative. Product mismatch rates remain unavailable for the stock-only run.
 
 | Study question | Supported presentation | Limit |
 |---|---|---|

@@ -33,17 +33,18 @@ def build_inputs(prepared, dataset, output):
     print(f"{len(samples)} inputs written to {output}")
 
 
-def reason(record, stock, compliant, fallback):
+def reason(record, stock, compliant, fallback, model_mismatch=False):
     if record is None:
         return "No model result for this area; fixed fallback (half, compliant) used."
     if record.get("visibility") != "clear":
         return f"Model judged the view {record.get('visibility')}; fixed fallback (half, compliant) used. Inspect."
     parts = [f"Model stock: {stock}" + (" (half rule applied)" if record.get("decision_rule") else "")]
     parts.append("expected product type visible" if compliant else "a different product type appears visible")
-    return "; ".join(parts) + (". Some fields use the fixed fallback." if fallback else ".")
+    hint = " Model also flagged a possible wrong product (not used: unreliable on labelled data); check if convenient." if model_mismatch else ""
+    return "; ".join(parts) + (". Some fields use the fixed fallback." if fallback else ".") + hint
 
 
-def build_outputs(prepared, results_path, output, run_id):
+def build_outputs(prepared, results_path, output, run_id, always_compliant=False):
     if output.exists():
         raise ValueError("Output exists; choose a new directory")
     expected = json.loads((prepared/"expected.json").read_text())
@@ -59,6 +60,9 @@ def build_outputs(prepared, results_path, output, run_id):
             seconds[camera, filename] += record.get("seconds", 0)
         stock = record and record.get("observed_stock")
         compliant = record and record.get("observed_compliance")
+        model_mismatch = always_compliant and compliant is False
+        if always_compliant and compliant is not None:
+            compliant = True  # compliance check net-negative on labelled data (RESULTS, 10 Oct)
         fallback = stock is None or compliant is None
         stats["missing_result"] += record is None
         stats["stock_fallback"] += stock is None
@@ -74,7 +78,8 @@ def build_outputs(prepared, results_path, output, run_id):
             area_id=area, product_name=record["sample"]["product_name"] if record else None, **prediction,
             visibility=record.get("visibility", "unknown") if record else "unknown", fallback_used=fallback,
             crop_url=f"/assets/{camera}_{Path(filename).stem}_{area}.png", reference=None,
-            reason=reason(record, stock, compliant, fallback)))
+            reason=reason(record, stock, compliant, fallback, model_mismatch)))
+        stats["model_mismatch_suppressed"] += model_mismatch
     validate_submission(submission, expected)
     output.mkdir(parents=True)
     write_json(output/"submission.json", submission)
@@ -85,6 +90,7 @@ def build_outputs(prepared, results_path, output, run_id):
         image_url=f"/assets/{camera}_{filename}", areas=areas) for (camera, filename), areas in snapshots.items()])
     per_image = sorted(seconds.values())
     report = dict(run_id=run_id, areas=len(expected), images=len(snapshots), decision_rule=f"half_if_stock_B>={HALF_THRESHOLD}",
+                  compliance="always_true" if always_compliant else "model",
                   fallback=dict(stock=FALLBACK_STOCK, compliant=FALLBACK_COMPLIANT), counts=dict(stats),
                   seconds_per_image=dict(p50=per_image[len(per_image)//2], p95=per_image[int(0.95*(len(per_image)-1))],
                                          total=sum(per_image)) if per_image else None)
@@ -104,8 +110,9 @@ if __name__ == "__main__":
     b.add_argument("--prepared", type=Path, default=Path("data/prepared-v1"))
     b.add_argument("--output", type=Path, required=True)
     b.add_argument("--run-id", required=True)
+    b.add_argument("--always-compliant", action="store_true", help="Answer compliant everywhere; model mismatch kept only as an app hint")
     args = parser.parse_args()
     if args.mode == "inputs":
         build_inputs(args.prepared, args.dataset, args.output)
     else:
-        build_outputs(args.prepared, args.results, args.output, args.run_id)
+        build_outputs(args.prepared, args.results, args.output, args.run_id, args.always_compliant)

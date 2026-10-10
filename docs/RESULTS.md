@@ -2,6 +2,15 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## Research report follow-up: calibration, per-area thresholds, blind final set — 10 October 2026
+
+Deep-research report (`~/Downloads/deep-research-report (2).md`, not in repo): hidden validation reuses the same 152 areas from the same day, so area-specific correction and score-optimal calibration rank first; test area-specific methods by leaving timestamps out within an area, not by area-grouped splits.
+
+- **Label coverage:** 146/152 areas have ≥1 stock label (6 none, 76 one, 33 two, 16 three, 21 four or more); 218 observations sit in areas with ≥2 labels.
+- **Calibrated expected-utility decision** (multinomial logistic on log-scores of both questions, trained on development, U(E)=3pE−2, U(H)=−3pE+pH−2pF, U(F)=4pF−3): stock points holdout −4…3 vs 3, evaluation 5–12 vs 25, development area-grouped 5-fold CV 54 vs 67. **Rejected**; the half rule is already close to optimal.
+- **Per-area half threshold** (choose each area's threshold from {0.02…0.5, none} on its other labelled timestamps; keep 0.20 unless strictly better), leave-one-timestamp-out on the 218 observations, stock points: **147 vs 78** for the global rule (development 109 vs 57, holdout 17 vs 3, evaluation 21 vs 18); requiring ≥2 other frames: 144. Copying the nearest labelled timestamp's label scores −2 (stock really changes during the day), so the gain is not label copying. Chosen thresholds: 0.02 ×37, 0.05 ×9, 0.1 ×3, 0.2 ×156, 0.3 ×10, 0.5 ×3. **Promising, not adopted yet**: needs the blind final check and a mentor answer on using our own labels of the same areas at other times.
+- **Blind final set:** `data/human-review-final/` (set `332e7fd946552d54`, protocol `sensei-replenish-v5`, port 8770): 50 random unlabelled observations (seed 20261010; 3 per camera + 8 random; curtain frames excluded), no suggestions and no reference labels shown; 48 of them are new timestamps of already-labelled areas (like the hidden validation). Score candidate pipelines on it once, after labelling.
+
 ## Labelled reference crops in the stock question — 10 October 2026
 
 Four human-labelled development crops shown before the target (`--references data/references-v1/refs.json`): full tomatoes `6443_1751001244_6443_1`, half apples with empty cups `6385_1751051814_6385_1`, half sweet potatoes with bare floor `6591_1751013255_6591_6`, empty single banana bunch `6215_1751001268_6215_1`. Prompt v1, 640 px, all 298 labelled areas; empty check from the existing answers; reference areas excluded from development for both versions (141 development observations).

@@ -93,7 +93,8 @@ Committed in `results/<run_id>/` (deliberately tracked for integration; regenera
 
 | Run | Use |
 |---|---|
-| `qwen3.8-27b-stockonly-ctx640-half020-full-v1` | **Use for the app (current best).** Same as below with the camera context at 640 px: better on development and evaluation, 2.9 s per camera image. |
+| `qwen3.8-27b-ctx640-half020-emptycheck-full-v1` | **Use for the app (current best).** 640 px context, stock question + half rule 0.20, plus a second "empty check" question (empty when ≥ 70% sure; `reason` says "(empty check)"), every area compliant. 5.75 s per camera image. Update `sensei.snapshots-file` to this folder. |
+| `qwen3.8-27b-stockonly-ctx640-half020-full-v1` | Superseded (no empty check), 2.9 s per camera image. |
 | `qwen3.8-27b-stockonly-half020-full-v1` | Superseded (1280 px context). |
 | `qwen3.8-27b-stockonly-halfrule-full-v1` | Same with half rule v1 (0.15). Superseded. |
 | `qwen3.8-27b-v1-halfrule-alwayscompliant-full-v1` | Previous recommendation: 4 questions per area; keeps a soft "Model also flagged a possible wrong product…" hint at the end of `reason` that the UI can show as "check product". |

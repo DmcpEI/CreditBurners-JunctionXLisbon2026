@@ -2,7 +2,7 @@
 
 Challenge confirmed: Sensei. Team: two people, Member1 and Member2. Final validation is only available at the end; reserve time for inference and submission. Cut scope if progress is slow.
 
-Dataset received: 181 images at 1280×720, 14 cameras, 152 areas and 1,962 area observations; no ground-truth labels supplied. Same-camera frames are 60–78 minutes apart. Preparation, validity masks, complete constant baselines and scorer now run locally; results and limitations are in `docs/RESULTS.md`. Next: current-image Qwen inference on a representative sample. Member2 can use the explicitly disclosed baseline app records for integration now.
+Dataset received: 181 images at 1280×720, 14 cameras, 152 areas and 1,962 area observations; no ground-truth labels supplied. Same-camera frames are 60–78 minutes apart. Preparation, validity masks, complete constant baselines and scorer now run locally. Qwen completed a 12-area GPU diagnostic (median 1.405 s/area, 55.52 GB peak allocated memory), catching both closed curtains but showing sparse-stock and visibility errors; see `docs/RESULTS.md`. Next: check those failure cases and gate actions on visibility before a full run (roughly 46 minutes extrapolated). Member2 can use the explicitly disclosed baseline app records for integration now.
 
 ## Objective
 > A store assistant that uses existing cameras to tell staff which produce shelves need attention, why, and what to do next.

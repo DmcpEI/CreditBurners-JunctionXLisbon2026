@@ -12,9 +12,17 @@ Latest rule update after the benchmark: truly empty areas are compliant; `ml/inf
 
 `ml/lora_cv.py` on knuth: 5-fold CV over all 344 labels (seed 20261011, each label scored once by a model that never saw it), base model loaded once, one adapter per fold, out-of-fold scores in `data/lora-cv/<config>.json`. Configs: current r8 / lr 1e-4 / 2 epochs; lr 2e-4 and 5e-5; 1 and 3 epochs; rank 16; 50% and 75% of the training folds (is more labelling worth it?). Scoring (`python -m ml.lora_cv --score data/lora-cv --labels … --empty-results …`): stock points with the production empty check, half threshold chosen on the pooled out-of-fold scores (same optimism for every config). Adopt a new setting only if it beats the current one by more than ≈ 10 points. ≈ 7 min per fold, ≈ 4 h in total.
 
+## Estimated official score (extrapolation) — 11 October 2026
+
+Not a measurement: our held-out rates applied to 289 validation areas (max 578).
+- **Stock:** LoRA mean stock points per true class on the 138 held-out labels (threshold 0.4 + empty check): full +0.736 (n = 91), half +0.273 (33), empty +0.143 (14). Held-out mix (66% full) → 0.565 per area → 163; reweighted to the random blind-50 mix (39 full / 8 half / 3 empty, 78% full) → 0.626 → 181; all-344-label mix → 0.567 → 164.
+- **Identification:** always compliant; 10 wrong products in 330 labelled observations → (320 − 2·10)/330 = 0.909 per area → 263.
+- **Missing areas:** none (rehearsal covered 281/281) → 0.
+- **Total ≈ 426 (held-out mix) to ≈ 444 (random mix) of 578 (74–77%).** Chance alone moves this by about ±20 points; if Sensei's labels judge half vs full differently from ours, more. The official validation replaces this line.
+
 ## Store insights from one recorded day (app, Shelf study) — 11 October 2026
 
-From the LoRA export (`ui/src/features/snapshots/insights.js`): 43% of 1,954 shelf checks empty or half. By hour: 06:00 30% empty / 33% full (overnight state), 09:00–10:00 2–3% empty / 70–72% full (restocked), 14:00 dip (11% empty), 15:00–16:00 refill, 19:00 19% empty / 41% full (evening run-down). Of 230 raw level changes only 116 persist two images (model noise ≈ half); the app removes A-B-A flicker. Median wait empty → refilled 2 h 15 min (12 refills; 15 empty spells not refilled by the shelf's last image; slowest: Fuji apples 6385_4 > 7.5 h). Often low: papaya, shallot, sweet potato, guava, chayote, melon (some may be displayed half-full by design); rarely low: lime, cherry, potato, pumpkin, ginger. Most movement: cameras 6376 and 6491 (22 lasting changes each); least: 6371, 6386, 6781. Caveats: one day, hourly images, model estimates (≈ 88% stock accuracy held out); not sales.
+From the LoRA export with the app's `insights.js` (curtain frames 6383/6386 at 06:12 treated as occluded, Lisbon time; see Website verification): 1,947 usable shelf checks, 42% empty or half (195 empty / 631 half / 1,121 full). By hour: 06:00 28% empty / 34% full (overnight state), 09:00–10:00 2–3% empty / 70–72% full (restocked), 14:00 dip (11% empty, 55% full), 15:00–16:00 refilled (65–67% full), 19:00 19% empty / 41% full (evening run-down); 20:00 has only 9 checks. 180 lasting level changes after removing A-B-A flicker. Median wait empty → refilled 134.8 min ≈ 2 h 15 min (12 refills; 15 empty spells not refilled by the shelf's last image; slowest: Fuji apples 6385_4 > 7.5 h). Often low: papaya, shallot, sweet potato, guava, chayote, melon (some may be displayed half-full by design); rarely low: lime, cherry, potato, pumpkin, ginger. Most movement: cameras 6376 and 6491; least: 6371, 6386, 6781. Caveats: one day, hourly images, model estimates (88% stock accuracy held out); not sales.
 
 ## Wrong-product check retried — not adopted — 11 October 2026
 

@@ -10,6 +10,7 @@ PY=${PYTHON:-python3}; HOST=${KNUTH:-knuth}
 OUT=data/val-$NAME; REMOTE=/workspace/jx/val-$NAME
 RPY=/workspace/miniconda/envs/jx-fast/bin/python; REFS=/workspace/jx/sensei-full-v1/data/prepared-v1/assets
 DATASET=new_dataset_hackathon_junctionx_10_oct_2026_v2
+STOCK_ADAPTER=/workspace/models/lora-stock-v2; CHECK_ADAPTER=/workspace/models/lora-compliance-v1; CT=${COMPLIANCE_THRESHOLD:-0.6}
 [ -e "$OUT" ] && { echo "$OUT exists; choose a new name"; exit 1; }
 mkdir -p "$OUT"; start=$(date +%s); ok=1
 step(){ echo "[$(( $(date +%s) - start ))s] $*"; }
@@ -24,9 +25,11 @@ if ssh -o ConnectTimeout=15 -o BatchMode=yes "$HOST" "test ! -e $REMOTE && mkdir
   ssh "$HOST" "cd $REMOTE && $RPY -B -m ml.validate $INPUT --references $REFS --output $OUT ${VALIDATE_FLAGS:-}" 2>&1 | tee "$OUT-prepare.log" | grep -v "^WARNING" | tail -40
   ssh "$HOST" "cat $REMOTE/$OUT/crops-sheet.jpg" > "$OUT-crops-sheet.jpg" 2>/dev/null && { step "CHECK $OUT-crops-sheet.jpg now (opening it): wrong crops = Ctrl-C"; open "$OUT-crops-sheet.jpg" 2>/dev/null || true; }
   step "inference on $HOST (Qwen3.8-27B + LoRA stock question; empty check on the base model when needed)"
-  ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v1 --paired-prompt v4 --paired-output $OUT/results-empty.json --paired-only-if-full-below 0.5 --questions stock --context-max-side 640 --adapter /workspace/models/lora-stock-v1 --output $OUT/results.json" > "$OUT/inference.log" 2>&1 || ok=0
+  ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v1 --paired-prompt v4 --paired-output $OUT/results-empty.json --paired-only-if-full-below 0.5 --questions stock --context-max-side 640 --adapter $STOCK_ADAPTER --output $OUT/results.json" > "$OUT/inference.log" 2>&1 || ok=0
+  step "product check on $HOST (trained crop/name LoRA)"
+  ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.compliance_lora $OUT/sample.json --adapter-in $CHECK_ADAPTER --model /workspace/models/qwen3.8-27b --output $OUT/results-compliance.json" > "$OUT/compliance.log" 2>&1 || echo "!!! product check failed: answering compliant everywhere"
   step "fetch results"
-  for f in expected sample report results results-empty; do ssh "$HOST" "cat $REMOTE/$OUT/$f.json" > "$OUT/$f.json" || ok=0; done
+  for f in expected sample report results results-empty results-compliance; do ssh "$HOST" "cat $REMOTE/$OUT/$f.json" > "$OUT/$f.json" || ok=0; done
   ssh "$HOST" "tar -C $REMOTE/$OUT -cf - assets" | tar -C "$OUT" -xf - || echo "!!! crops/photos not fetched (app only; submission unaffected)"
 else
   ok=0
@@ -37,8 +40,11 @@ fi
 [ -s "$OUT/results.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results.json" 2>/dev/null || { echo '{}' > "$OUT/results.json"; ok=0; }
 [ $ok = 1 ] || echo "!!! INFERENCE INCOMPLETE (see $OUT/inference.log): missing areas use the fallback (half, compliant)"
 
-step "export (half threshold 0.4 on the fine-tuned answer, empty check, always compliant) + coverage check"
+step "YOLO stock scores on this laptop (models/yolo-stock-v1.pt), averaged with the VLM's"
+YOLO=(); if [ -d "$OUT/assets" ] && $PY -B -m ml.yolo_cls predict --weights models/yolo-stock-v1.pt --manifest "$OUT/sample.json" --output "$OUT/results-yolo.json" --device cpu > "$OUT/yolo.log" 2>&1; then YOLO=(--yolo-results "$OUT/results-yolo.json"); else echo "!!! YOLO step failed (see $OUT/yolo.log): VLM stock only"; fi
+step "export (YOLO+VLM stock, half if >= 0.4, empty check, product check B >= $CT) + coverage check"
+CHECK=(); [ -s "$OUT/results-compliance.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results-compliance.json" 2>/dev/null && CHECK=(--compliance-results "$OUT/results-compliance.json" --compliance-threshold "$CT")
 EMPTY=(); [ -s "$OUT/results-empty.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results-empty.json" 2>/dev/null && EMPTY=(--empty-results "$OUT/results-empty.json")
-$PY -m ml.export outputs "$OUT/results.json" --prepared "$OUT" --output "$OUT/export" --run-id "val-$NAME" --always-compliant --area-thresholds ml/lora_thresholds.json ${EMPTY[@]+"${EMPTY[@]}"} || exit 1
+$PY -m ml.export outputs "$OUT/results.json" --prepared "$OUT" --output "$OUT/export" --run-id "val-$NAME" --always-compliant --area-thresholds ml/lora_thresholds.json ${EMPTY[@]+"${EMPTY[@]}"} ${CHECK[@]+"${CHECK[@]}"} ${YOLO[@]+"${YOLO[@]}"} || exit 1
 step "DONE: $OUT/export/submission.json"
 [ -d "$OUT/assets" ] && echo "App on this run: java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=$OUT --sensei.snapshots-file=$OUT/export/snapshots.json"

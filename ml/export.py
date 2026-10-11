@@ -46,12 +46,14 @@ def reason(record, stock, compliant, fallback, model_mismatch=False, product_che
 
 
 def build_outputs(prepared, results_path, output, run_id, always_compliant=False, empty_results_path=None, area_thresholds_path=None,
-                  probe_path=None, hidden_path=None):
+                  probe_path=None, hidden_path=None, compliance_path=None, compliance_threshold=0.9, yolo_path=None):
     if output.exists():
         raise ValueError("Output exists; choose a new directory")
     expected = json.loads((prepared/"expected.json").read_text())
     results = json.loads(results_path.read_text())
     empty_results = json.loads(empty_results_path.read_text()) if empty_results_path else None
+    compliance = json.loads(compliance_path.read_text()) if compliance_path else {}  # trained product check (ml/compliance_lora.py)
+    yolo = json.loads(yolo_path.read_text()) if yolo_path else {}  # YOLO stock scores, averaged 50/50 with the VLM answer (ml/yolo_cls.py)
     area_thresholds = json.loads(area_thresholds_path.read_text()) if area_thresholds_path else dict(default=HALF_THRESHOLD, areas={})
     if probe_path:
         import numpy as np
@@ -65,6 +67,12 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
     for camera, filename, area in expected:
         key = f"{camera}_{Path(filename).stem}_{area}"
         record = results.get(key)
+        if record is not None and key in yolo and "stock" in record.get("answers", {}):
+            vlm = record["answers"]["stock"]["scores"]
+            scores = {c: (vlm[c] + yolo[key][c]) / 2 for c in "ABC"}
+            record = {**record, "answers": {**record["answers"], "stock": {**record["answers"]["stock"], "scores": scores, "vlm_scores": vlm}},
+                      "observed_stock": {"A": "empty", "B": "half", "C": "full"}[max("ABC", key=scores.get)]}
+            stats["yolo_blended"] += 1
         if record is not None:
             if probe_path and key in hidden and "stock" in record.get("answers", {}):
                 record = probe.apply(probe_params, probe_thresholds, record, hidden[key], area)
@@ -90,6 +98,10 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
         stats["half_rule_changed"] += bool(record and record.get("decision_rule") and record.get("stock_before_rule") != "half")
         stock = stock or FALLBACK_STOCK
         compliant = FALLBACK_COMPLIANT if compliant is None else compliant
+        check = compliance.get(key)
+        if check and stock != "empty" and check["B"] >= compliance_threshold:  # a truly empty area is compliant
+            compliant = False
+            stats["compliance_check_flagged"] += 1
         stats[f"stock_{stock}"] += 1
         stats["non_compliant"] += not compliant
         prediction = dict(planogram_compliant=compliant, stock_level=stock, stock_value=LEVELS[stock])
@@ -107,11 +119,11 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
         snapshot_id=f"{camera}_{Path(filename).stem}", run_id=run_id, camera_id=camera, image_file=filename,
         captured_at=datetime.fromtimestamp(int(Path(filename).stem), timezone.utc).isoformat(),
         processed_at=processed, prediction_source="saved", context_mode="current_image_only",
-        product_check="model" if stats["product_checked"] else "not_assessed",
+        product_check="model" if stats["product_checked"] or compliance else "not_assessed",
         image_url=f"/assets/{camera}_{filename}", areas=areas) for (camera, filename), areas in snapshots.items()])
     per_image = sorted(seconds.values())
     report = dict(run_id=run_id, areas=len(expected), images=len(snapshots), decision_rule=f"half_if_stock_B>={area_thresholds['default']}",
-                  compliance="always_true" if always_compliant else "model",
+                  compliance=(f"trained_check_B>={compliance_threshold}" if compliance else "always_true" if always_compliant else "model"),
                   empty_rule=f"empty_if_v4_A>={EMPTY_THRESHOLD}" if empty_results is not None else None,
                   area_thresholds=len(area_thresholds["areas"]), probe=str(probe_path) if probe_path else None,
                   fallback=dict(stock=FALLBACK_STOCK, compliant=FALLBACK_COMPLIANT), counts=dict(stats),
@@ -138,9 +150,12 @@ if __name__ == "__main__":
     b.add_argument("--area-thresholds", type=Path, help="Per-shelf half thresholds (ml/area_thresholds.json)")
     b.add_argument("--empty-results", type=Path, help="Results of the prompt-v4 empty check (second stock question)")
     b.add_argument("--always-compliant", action="store_true", help="Answer compliant everywhere; model mismatch kept only as an app hint")
+    b.add_argument("--compliance-results", type=Path, help="Trained product check scores (ml.compliance_lora --adapter-in); non-compliant if B >= threshold")
+    b.add_argument("--compliance-threshold", type=float, default=0.9)
+    b.add_argument("--yolo-results", type=Path, help="YOLO stock scores (ml.yolo_cls predict), averaged with the VLM's")
     args = parser.parse_args()
     if args.mode == "inputs":
         build_inputs(args.prepared, args.dataset, args.output)
     else:
         build_outputs(args.prepared, args.results, args.output, args.run_id, args.always_compliant, args.empty_results, args.area_thresholds,
-                      args.probe, args.hidden)
+                      args.probe, args.hidden, args.compliance_results, args.compliance_threshold, args.yolo_results)

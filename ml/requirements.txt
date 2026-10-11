@@ -1,1 +1,10 @@
+# Preparation, export and scoring (CPU)
+numpy
 Pillow>=10
+# VLM inference and fine-tuning (NVIDIA GPU, ~60 GB)
+torch>=2.11
+transformers>=5.19
+accelerate
+peft>=0.21
+# YOLO stock classifier (opencv-python-headless on servers without libGL)
+ultralytics>=8.3

@@ -29,7 +29,7 @@ External review (GPT, on `7327f73`) and what we did:
 - **Validation rehearsal** (`scripts/run_validation.sh`, 26 images / 281 areas): 3 min 27 s end to end (VLM 2 min, product check 1 min, YOLO on the laptop 5 s), **281/281 identical** to the full export.
 - **Estimated official score (extrapolation):** stock 0.735 per area on the labelled mix → 213, 0.795 on the random blind-50 mix → 230; identification (1947 − 3·149)/1947 = 0.770 per area always compliant → 223, +126/1947 per area with the check → 241. **Total ≈ 454–471 of 578 (79–81%)**; ± ≈ 20 from chance, more if Sensei's labels differ from ours.
 
-Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
+Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Sections are newest first; paths of runs and files removed from the tree on 11 Oct (earlier exports, the probe, per-shelf thresholds, `docs/PLAN.md`) are in Git history.
 
 ## LoRA settings sweep — round 1 done, round 2 running — 11 October 2026
 

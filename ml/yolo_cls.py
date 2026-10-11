@@ -77,7 +77,7 @@ def stock(args):
 
 
 def product(args):
-    snapshots = json.loads(Path("results/qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1/snapshots.json").read_text())
+    snapshots = json.loads(Path("results/qwen3.8-27b-lora2-yolopad-emptycheck-alwayscompliant-full-v1/snapshots.json").read_text())
     rows = [(f"{s['snapshot_id']}_{a['area_id']}", a["product_name"], a["stock_level"]) for s in snapshots
             if s["snapshot_id"] not in CURTAIN for a in s["areas"]]
     held = set(json.loads(Path(args.eval_ids).read_text()))

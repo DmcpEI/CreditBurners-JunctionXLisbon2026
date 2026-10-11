@@ -87,28 +87,16 @@ Python writes app snapshots and evidence assets; Spring reads them for the core 
 - Optional staff acknowledgement is separate from the model prediction. Marking a task checked must not change stock/compliance or the Sensei export.
 - Run identity links results to model, prompt and preprocessing settings retained with the ML output. The supplied dataset archive is tracked at the team's request; keep extracted duplicates, weights, uploads and generated result files out of Git.
 
-## Real data (Member2: start here)
+## Real data
 
-Committed in `results/<run_id>/` (deliberately tracked for integration; regenerate with `python3 -m ml.export outputs …`):
+Committed in `results/<run_id>/` (regenerate with `python3 -m ml.export outputs …`, see `ml/run.py`):
 
 | Run | Use |
 |---|---|
-| `qwen3.8-27b-lora2-yolopad-emptycheck-productcheck-full-v1` | **Submission-format best (v9, 11 Oct).** YOLO on square-padded crops; held out 255/344. Otherwise as the row below. |
-| `qwen3.8-27b-lora2-yolopad-emptycheck-alwayscompliant-full-v1` | **Use for the app (v9).** Spring default. |
-| `qwen3.8-27b-lora2-yolo-emptycheck-productcheck-full-v1` | Superseded by yolopad (v8). Stock: YOLO11n + LoRA v2 averaged, half ≥ 0.4, empty check; product check B ≥ 0.6 → 102 non-compliant. Held out 253/344 stock points. |
-| `qwen3.8-27b-lora2-yolo-emptycheck-alwayscompliant-full-v1` | Superseded (v8 app). Same stock as above, every area compliant (product flags kept out of the staff UI). Point `sensei.snapshots-file` here (Spring default). |
-| `qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1` | Superseded (LoRA v1 alone). Stock question answered by Qwen3.8-27B with our LoRA adapter (`/workspace/models/lora-stock-v1`), half if its half score ≥ 0.4 (`ml/lora_thresholds.json`); empty check on the base model; every area compliant. Held-out (2 folds, 138 labels): 78 stock points vs 68 for the probe. About 4.5 s per camera image. 8 of 1,962 areas use the fallback (model answered "can't tell"). |
-| `qwen3.8-27b-ctx640-probe-emptycheck-shared-alwayscompliant-full-v1` | Superseded (hidden-state probe + per-shelf thresholds; blind 75/99, 3.8 s per image). |
-| `qwen3.8-27b-ctx640-perarea-emptycheck-shared-alwayscompliant-full-v1` | Superseded (per-shelf half rule on the answer scores; blind 60/99). |
-| `qwen3.8-27b-ctx640-half020-emptycheck-shared-full-v1` | Superseded (global half threshold 0.20, 3.8 s per image). |
-| `qwen3.8-27b-ctx640-half020-emptycheck-full-v1` | Superseded (questions computed separately, 5.75 s per image; 97% identical answers). |
-| `qwen3.8-27b-stockonly-ctx640-half020-full-v1` | Superseded (no empty check), 2.9 s per camera image. |
-| `qwen3.8-27b-stockonly-half020-full-v1` | Superseded (1280 px context). |
-| `qwen3.8-27b-stockonly-halfrule-full-v1` | Same with half rule v1 (0.15). Superseded. |
-| `qwen3.8-27b-v1-halfrule-alwayscompliant-full-v1` | Previous recommendation: 4 questions per area; keeps a soft "Model also flagged a possible wrong product…" hint at the end of `reason` that the UI can show as "check product". |
-| `qwen3.8-27b-v1-halfrule-full-v1` | Same stock, with the model's compliance answers (250 mismatches, many false alarms). Comparison only. |
+| `qwen3.8-27b-lora2-yolopad-emptycheck-productcheck-full-v1` | **The submission pipeline on the 181 supplied images.** Stock: YOLO11n (square-padded crops) and the LoRA v2 VLM averaged, half if ≥ 0.4, empty check; product check: non-compliant if ≥ 0.6 sure (never on an area answered empty) → 102 non-compliant. |
+| `qwen3.8-27b-lora2-yolopad-emptycheck-alwayscompliant-full-v1` | **The app's data** (Spring default): same stock, every area compliant — product flags are kept out of the staff UI. |
 
-**Product check (all current runs): not assessed.** Every area is answered compliant by policy; the model's product question was dropped because it produced more false alarms than real catches. Snapshots now carry `product_check: "not_assessed"` (or `"model"` when a run really asks), and `reason` says "product identity not checked (answered compliant by policy)". Do not show "Expected product matches" for these runs; prefer this field over parsing `run_id` (the run id also contains `alwayscompliant`). The API default `sensei.snapshots-file` should point to the current-best folder above.
+Earlier runs (single VLM, probe, per-shelf thresholds, …) were removed from the tree on 11 Oct; they are in Git history and described in `docs/RESULTS.md`.
 
 Each run folder has:
 - `snapshots.json`: array of 181 app snapshots (one per camera image, 1,962 areas), exactly the App snapshot format above. `prediction_source: "saved"`, `context_mode: "current_image_only"`, `reference: null`, `visibility` is `clear`/`occluded`/`unknown`, `fallback_used: true` when an answer used the fixed half/compliant fallback. Load the whole file; it is the snapshot index.
@@ -121,7 +109,7 @@ python3 -m ml.prepare new_dataset_hackathon_junctionx_10_oct_2026_v2 --output da
 ```
 Then `/assets/<name>` in any snapshot = file `data/prepared-v1/assets/<name>`: `image_url` is the original camera image (`<camera>_<timestamp>.jpg`), `crop_url` the rectified area crop (`<camera>_<timestamp>_<area_id>.png`). All 1,962 crop and 181 image URLs resolve. Area polygons for outlining live in `new_dataset_hackathon_junctionx_10_oct_2026_v2/planogram.json` (`image_coordinates`, pixel corners on the 1280×720 image).
 
-Accuracy caveat for the pitch/UI: stock matched our labels on 64–87% of areas depending on the labelled group (64% on fresh evaluation areas) (see `docs/RESULTS.md`); do not display model scores as confidence.
+Accuracy caveat for the pitch/UI: on our 344 labels held out by 5-fold cross-validation the submitted stock decision is right 92.7% of the time (255 of 344 points); these are model predictions on our own labels, not measured inventory or the official score.
 
 ## Mocks
 

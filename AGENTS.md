@@ -40,9 +40,9 @@
 - Commit message: `<area>: <what> — <why>`, one line.
 
 ## Tracking work
-- Start of every session: `git pull --rebase`, then read `docs/PLAN.md`, `docs/CONTRACT.md` and `git log -10`.
+- Start of every session: `git pull --rebase`, then read `README.md`, `docs/CONTRACT.md` and `git log -10`.
 - `docs/DEMO.md`: the 3-minute script, fallbacks and known failures. `docs/RESULTS.md`: metrics and how they were measured.
-- `docs/PLAN.md`: objective, approach, schedule.
+- `README.md`: challenge, approach, results, how to run. `docs/APP.md`: the app.
 - No changelog, design notes or other docs.
 
 ## Testing and verification

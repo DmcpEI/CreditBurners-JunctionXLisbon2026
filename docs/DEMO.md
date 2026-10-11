@@ -1,6 +1,6 @@
 # Demo
 
-Status: working local Spring/React app on saved real predictions from `qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1` (fine-tuned model). Store view (simulated live view with urgency per camera and a per-camera filter), alerts, camera/crop evidence and the Shelf study (store / camera / product insights for the recorded day) are implemented. Public deployment/QR and the final presentation rehearsal remain pending. Current continuation instructions: `docs/PLAN.md`, Member2 continuation.
+Status: working Spring/React app (ShelfCue) on saved predictions of the submission pipeline (`results/qwen3.8-27b-lora2-yolopad-emptycheck-alwayscompliant-full-v1/`), publicly hosted (see the end of this file). App design: `docs/APP.md`.
 
 Product name: **ShelfCue**. Challenge confirmed: Sensei. The script below demonstrates the shelf assistant and its measured results.
 

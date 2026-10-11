@@ -6,6 +6,16 @@ Checks: 15 UI tests passed under `TZ=America/New_York`, including curtain exclus
 
 # Results
 
+## Unit counting (mentor's idea) — branch `feat/unit-counting`, not adopted — 11 October 2026
+
+- **Idea:** count sellable units (packs, bags, bunches or loose items) and decide stock from the count with per-product thresholds: about one unit left = empty, then a share of the area's capacity for half/full.
+- **Counting** (`ml/count_units.py`): base Qwen3.8-27B reads the crop + mask and writes a number; all 1,962 crops in 459 s. Capacity of an area = its highest count over the day (no labels needed).
+- **Rule** (`ml/count_rule.py`): empty if count ≤ E, else half if count/capacity < H, else full; E, H chosen on the training folds (per kind of produce with ≥ 15 labels, else global), same 5 folds as everything else.
+- **Held-out stock points (max 344):** count rule per kind −61 (236 correct), global −74 (233); submitted hybrid 255 (319); hybrid + "count ≤ E → empty" 232; hybrid with count deciding half/full 16; majority vote of hybrid, count rule and YOLO 243.
+- **Why:** counts separate empty partly (16 of 33 empty labels count ≤ 1, median 2) but not half from full: share of capacity, quartiles half 0.60/0.75/0.88 vs full 0.67/0.87/1.00. VLM counts of loose produce are coarse estimates, and "half" in our labels often means visible gaps or bare floor rather than fewer items.
+- **What might make it work:** real instance counts (a detector or SAM 3 instance masks per product) and capacity from the planogram/tray geometry instead of the day's maximum. Not attempted in the time left.
+
+
 ## Review response, final pipeline v9 — 11 October 2026
 
 External review (GPT, on `7327f73`) and what we did:

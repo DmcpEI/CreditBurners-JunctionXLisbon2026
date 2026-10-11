@@ -49,7 +49,7 @@ def stock(args):
             p = dict(zip(model.names.values(), probs))
             oof[i] = dict(A=p["empty"], B=p["half"], C=p["full"], D=0.0)
         print(f"fold {f + 1}/5 done", flush=True)
-    target = Path("data/lora-cv") / f"yolo-{Path(args.weights).stem}-e{args.epochs}.json"
+    target = Path("data/lora-cv") / f"yolo-{Path(args.weights).stem}-e{args.epochs}{'' if args.imgsz == 224 else f'-i{args.imgsz}'}.json"
     target.write_text(json.dumps(oof) + "\n")
     print(f"STOCK_DONE {target}", flush=True)
 

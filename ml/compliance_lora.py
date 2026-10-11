@@ -38,6 +38,7 @@ def main():
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--train-ids", type=Path, help="Unlabelled, visible, not-empty observations to make pairs from")
     parser.add_argument("--eval-ids", type=Path, help="Human-labelled observations (never trained on)")
+    parser.add_argument("--real-labels", type=Path, help="JSON {sample_id: compliant} human-reviewed observations added to training (own name, x3)")
     parser.add_argument("--adapter-in", type=Path, help="Production: score every sample of the manifest with this adapter (own name only)")
     parser.add_argument("--model", required=True)
     parser.add_argument("--output", type=Path, required=True)
@@ -62,6 +63,9 @@ def main():
         return score_manifest(args, manifest)
     train_pairs = pairs([manifest[i] for i in json.loads(args.train_ids.read_text())], ENGLISH, seed=1)
     eval_pairs = pairs([manifest[i] for i in json.loads(args.eval_ids.read_text())], ENGLISH, seed=2)
+    if args.real_labels:  # real wrong products (strict review, 11 Oct) next to the made-up swaps
+        real = json.loads(args.real_labels.read_text())
+        train_pairs += [({**manifest[i], "sample_id": f"{i}|real{k}"}, "A" if ok else "B") for i, ok in real.items() for k in range(3)]
     proc = AutoProcessor.from_pretrained(args.model)
     model = AutoModelForImageTextToText.from_pretrained(args.model, dtype=torch.bfloat16, device_map="cuda")
     model.gradient_checkpointing_enable()

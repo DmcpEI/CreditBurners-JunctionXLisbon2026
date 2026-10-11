@@ -37,3 +37,4 @@ new_dataset_hackathon_junctionx_10_oct_2026_v2/*
 models/*
 !models/lora-stock-v1/
 !models/yolo-stock-v1.pt
+!models/lora-stock-v2/

@@ -1,0 +1,33 @@
+{
+  "run_id": "qwen3.8-27b-lora2-yolo-emptycheck-alwayscompliant-full-v1",
+  "areas": 1962,
+  "images": 181,
+  "decision_rule": "half_if_stock_B>=0.4",
+  "compliance": "always_true",
+  "empty_rule": "empty_if_v4_A>=0.7",
+  "area_thresholds": 0,
+  "probe": null,
+  "fallback": {
+    "stock": "half",
+    "compliant": true
+  },
+  "counts": {
+    "yolo_blended": 1962,
+    "product_checked": 0,
+    "missing_result": 0,
+    "stock_fallback": 0,
+    "compliance_fallback": 0,
+    "empty_rule_changed": 8,
+    "half_rule_changed": 67,
+    "stock_empty": 199,
+    "non_compliant": 0,
+    "model_mismatch_suppressed": 0,
+    "stock_full": 1232,
+    "stock_half": 531
+  },
+  "seconds_per_image": {
+    "p50": 3.6296657539787702,
+    "p95": 5.671674234967213,
+    "total": 701.8027241559757
+  }
+}

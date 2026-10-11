@@ -41,7 +41,7 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 - **Local app fails:** show the recorded walkthrough and say it is a recording.
 - **Photo mode unreliable or unfinished:** omit it. The store replay remains the main product.
 - No invented model results or impact metrics. Any development fixture must say "Illustrative mock" and must not enter evaluation results.
-- Current integration data: `results/qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1/snapshots.json`. The old `data/prepared-v1/snapshots.json` is a constant baseline available only by explicit override; never present it as model output.
+- Current integration data: `results/qwen3.8-27b-lora2-yolo-emptycheck-alwayscompliant-full-v1/snapshots.json`. The old `data/prepared-v1/snapshots.json` is a constant baseline available only by explicit override; never present it as model output.
 
 ## Acceptance checks before judging
 - Public URL and QR code work from a phone on mobile data; list, detail and replay work on a narrow screen.
@@ -120,3 +120,17 @@ Preparation creates images and rectified crops; it does not run the model. Confi
 ## Pitch evidence and efficiency
 
 Use the latest measured evaluation in RESULTS and name the labelled sample and pipeline. Current report has median 3.81 s / camera image on the measured hardware; cached browser replay is not inference time. Include a tariff assumption for cost estimates and distinguish warm processing/cold loading. Official hidden-validation accuracy is not yet claimed. User-visible images and stock conditions may differ between cameras' capture times; never describe the gallery as a live feed.
+
+## Public demo (11 October 2026)
+
+Mentor approved publishing the store images. Live link (Cloudflare quick tunnel, no account): **https://simon-provincial-once-usage.trycloudflare.com**, served from Member1's Mac. It works only while the Mac is awake and online and both processes run; recreating the tunnel changes the hostname (redo the QR code). Restart:
+
+```bash
+caffeinate -dims &                                    # keep the Mac awake
+java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=data/prepared-v1 \
+  --sensei.snapshots-file=results/qwen3.8-27b-lora2-yolo-emptycheck-alwayscompliant-full-v1/snapshots.json \
+  --server.address=127.0.0.1 --server.port=8081 &
+cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8081   # prints the public https URL
+```
+
+Needs Java 17, Maven (to build the jar) and cloudflared (`brew install openjdk@17 maven cloudflared`). Restarting only the Java app keeps the same public link. Verified over the public URL: `python3 api/verify.py <url>` passes; encoded path traversal returns 400. Do not expose the scratch Python stand-in API: it has no path checks.

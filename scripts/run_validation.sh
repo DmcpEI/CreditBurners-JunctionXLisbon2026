@@ -55,4 +55,4 @@ ok = (images, areas) == (int(sys.argv[2]), int(sys.argv[3]))
 print(f"{'OK' if ok else '!!! CHECK'}: {len(sub)} cameras, {images} images, {areas} areas (organiser: {sys.argv[2]} images, {sys.argv[3]} areas)")
 PYEOF
 step "DONE: $OUT/export/submission.json"
-[ -d "$OUT/assets" ] && echo "App on this run: java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=$OUT --sensei.snapshots-file=$OUT/export/snapshots.json"
+[ -d "$OUT/assets" ] && echo "App on this run: java -jar api/target/shelfcue-0.1.0.jar --shelfcue.data-dir=$OUT --shelfcue.snapshots-file=$OUT/export/snapshots.json"

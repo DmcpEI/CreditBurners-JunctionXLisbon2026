@@ -77,7 +77,7 @@ From the repository root, with Node, Java17+ and Maven installed, and `data/prep
 npm ci --prefix ui
 npm run build --prefix ui
 mvn -f api/pom.xml package
-java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=data/prepared-v1 --server.address=0.0.0.0 --server.port=8080
+java -jar api/target/shelfcue-0.1.0.jar --shelfcue.data-dir=data/prepared-v1 --server.address=0.0.0.0 --server.port=8080
 ```
 
 Open http://localhost:8080. For a phone on the same Wi-Fi use `http://<Mac-LAN-IP>:8080`; get the IP with `ipconfig getifaddr en0`. The Java process serves the built UI and reads the export only at startup. Stop with Ctrl+C before rebuilding/replacing its running JAR. If 8080 is user-owned, choose 8082 and use that URL for verification.
@@ -112,7 +112,7 @@ To display the new results in the app, also prepare the validation assets locall
 
 ```bash
 python3 -m ml.validate data/validation-input --output data/val-defesa-01-assets
-java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=data/val-defesa-01-assets --sensei.snapshots-file=data/val-defesa-01/export/snapshots.json --server.address=0.0.0.0 --server.port=8080
+java -jar api/target/shelfcue-0.1.0.jar --shelfcue.data-dir=data/val-defesa-01-assets --shelfcue.snapshots-file=data/val-defesa-01/export/snapshots.json --server.address=0.0.0.0 --server.port=8080
 ```
 
 Preparation creates images and rectified crops; it does not run the model. Confirm every JSON image/crop URL resolves to that local assets folder before presenting. This fresh-input-to-app procedure has not been rehearsed in this session; do it with Member1 before the defence. Generic handheld/store images without matching camera/planogram geometry are outside the current pipeline. Copying photos into the original dataset folder alone does not analyse them or refresh the app.
@@ -127,8 +127,8 @@ Mentor approved publishing the store images. Live link (Cloudflare quick tunnel,
 
 ```bash
 caffeinate -dims &                                    # keep the Mac awake
-java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=data/prepared-v1 \
-  --sensei.snapshots-file=results/qwen3.8-27b-lora2-yolopad-emptycheck-alwayscompliant-full-v1/snapshots.json \
+java -jar api/target/shelfcue-0.1.0.jar --shelfcue.data-dir=data/prepared-v1 \
+  --shelfcue.snapshots-file=results/qwen3.8-27b-lora2-yolopad-emptycheck-alwayscompliant-full-v1/snapshots.json \
   --server.address=127.0.0.1 --server.port=8081 &
 cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8081   # prints the public https URL
 ```

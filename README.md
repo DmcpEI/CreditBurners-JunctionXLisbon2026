@@ -1,10 +1,12 @@
-# Credit Burners — Fresh eyes on fresh produce
+# ShelfCue — fresh eyes on fresh produce
 
-JunctionX Lisbon 2026 · Sensei challenge · Team Credit Burners (Member1: ML and evaluation, Member2: app and API).
+**Team Credit Burners** · JunctionX Lisbon 2026 · Sensei challenge (Member1: ML and evaluation, Member2: app and API).
 
-We turn a supermarket's existing ceiling cameras into a shelf assistant: for every shelf area in every camera image we decide **how full it is** and **whether it holds the right product**, and **ShelfCue**, our phone app, shows staff what to restock first with the photo as evidence.
+ShelfCue turns a supermarket's existing ceiling cameras into a shelf assistant: for every shelf area in every camera image it decides **how full it is** and **whether it holds the right product**, and its phone app shows staff what to restock first, with the photo as evidence.
 
-**Live demo:** https://simon-provincial-once-usage.trycloudflare.com (simulated live view on the recorded data; see `docs/DEMO.md`).
+### 🌐 Try it: **[simon-provincial-once-usage.trycloudflare.com](https://simon-provincial-once-usage.trycloudflare.com)**
+
+Open it on a phone. It's a simulated live view: the latest recorded image of each camera stands in for a live feed. Hosting notes are in `docs/DEMO.md`.
 
 ## The challenge
 
@@ -106,7 +108,7 @@ Notes:
 ```bash
 npm ci --prefix ui && npm run build --prefix ui
 mvn -f api/pom.xml package
-java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=data/prepared-v1 --server.address=127.0.0.1   # http://127.0.0.1:8080
+java -jar api/target/shelfcue-0.1.0.jar --shelfcue.data-dir=data/prepared-v1 --server.address=127.0.0.1   # http://127.0.0.1:8080
 ```
 `python3 api/verify.py` checks the running API. Public hosting through a Cloudflare tunnel is described in `docs/DEMO.md`.
 

@@ -6,6 +6,17 @@ Checks: 15 UI tests passed under `TZ=America/New_York`, including curtain exclus
 
 # Results
 
+## Official validation — frozen pipeline 311 / 578 — 11 October 2026
+
+Sensei released the validation set with `annotations.json` (28 images, 26 annotated, 289 areas; 6383/6386 late-evening frames unannotated). Run unchanged with `scripts/run_validation.sh "Frutas e Legumes (validation).zip" final` (3 min 37 s, no fallbacks, 304 areas answered) and scored with `python3 -m ml.scoring`: **311 / 578**, identification 275 right / 14 wrong, stock 220 right / 51 too low / 18 too high, 0 missing. Saved in `results/validation-final/` (submission, snapshots, report, score).
+
+- **Truth distribution:** 145 full / 108 half / 36 empty; 4 non-compliant (1.4%). Images 20:14–21:57 Lisbon on 27 June plus one 2 July 14:16 — all after the hours of our labelled day (06:12–20:16).
+- **Stock confusion (truth → ours):** full→half 35, full→full 109, full→empty 1; half→half 78, half→full 15, half→empty 15; empty→empty 33, empty→half 1, empty→full 2.
+- **Product check:** 10 false alarms, 0 of 4 wrong products caught (−30 vs always compliant).
+- **Post-hoc ablations on the same outputs (not a fair score; chosen after seeing the labels):** always compliant 341; VLM only 294; YOLO only 341; hybrid without empty check 355; hybrid with half threshold 0.5–0.7 (with empty check) 359.
+- **Why the estimate (455–469) was off:** validation is evening-only (distribution shift in time of day and lighting); Sensei's "full" is more generous than our labels; wrong products, frequent in our morning frames, are rare in the evening. Our cross-validation shared the day's conditions with training, so it could not see this.
+
+
 ## Policy layer: is the configuration the best for points? (nested CV) — 11 October 2026
 
 Nested 5-fold on the cached held-out scores: settings chosen on four folds, scored on the fifth. Grid: YOLO weight 0.3–0.7, half threshold 0.25–0.5, empty-check threshold 0.5–0.9/off (production gate kept).

@@ -55,7 +55,31 @@ The user interface (1–5) breaks ties. We run our code on the validation images
 
 Product flags are part of the submission but kept out of the staff app. Details: `docs/APP.md`.
 
-## Results (our own labels; the official score comes only from Sensei's validation)
+## Validation result (Sensei's labels)
+
+Our frozen pipeline, run unchanged on Sensei's validation images (`results/validation-final/`): **311 of 578 points**, all 289 areas answered.
+
+| | Correct | Wrong | Points |
+|---|---|---|---|
+| Identification | 275 | 14 | +247 |
+| Stock | 220 (76%) | 51 too low, 18 too high | +64 |
+
+That's well below our estimate (455–469). The validation images are all from the evening (20:14–21:57, plus one from 2 July), after the hours our labelled day covers, and three things differ:
+- **"Full" is more generous in Sensei's labels:** 35 of their 145 full shelves we called half.
+- **Wrong products are rare in the evening:** 4 of 289 areas, against 8% in our morning-heavy day. Our product check raised 10 false alarms and caught none of the 4.
+- **Empty works:** 33 of 36 empty shelves were right.
+
+Post-hoc diagnosis on the same outputs (chosen after seeing the labels, so not a fair score; details in `docs/RESULTS.md`):
+
+| Variant | Score |
+|---|---|
+| Without the product check | 341 |
+| Additionally half only at ≥ 0.5 | 359 |
+| VLM only, no YOLO | 294 |
+
+Lessons: YOLO helps (+47 over the VLM alone); our labels were stricter about "full" than Sensei's; and a wrong-product check needs validation data that covers different times of day.
+
+## Results on our own labels (cross-validation)
 
 **Stock:** 5-fold cross-validation over our 344 labels; each label is scored once by models that never saw it. Max 344 points.
 

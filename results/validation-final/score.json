@@ -1,0 +1,11 @@
+{
+  "areas": 289,
+  "missing": 0,
+  "identification_correct": 275,
+  "identification_wrong": 14,
+  "stock_correct": 220,
+  "stock_under": 51,
+  "stock_over": 18,
+  "score": 311,
+  "maximum": 578
+}

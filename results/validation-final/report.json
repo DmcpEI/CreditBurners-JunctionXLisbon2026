@@ -1,0 +1,33 @@
+{
+  "run_id": "val-final",
+  "areas": 304,
+  "images": 28,
+  "decision_rule": "half_if_stock_B>=0.4",
+  "compliance": "trained_check_B>=0.6",
+  "empty_rule": "empty_if_v4_A>=0.7",
+  "area_thresholds": 0,
+  "fallback": {
+    "stock": "half",
+    "compliant": true
+  },
+  "counts": {
+    "yolo_blended": 304,
+    "product_checked": 0,
+    "missing_result": 0,
+    "stock_fallback": 0,
+    "compliance_fallback": 0,
+    "empty_rule_changed": 7,
+    "half_rule_changed": 15,
+    "stock_full": 126,
+    "non_compliant": 10,
+    "model_mismatch_suppressed": 0,
+    "stock_half": 114,
+    "compliance_check_flagged": 10,
+    "stock_empty": 64
+  },
+  "seconds_per_image": {
+    "p50": 4.213076748943422,
+    "p95": 6.1172294880962,
+    "total": 121.02059748591273
+  }
+}

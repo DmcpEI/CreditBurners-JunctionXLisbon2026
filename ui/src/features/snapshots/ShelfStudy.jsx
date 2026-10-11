@@ -1,9 +1,8 @@
 import React, {useMemo} from 'react';
 import english from '../../../../ml/products_en.json';
-import {fullTime, productLabel, shelfLabel, timeLabel, storeHour} from './presentation';
+import {productLabel, shelfLabel, timeLabel} from './presentation';
 import {byHour, observations, rank, shelfEvents, summary} from './insights';
 import {manualPreview} from './manualPreview';
-import ObservationToolbar from './ObservationToolbar';
 
 const category = name => english[name] || productLabel(name);
 const title = value => value.charAt(0).toLocaleUpperCase() + value.slice(1);
@@ -14,7 +13,7 @@ const hourLabel = hour => `${String(hour).padStart(2, '0')}:00`;
 
 // Shelf study: one recorded day, studied for the whole store, one camera (zone) or one product.
 export default function ShelfStudy({browser, onOpen}) {
-  const {studySnapshots, studyLoading, studyError, frames, location, navigate, current, retry} = browser;
+  const {studySnapshots, studyLoading, studyError, location, navigate, current, retry} = browser;
   const preview = location.demo === '1';
   const all = useMemo(() => observations(preview ? studySnapshots.map(manualPreview) : studySnapshots, {category, includePreview: preview}), [studySnapshots, preview]);
   const products = useMemo(() => [...new Set(all.map(o => o.category))].sort(), [all]);
@@ -47,7 +46,7 @@ export default function ShelfStudy({browser, onOpen}) {
       <div><strong>{stats.changes}</strong><span>observed stock changes</span><small>immediate reversals filtered</small></div>
     </div>
 
-    <HourChart hours={byHour(obs)} scope={scope} frames={frames} browser={browser}/>
+    <HourChart hours={byHour(obs)}/>
 
     <div className="study-lists">
       {scope === 'store' && <>
@@ -63,25 +62,19 @@ export default function ShelfStudy({browser, onOpen}) {
       <RefillList spells={spells} onOpen={onOpen}/>
     </div>
 
-    {scope === 'camera' && <section className="study-archive"><h3>Browse this camera's images</h3>
-      <div className="study-frame-choice" aria-label="Selected study image"><button aria-label="Previous image" disabled={browser.position <= 0} onClick={() => browser.selectFrame(frames[browser.position - 1].snapshot_id)}>←</button><div><span>Image {browser.position + 1} of {frames.length}</span><strong>{current && fullTime(current.captured_at)}</strong></div><button aria-label="Next image" disabled={browser.position < 0 || browser.position >= frames.length - 1} onClick={() => browser.selectFrame(frames[browser.position + 1].snapshot_id)}>→</button></div>
-      <ObservationToolbar browser={browser} hideCamera/></section>}
     <p className="study-note">One recorded day (27 June 2025), about one image per camera per hour. All times are Europe/Lisbon. Confirmed curtain-covered frames and unusable assessments are excluded. Stock levels are model estimates; changes need a following observation that does not immediately reverse them. Observation gaps are not exact replenishment durations, and stock changes do not measure sales.</p>
   </section>;
 }
 
-function HourChart({hours, scope, frames, browser}) {
-  const frameAt = hour => frames.find(f => storeHour(f.captured_at) === hour);
+function HourChart({hours}) {
   return <section className="study-chart study-hours active-chart"><header><span className="section-kicker">Stock by hour</span>
     <h3>When shelves run low</h3>
-    <p>Share of assessed shelves at each recorded hour · Lisbon time.{scope === 'camera' ? ' Tap an hour to open that image.' : ''}</p></header>
+    <p>Share of assessed shelves at each recorded hour · Lisbon time.</p></header>
     <div className="chart-legend">{['empty', 'half', 'full'].map(state => <span key={state}><i className={`stock-${state}`}/>{title(state)}</span>)}</div>
     <div className="timeline-scroll" tabIndex={0} aria-label="Stock share by hour"><div className="stock-timeline">{hours.map(h => {
       const bar = <><span className="timeline-bar" aria-hidden="true">{['empty', 'half', 'full'].map(state => <i key={state} className={`stock-${state}`} style={{height: `${h[state] / h.n * 100}%`}}/>)}</span><strong>{hourLabel(h.hour)}</strong><small>{pct((h.empty + h.half) / h.n)} low</small></>;
       const label = `${hourLabel(h.hour)}: ${h.empty} empty, ${h.half} half, ${h.full} full`;
-      const frame = scope === 'camera' && frameAt(h.hour);
-      return frame ? <button key={h.hour} aria-label={label} aria-pressed={browser.location.snapshot === frame.snapshot_id} onClick={() => browser.selectFrame(frame.snapshot_id)}>{bar}</button>
-        : <div key={h.hour} className="timeline-col" role="img" aria-label={label}>{bar}</div>;
+      return <div key={h.hour} className="timeline-col" role="img" aria-label={label}>{bar}</div>;
     })}</div></div>
   </section>;
 }

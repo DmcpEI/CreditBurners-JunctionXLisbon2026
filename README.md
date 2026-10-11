@@ -87,7 +87,7 @@ Sensei released the validation images with their labels (26 images, 289 areas, m
 
 **Wrong product:** on the 435 reviewed images (149 wrong; the check never trained on these shelves) the check catches 72 wrong products. It raised no false alarms on 272 ordinary labelled shelves; 27 correct images on the suspicious shelves were flagged. That is about +126 points on the recorded day over answering "compliant" everywhere, ≈ +19 per 289 validation areas.
 
-**Estimated official score:** ≈ 455–469 of 578 (79–81%), from stock 214–228 plus identification ≈ 241. This is an extrapolation from our own labels: the configuration was chosen on the same held-out predictions, our half/full judgement may differ from Sensei's, and the time of day of the validation images changes how many wrong products appear. Derivations: `docs/RESULTS.md`.
+**Estimate made before validation:** ≈ 455–469 of 578 (79–81%); the actual validation score is 374 (see above), from stock 214–228 plus identification ≈ 241. This is an extrapolation from our own labels: the configuration was chosen on the same held-out predictions, our half/full judgement may differ from Sensei's, and the time of day of the validation images changes how many wrong products appear. Derivations: `docs/RESULTS.md`.
 
 **Speed:** 26 validation images take about 3.5 minutes end to end on one RTX PRO 6000 (≈ 4 s per camera image for the VLM questions, 1 min for the product check, 3 ms per crop for YOLO on a laptop).
 

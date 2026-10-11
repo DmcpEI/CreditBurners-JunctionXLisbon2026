@@ -1,7 +1,7 @@
 """Wrong-product (planogram compliance) LoRA trained on self-made pairs; experiment, 11 October 2026.
 
 Organiser (Discord, 11 Oct): validation images come from the same cameras; any product that is not the planogram's
-product is non-compliant, and teams are expected to train for it. We have only 10 human-labelled wrong products, so
+product is non-compliant, and teams are expected to train for it. We had only 10 labelled wrong products, so
 we make pairs from unlabelled observations: a shelf crop with its own planogram name = A (this product), the same crop
 with another area's name = B (different product or variety; half the time the same kind of produce, e.g. Fuji vs
 Gala). Crop + mask only, no camera view, so the model must compare what it sees with the name instead of
@@ -37,8 +37,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--train-ids", type=Path, help="Unlabelled, visible, not-empty observations to make pairs from")
-    parser.add_argument("--eval-ids", type=Path, help="Human-labelled observations (never trained on)")
-    parser.add_argument("--real-labels", type=Path, help="JSON {sample_id: compliant} human-reviewed observations added to training (own name, x3)")
+    parser.add_argument("--eval-ids", type=Path, help="Labelled observations (never trained on)")
+    parser.add_argument("--real-labels", type=Path, help="JSON {sample_id: compliant} reviewed observations added to training (own name, x3)")
     parser.add_argument("--adapter-in", type=Path, help="Production: score every sample of the manifest with this adapter (own name only)")
     parser.add_argument("--model", required=True)
     parser.add_argument("--output", type=Path, required=True)

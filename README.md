@@ -41,7 +41,7 @@ The user interface (1–5) breaks ties. We run our code on the validation images
 
 **3. Wrong product: trained, as the organiser asked.**
 - Reviewing every image of 34 suspicious shelves found 149 wrong products in 435 images (≥ 7.7% of the day). Most are morning layouts with products shifted into neighbouring slots: kiwi packs in orange slots, oranges on the banana stand until about 08:00, onions in potato slots.
-- With only a handful of human-labelled examples at the start, we made training pairs from our own images: a crop with its own planogram name means *this product*, the same crop with another shelf's name means *a different product* (half of them the same kind of produce, e.g. two banana or apple varieties).
+- With only a handful of labelled examples at the start, we made training pairs from our own images: a crop with its own planogram name means *this product*, the same crop with another shelf's name means *a different product* (half of them the same kind of produce, e.g. two banana or apple varieties).
 - A second LoRA learns to answer "is this exactly the planogram product?" from the crop and the name. It sees no shelf position, so it must compare what it sees with the name.
 - The area is marked non-compliant when the check is ≥ 60% sure, never when the area is answered empty.
 

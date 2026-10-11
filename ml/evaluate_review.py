@@ -1,4 +1,4 @@
-"""Validate frozen human reviews, prepare split inputs, and score independent tasks."""
+"""Validate frozen reviews, prepare split inputs, and score independent tasks."""
 import argparse
 import hashlib
 import json
@@ -11,7 +11,7 @@ def load_review(path, manifest_path):
     review = json.loads(path.read_text())
     manifest = json.loads(manifest_path.read_text())
     if review.get('status') != 'frozen' or not review.get('reviewer') or not review.get('frozen_at'):
-        raise ValueError('A frozen named human review is required')
+        raise ValueError('A frozen, named review is required')
     revision = manifest.get('protocol', {}).get('revision', 'sensei-box-capacity-v2')  # v1 set predates the field
     if review.get('set_id') != manifest['set_id'] or review.get('protocol', {}).get('revision') != revision:
         raise ValueError('Wrong set or annotation protocol')

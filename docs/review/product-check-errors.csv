@@ -1,0 +1,105 @@
+id,area,product,kind,reviewed,check,error,P_same,P_different,P_cant_tell,final_stock
+6376_1751037379_6376_3,6376_3,KIWI GOLD ZESPRI 500 G,kiwi,correct product,flagged,false alarm,0.222,0.774,0.004,full
+6376_1751041136_6376_3,6376_3,KIWI GOLD ZESPRI 500 G,kiwi,correct product,flagged,false alarm,0.293,0.703,0.004,full
+6376_1751033639_6376_4,6376_4,KIWI ZESPRI 500 GR,kiwi,correct product,flagged,false alarm,0.13,0.847,0.023,full
+6376_1751037379_6376_4,6376_4,KIWI ZESPRI 500 GR,kiwi,correct product,flagged,false alarm,0.015,0.926,0.059,full
+6376_1751041136_6376_4,6376_4,KIWI ZESPRI 500 GR,kiwi,correct product,flagged,false alarm,0.005,0.98,0.016,full
+6376_1751044933_6376_4,6376_4,KIWI ZESPRI 500 GR,kiwi,correct product,flagged,false alarm,0.011,0.969,0.02,full
+6376_1751033639_6376_5,6376_5,KIWI CNT BIO 400 G,kiwi,correct product,flagged,false alarm,0.013,0.927,0.059,full
+6376_1751037379_6376_5,6376_5,KIWI CNT BIO 400 G,kiwi,correct product,flagged,false alarm,0.03,0.887,0.083,full
+6376_1751041136_6376_5,6376_5,KIWI CNT BIO 400 G,kiwi,correct product,flagged,false alarm,0.019,0.934,0.047,full
+6376_1751044933_6376_5,6376_5,KIWI CNT BIO 400 G,kiwi,correct product,flagged,false alarm,0.027,0.907,0.066,full
+6376_1751049028_6376_5,6376_5,KIWI CNT BIO 400 G,kiwi,correct product,flagged,false alarm,0.035,0.806,0.159,full
+6383_1751013620_6383_7,6383_7,CHUCHU CNT KG,chayote,correct product,flagged,false alarm,0.377,0.622,0.0,full
+6385_1751044017_6385_9,6385_9,MACA REINETA CNT CAL 70/80 KG,apple,correct product,flagged,false alarm,0.245,0.755,0.0,full
+6443_1751036374_6443_5,6443_5,TOMATE ZER0%D 1KG,tomato,correct product,flagged,false alarm,0.294,0.705,0.0,full
+6443_1751040209_6443_5,6443_5,TOMATE ZER0%D 1KG,tomato,correct product,flagged,false alarm,0.223,0.777,0.0,full
+6468_1751013530_6468_8,6468_8,GRANADILHA 80 G,passion fruit,correct product,flagged,false alarm,0.119,0.881,0.0,full
+6468_1751021997_6468_8,6468_8,GRANADILHA 80 G,passion fruit,correct product,flagged,false alarm,0.02,0.98,0.0,full
+6468_1751029957_6468_8,6468_8,GRANADILHA 80 G,passion fruit,correct product,flagged,false alarm,0.002,0.997,0.0,half
+6468_1751033646_6468_8,6468_8,GRANADILHA 80 G,passion fruit,correct product,flagged,false alarm,0.002,0.997,0.0,half
+6468_1751037301_6468_8,6468_8,GRANADILHA 80 G,passion fruit,correct product,flagged,false alarm,0.016,0.984,0.0,half
+6468_1751041038_6468_8,6468_8,GRANADILHA 80 G,passion fruit,correct product,flagged,false alarm,0.002,0.997,0.0,half
+6468_1751044824_6468_8,6468_8,GRANADILHA 80 G,passion fruit,correct product,flagged,false alarm,0.001,0.999,0.0,half
+6594_1751025171_6594_12,6594_12,CEBOLINHA FRANCESA CNT 500G,shallot,correct product,flagged,false alarm,0.202,0.798,0.0,full
+6594_1751033482_6594_12,6594_12,CEBOLINHA FRANCESA CNT 500G,shallot,correct product,flagged,false alarm,0.378,0.622,0.0,full
+6594_1751037746_6594_12,6594_12,CEBOLINHA FRANCESA CNT 500G,shallot,correct product,flagged,false alarm,0.294,0.706,0.0,full
+6594_1751041681_6594_12,6594_12,CEBOLINHA FRANCESA CNT 500G,shallot,correct product,flagged,false alarm,0.349,0.651,0.0,full
+6594_1751049768_6594_12,6594_12,CEBOLINHA FRANCESA CNT 500G,shallot,correct product,flagged,false alarm,0.378,0.622,0.0,half
+6376_1751009380_6376_3,6376_3,KIWI GOLD ZESPRI 500 G,kiwi,wrong product,not flagged,missed wrong product,0.407,0.592,0.0,full
+6376_1751013482_6376_3,6376_3,KIWI GOLD ZESPRI 500 G,kiwi,wrong product,not flagged,missed wrong product,0.835,0.164,0.0,full
+6376_1751017831_6376_3,6376_3,KIWI GOLD ZESPRI 500 G,kiwi,wrong product,not flagged,missed wrong product,0.731,0.269,0.0,full
+6376_1751021977_6376_3,6376_3,KIWI GOLD ZESPRI 500 G,kiwi,wrong product,not flagged,missed wrong product,0.072,0.775,0.153,empty
+6376_1751025657_6376_3,6376_3,KIWI GOLD ZESPRI 500 G,kiwi,wrong product,not flagged,missed wrong product,0.107,0.695,0.199,empty
+6376_1751029801_6376_3,6376_3,KIWI GOLD ZESPRI 500 G,kiwi,wrong product,not flagged,missed wrong product,0.21,0.646,0.144,empty
+6376_1751013482_6376_4,6376_4,KIWI ZESPRI 500 GR,kiwi,wrong product,not flagged,missed wrong product,0.499,0.499,0.003,full
+6376_1751021977_6376_4,6376_4,KIWI ZESPRI 500 GR,kiwi,wrong product,not flagged,missed wrong product,0.304,0.643,0.053,empty
+6376_1751025657_6376_4,6376_4,KIWI ZESPRI 500 GR,kiwi,wrong product,not flagged,missed wrong product,0.291,0.615,0.094,empty
+6376_1751029801_6376_4,6376_4,KIWI ZESPRI 500 GR,kiwi,wrong product,not flagged,missed wrong product,0.252,0.685,0.064,empty
+6376_1751005774_6376_5,6376_5,KIWI CNT BIO 400 G,kiwi,wrong product,not flagged,missed wrong product,0.437,0.561,0.003,full
+6376_1751009380_6376_5,6376_5,KIWI CNT BIO 400 G,kiwi,wrong product,not flagged,missed wrong product,0.5,0.5,0.001,full
+6376_1751021977_6376_5,6376_5,KIWI CNT BIO 400 G,kiwi,wrong product,not flagged,missed wrong product,0.182,0.636,0.182,empty
+6376_1751025657_6376_5,6376_5,KIWI CNT BIO 400 G,kiwi,wrong product,not flagged,missed wrong product,0.274,0.58,0.147,empty
+6376_1751029801_6376_5,6376_5,KIWI CNT BIO 400 G,kiwi,wrong product,not flagged,missed wrong product,0.217,0.667,0.116,empty
+6376_1751001169_6376_7,6376_7,CITRINOS ALGARVE IGP LARANJA 6/7/8 3KG,orange,wrong product,not flagged,missed wrong product,0.65,0.348,0.002,full
+6376_1751005774_6376_7,6376_7,CITRINOS ALGARVE IGP LARANJA 6/7/8 3KG,orange,wrong product,not flagged,missed wrong product,0.466,0.528,0.005,full
+6376_1751009380_6376_7,6376_7,CITRINOS ALGARVE IGP LARANJA 6/7/8 3KG,orange,wrong product,not flagged,missed wrong product,0.678,0.32,0.002,full
+6376_1751013482_6376_7,6376_7,CITRINOS ALGARVE IGP LARANJA 6/7/8 3KG,orange,wrong product,not flagged,missed wrong product,0.529,0.467,0.005,full
+6376_1751017831_6376_7,6376_7,CITRINOS ALGARVE IGP LARANJA 6/7/8 3KG,orange,wrong product,not flagged,missed wrong product,0.704,0.294,0.002,full
+6376_1751021977_6376_7,6376_7,CITRINOS ALGARVE IGP LARANJA 6/7/8 3KG,orange,wrong product,not flagged,missed wrong product,0.705,0.294,0.002,full
+6376_1751025657_6376_7,6376_7,CITRINOS ALGARVE IGP LARANJA 6/7/8 3KG,orange,wrong product,not flagged,missed wrong product,0.561,0.437,0.002,full
+6376_1751029801_6376_7,6376_7,CITRINOS ALGARVE IGP LARANJA 6/7/8 3KG,orange,wrong product,not flagged,missed wrong product,0.498,0.498,0.003,full
+6376_1751017831_6376_8,6376_8,CITRINOS ALGARVE IGP LARANJA 6/7/8 3KG,orange,wrong product,not flagged,missed wrong product,0.468,0.53,0.002,full
+6376_1751021977_6376_8,6376_8,CITRINOS ALGARVE IGP LARANJA 6/7/8 3KG,orange,wrong product,not flagged,missed wrong product,0.437,0.561,0.002,full
+6383_1751048924_6383_7,6383_7,CHUCHU CNT KG,chayote,wrong product,not flagged,missed wrong product,0.107,0.892,0.001,empty
+6443_1751013117_6443_3,6443_3,TOMATE TASTY SC EMB 400G,tomato,wrong product,not flagged,missed wrong product,0.56,0.436,0.003,full
+6443_1751016838_6443_3,6443_3,TOMATE TASTY SC EMB 400G,tomato,wrong product,not flagged,missed wrong product,0.651,0.348,0.001,full
+6443_1751020727_6443_3,6443_3,TOMATE TASTY SC EMB 400G,tomato,wrong product,not flagged,missed wrong product,0.499,0.499,0.003,full
+6443_1751032575_6443_3,6443_3,TOMATE TASTY SC EMB 400G,tomato,wrong product,not flagged,missed wrong product,0.468,0.531,0.001,full
+6443_1751040209_6443_3,6443_3,TOMATE TASTY SC EMB 400G,tomato,wrong product,not flagged,missed wrong product,0.437,0.561,0.002,full
+6443_1751044079_6443_3,6443_3,TOMATE TASTY SC EMB 400G,tomato,wrong product,not flagged,missed wrong product,0.359,0.592,0.049,full
+6443_1751001244_6443_5,6443_5,TOMATE ZER0%D 1KG,tomato,wrong product,not flagged,missed wrong product,0.591,0.406,0.003,full
+6443_1751005341_6443_5,6443_5,TOMATE ZER0%D 1KG,tomato,wrong product,not flagged,missed wrong product,0.622,0.377,0.002,full
+6443_1751009482_6443_5,6443_5,TOMATE ZER0%D 1KG,tomato,wrong product,not flagged,missed wrong product,0.468,0.53,0.002,full
+6468_1751001157_6468_13,6468_13,MANGA AVIÃO PALMER KG,mango,wrong product,not flagged,missed wrong product,0.817,0.182,0.0,empty
+6468_1751005772_6468_13,6468_13,MANGA AVIÃO PALMER KG,mango,wrong product,not flagged,missed wrong product,0.755,0.245,0.0,empty
+6468_1751001157_6468_14,6468_14,MANGA AVIÃO PALMER KG,mango,wrong product,not flagged,missed wrong product,0.119,0.88,0.001,empty
+6468_1751001157_6468_8,6468_8,GRANADILHA 80 G,passion fruit,wrong product,not flagged,missed wrong product,0.531,0.469,0.0,half
+6591_1751001189_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.407,0.592,0.0,empty
+6591_1751005287_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.269,0.731,0.0,empty
+6591_1751009443_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.037,0.962,0.001,empty
+6591_1751013255_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.076,0.924,0.001,empty
+6591_1751017235_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.562,0.438,0.0,full
+6591_1751020896_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.679,0.321,0.0,full
+6591_1751025118_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.731,0.269,0.0,full
+6591_1751028988_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.679,0.321,0.0,full
+6591_1751032871_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.731,0.269,0.0,full
+6591_1751036598_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.622,0.377,0.0,full
+6591_1751040216_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.679,0.321,0.0,full
+6591_1751044047_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.817,0.182,0.0,full
+6591_1751048487_6591_3,6591_3,BATATA ZER0%D 4KG,potato,wrong product,not flagged,missed wrong product,0.777,0.223,0.0,full
+6591_1751001189_6591_5,6591_5,BATATA VERMELHA CNT EMB. 3KG,potato,wrong product,not flagged,missed wrong product,0.777,0.223,0.0,empty
+6591_1751005287_6591_5,6591_5,BATATA VERMELHA CNT EMB. 3KG,potato,wrong product,not flagged,missed wrong product,0.835,0.164,0.0,empty
+6591_1751009443_6591_5,6591_5,BATATA VERMELHA CNT EMB. 3KG,potato,wrong product,not flagged,missed wrong product,0.817,0.182,0.0,empty
+6591_1751013255_6591_5,6591_5,BATATA VERMELHA CNT EMB. 3KG,potato,wrong product,not flagged,missed wrong product,0.561,0.437,0.002,empty
+6594_1751001189_6594_12,6594_12,CEBOLINHA FRANCESA CNT 500G,shallot,wrong product,not flagged,missed wrong product,0.622,0.377,0.0,half
+6594_1751005322_6594_12,6594_12,CEBOLINHA FRANCESA CNT 500G,shallot,wrong product,not flagged,missed wrong product,0.622,0.377,0.0,empty
+6594_1751008928_6594_12,6594_12,CEBOLINHA FRANCESA CNT 500G,shallot,wrong product,not flagged,missed wrong product,0.562,0.438,0.0,half
+6594_1751013117_6594_12,6594_12,CEBOLINHA FRANCESA CNT 500G,shallot,wrong product,not flagged,missed wrong product,0.679,0.321,0.0,half
+6594_1751001189_6594_13,6594_13,CEBOLA DOCE CNT EMB 1 KG,onion,wrong product,not flagged,missed wrong product,0.777,0.223,0.0,full
+6594_1751005322_6594_13,6594_13,CEBOLA DOCE CNT EMB 1 KG,onion,wrong product,not flagged,missed wrong product,0.817,0.182,0.0,full
+6594_1751008928_6594_13,6594_13,CEBOLA DOCE CNT EMB 1 KG,onion,wrong product,not flagged,missed wrong product,0.731,0.269,0.0,full
+6594_1751013117_6594_13,6594_13,CEBOLA DOCE CNT EMB 1 KG,onion,wrong product,not flagged,missed wrong product,0.852,0.148,0.0,full
+6594_1751013117_6594_2,6594_2,BATATA VERMELHA EMB:. 5 KG,potato,wrong product,not flagged,missed wrong product,0.438,0.562,0.0,half
+6594_1751017278_6594_6,6594_6,CEBOLA NOVA CNT KG,onion,wrong product,not flagged,missed wrong product,0.731,0.269,0.0,full
+6594_1751021279_6594_6,6594_6,CEBOLA NOVA CNT KG,onion,wrong product,not flagged,missed wrong product,0.706,0.294,0.0,full
+6594_1751025171_6594_6,6594_6,CEBOLA NOVA CNT KG,onion,wrong product,not flagged,missed wrong product,0.777,0.223,0.0,full
+6594_1751029354_6594_6,6594_6,CEBOLA NOVA CNT KG,onion,wrong product,not flagged,missed wrong product,0.562,0.438,0.0,full
+6594_1751033482_6594_6,6594_6,CEBOLA NOVA CNT KG,onion,wrong product,not flagged,missed wrong product,0.818,0.182,0.0,full
+6594_1751037746_6594_6,6594_6,CEBOLA NOVA CNT KG,onion,wrong product,not flagged,missed wrong product,0.777,0.223,0.0,full
+6594_1751041681_6594_6,6594_6,CEBOLA NOVA CNT KG,onion,wrong product,not flagged,missed wrong product,0.835,0.165,0.0,full
+6594_1751045458_6594_6,6594_6,CEBOLA NOVA CNT KG,onion,wrong product,not flagged,missed wrong product,0.835,0.165,0.0,full
+6594_1751049768_6594_6,6594_6,CEBOLA NOVA CNT KG,onion,wrong product,not flagged,missed wrong product,0.706,0.294,0.0,full
+6781_1751001200_6781_10,6781_10,BATATA VERMELHA CNT KG,potato,wrong product,not flagged,missed wrong product,0.993,0.007,0.0,full
+6781_1751005810_6781_10,6781_10,BATATA VERMELHA CNT KG,potato,wrong product,not flagged,missed wrong product,0.971,0.029,0.0,full
+6781_1751009927_6781_10,6781_10,BATATA VERMELHA CNT KG,potato,wrong product,not flagged,missed wrong product,0.958,0.042,0.0,full

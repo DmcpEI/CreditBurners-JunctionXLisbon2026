@@ -2,7 +2,7 @@
 
 Status: working local Spring/React app on saved real predictions from `qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1` (fine-tuned model). Store view (simulated live view with urgency per camera and a per-camera filter), alerts, camera/crop evidence and the Shelf study (store / camera / product insights for the recorded day) are implemented. Public deployment/QR and the final presentation rehearsal remain pending. Current continuation instructions: `docs/PLAN.md`, Member2 continuation.
 
-Challenge confirmed: Sensei. The script below demonstrates the shelf assistant and its measured results.
+Product name: **ShelfCue**. Challenge confirmed: Sensei. The script below demonstrates the shelf assistant and its measured results.
 
 ## One-sentence pitch
 We turn existing store cameras into a prioritised list of shelf tasks, with visible evidence so staff can decide what to restock or inspect.
@@ -67,7 +67,7 @@ Shelf study: Whole store / Camera / Product scopes over the recorded day: share 
 
 Alerts are derived from the latest selected saved data: a new observation with no issue removes the corresponding task, but there is no automatic ingestion or manual completion database. Login, staff roles, assignment, vibration/push notifications and fresh-analysis jobs are not implemented.
 
-Latest integration verification: 15 preparation/scoring smoke tests, 14 frontend tests, Vite/Maven builds and `api/verify.py` passed. On an isolated port, verified the recommended run and explicit product-check metadata, all 181 indexed frames/assets, 14 camera cards/152 latest shelves, no 390px overflow and study ranking → crop navigation. Physical device/public/mobile-data access and full per-camera polygon review remain unverified. Temporary test servers were stopped; user-owned IntelliJ processes were not stopped.
+Latest integration verification (11 Oct): 15 preparation/scoring smoke tests, 15 frontend tests, Vite build and live `api/verify.py` passed. Earlier Maven build and isolated-port verification covered all 181 indexed frames/assets and explicit product-check metadata. ShelfCue branding/layout checked at 320, 390, 820 and 1280px, including mobile alerts and study ranking → crop navigation; no horizontal page overflow. The narrowest study metrics now stack. Physical device/public/mobile-data access and full per-camera polygon review remain unverified. Temporary test servers were stopped; user-owned IntelliJ processes were not stopped.
 
 ## Run locally
 

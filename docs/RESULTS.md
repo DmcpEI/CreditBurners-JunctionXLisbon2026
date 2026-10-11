@@ -348,7 +348,7 @@ Development split only (32 items, 30 stock / 25 compliance labels; frozen GT unc
 - **Answer prefix on 27B: not adopted.** +2 points but it introduced 2 fallbacks (letter mass ≈ 0 on those questions); the gain is within noise and partly from fallbacks.
 - **Rough cost per camera image** (serial extrapolation, 10.84 areas/image, not a full-frame measurement): 27B ≈ 15 s, 4B ≈ 5 s.
 
-**Lead for the next experiment (in-sample, not a result):** on the v1 replay, predicting half whenever the stock B score ≥ 0.15 would move dev stock from 20/30 (−9 points) to 26/30 (+15). This threshold was chosen on the same 25 items, so it must be tested on data it was not tuned on (e.g. existing cached holdout answers, no GPU) under a declared protocol, and it is a form of calibration on hand labels (see PLAN mentor question).
+**Lead for the next experiment (in-sample, not a result):** on the v1 replay, predicting half whenever the stock B score ≥ 0.15 would move dev stock from 20/30 (−9 points) to 26/30 (+15). This threshold was chosen on the same 25 items, so it must be tested on data it was not tuned on (e.g. existing cached holdout answers, no GPU) under a declared protocol, and it is a form of calibration on our labels (see PLAN mentor question).
 
 Code: `ml/infer_sample.py` adds `--stock-prompt {v1,v2}` (default v1, old cache keys unchanged) and `--answer-prefix` (included in cache keys). knuth: added `/workspace/models/qwen3.5-4b` (9.3 GB); 28 GB free.
 

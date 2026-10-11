@@ -29,9 +29,9 @@ def encoder(proc, root):
 
 
 def train(model, proc, encode, samples, labels, epochs, lr, accumulate, seed=0):
-    """CE on the answer letter at the last position; model already wrapped with LoRA."""
+    """CE on the answer letter at the last position; model already wrapped with LoRA. Labels are stock levels or letters."""
     import torch
-    letter_id = {k: proc.tokenizer.encode(v, add_special_tokens=False)[0] for k, v in LETTER.items()}
+    letter_id = lambda v: proc.tokenizer.encode(LETTER.get(v, v), add_special_tokens=False)[0]
     optimiser = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=lr, weight_decay=0.0)
     model.train()
     samples, started = list(samples), time.perf_counter()
@@ -40,7 +40,7 @@ def train(model, proc, encode, samples, labels, epochs, lr, accumulate, seed=0):
         total = 0.0
         for n, sample in enumerate(samples, 1):
             logits = model(**encode(sample)).logits[0, -1].float()
-            target = torch.tensor(letter_id[labels[sample["sample_id"]]], device="cuda")
+            target = torch.tensor(letter_id(labels[sample["sample_id"]]), device="cuda")
             loss = torch.nn.functional.cross_entropy(logits[None], target[None]) / accumulate
             loss.backward()
             total += loss.item() * accumulate

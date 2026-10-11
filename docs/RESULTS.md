@@ -6,6 +6,20 @@ Checks: 15 UI tests passed under `TZ=America/New_York`, including curtain exclus
 
 # Results
 
+## Unit counting (mentor's idea) — tested, not adopted — 11 October 2026
+
+Full write-up and code on branch `feat/unit-counting`. Count sellable units and decide stock from the count, with thresholds that depend on the product (small fruit needs more units to be half/full). Held-out stock points (max 344, 5-fold, half threshold 0.4):
+
+| Stock decision | Points | Correct |
+|---|---|---|
+| Submitted hybrid (YOLO + LoRA) | 255 | 319 |
+| Hybrid 80% + detector adapter 20% | 257 | 320 |
+| SAM 3 instance counts + learned adapter (count, unit size, coverage), alone | 140 | 285 |
+| VLM-written counts + per-product thresholds, alone | −61 | 236 |
+
+Real detector counts carry signal (≈ our first fine-tuned VLM on their own); the hybrid already captures it (+2, within noise). Not adopted.
+
+
 ## Review response, final pipeline v9 — 11 October 2026
 
 External review (GPT, on `7327f73`) and what we did:

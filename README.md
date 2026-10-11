@@ -78,6 +78,7 @@ Product flags are part of the submission but kept out of the staff app. Details:
 - a smaller VLM (Qwen3.5-4B), SAM 3 coverage, per-shelf thresholds, a hidden-state probe;
 - an untrained product question (more false alarms than catches), YOLO as a product classifier;
 - bigger YOLO models (no gain in the average);
+- the mentor's unit-counting idea: SAM 3 instance counts with a learned adapter reach 140/344 alone but add only +2 to the average (branch `feat/unit-counting`);
 - Claude Haiku / Sonnet / Opus zero-shot (Opus close to our earlier pipeline, at a per-image API cost and with store images leaving the premises).
 
 ## Run it

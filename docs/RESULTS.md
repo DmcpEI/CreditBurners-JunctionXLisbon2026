@@ -6,6 +6,20 @@ Checks: 15 UI tests passed under `TZ=America/New_York`, including curtain exclus
 
 # Results
 
+## Policy layer: is the configuration the best for points? (nested CV) — 11 October 2026
+
+Nested 5-fold on the cached held-out scores: settings chosen on four folds, scored on the fifth. Grid: YOLO weight 0.3–0.7, half threshold 0.25–0.5, empty-check threshold 0.5–0.9/off (production gate kept).
+
+| Stock policy | Held-out points (max 344) |
+|---|---|
+| **Fixed production** (50/50, half ≥ 0.4, empty ≥ 0.7) | **255** |
+| Tuned globally (nested) | 236 |
+| Tuned globally + half threshold per kind of produce (≥ 15 labels, nested) | 240 |
+| Best on all 344 at once (in-sample, optimistic) | 257 (0.4 / 0.4 / 0.5) |
+
+The chosen setting changes per fold (weight 0.4–0.6, half 0.25–0.4, empty 0.5–0.6) and loses 15–19 points on unseen folds: our labels cannot support finer tuning. **Kept the fixed configuration.** Per-product / per-chain policy adapters (mentor's suggestion, README "Scaling") need more labels per product than one store-day gives.
+
+
 ## Unit counting (mentor's idea) — tested, not adopted — 11 October 2026
 
 Full write-up and code on branch `feat/unit-counting`. Count sellable units and decide stock from the count, with thresholds that depend on the product (small fruit needs more units to be half/full). Held-out stock points (max 344, 5-fold, half threshold 0.4):

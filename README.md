@@ -90,7 +90,8 @@ We only had one store and one day, but the pipeline is already split the way a m
    - decision thresholds (today one file, `ml/lora_thresholds.json`, which already supports per-area values);
    - per-product unit rules (the learned count adapter on branch `feat/unit-counting` takes unit size into account);
    - optionally a per-chain LoRA (60 MB, about 8 min of training) swapped in at inference on one shared base model.
-3. **Calibrate a new chain from a few labels.** Our learning curve shows what labels buy: 50% → 75% → 100% of our labels gave 119 → 181 → 186 held-out points for the same model. A new chain's policy layer needs on the order of a hundred labelled shelves, made with our labelling page, not a new model.
+3. **But only with enough labels per product.** On our single store-day (344 labels over ~60 products), tuning the policy per product lost points on held-out data (240 vs 255 for one fixed policy, nested cross-validation), so per-product and per-chain adapters need the larger multi-store dataset.
+4. **Calibrate a new chain from a few labels.** Our learning curve shows what labels buy: 50% → 75% → 100% of our labels gave 119 → 181 → 186 held-out points for the same model. A new chain's policy layer needs on the order of a hundred labelled shelves, made with our labelling page, not a new model.
 
 ## Run it
 

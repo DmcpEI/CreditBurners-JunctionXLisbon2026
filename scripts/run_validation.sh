@@ -27,6 +27,7 @@ if ssh -o ConnectTimeout=15 -o BatchMode=yes "$HOST" "test ! -e $REMOTE && mkdir
   ssh "$HOST" "cd $REMOTE && $RPY -B -u -m ml.infer_sample $OUT/sample.json --model /workspace/models/qwen3.8-27b --stock-prompt v1 --paired-prompt v4 --paired-output $OUT/results-empty.json --paired-only-if-full-below 0.5 --questions stock --context-max-side 640 --adapter /workspace/models/lora-stock-v1 --output $OUT/results.json" > "$OUT/inference.log" 2>&1 || ok=0
   step "fetch results"
   for f in expected sample report results results-empty; do ssh "$HOST" "cat $REMOTE/$OUT/$f.json" > "$OUT/$f.json" || ok=0; done
+  ssh "$HOST" "tar -C $REMOTE/$OUT -cf - assets" | tar -C "$OUT" -xf - || echo "!!! crops/photos not fetched (app only; submission unaffected)"
 else
   ok=0
   step "!!! $HOST unreachable: preparing locally for a fallback submission"
@@ -40,3 +41,4 @@ step "export (half threshold 0.4 on the fine-tuned answer, empty check, always c
 EMPTY=(); [ -s "$OUT/results-empty.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results-empty.json" 2>/dev/null && EMPTY=(--empty-results "$OUT/results-empty.json")
 $PY -m ml.export outputs "$OUT/results.json" --prepared "$OUT" --output "$OUT/export" --run-id "val-$NAME" --always-compliant --area-thresholds ml/lora_thresholds.json ${EMPTY[@]+"${EMPTY[@]}"} || exit 1
 step "DONE: $OUT/export/submission.json"
+[ -d "$OUT/assets" ] && echo "App on this run: java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=$OUT --sensei.snapshots-file=$OUT/export/snapshots.json"

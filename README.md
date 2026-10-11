@@ -6,17 +6,22 @@ Existing ceiling cameras → for every planogram area: **is the shelf empty, hal
 
 ## Results (our labelled data, not the official score)
 
-| Method | Held-out stock points (2 folds, 138 labels) | Blind check (50 shelves, points of 99) |
-|---|---|---|
-| **Fine-tuned (LoRA) — submitted** | **78** | — (the 50 were used for training) |
-| Hidden-state probe | 68 | 75 |
-| Per-shelf thresholds | 60 | 60 |
-| Global cost rule | — | 52 |
-| Claude Opus, zero-shot, same prompt | — | 72 |
+Our own validation: 138 labelled shelves held out from training (2 folds); stock only, max 138 points (+1 right, −2 too low, −3 too high).
+
+| Method | Held-out stock points | Correct | Too low / too high | Blind check (50 shelves, points of 99) |
+|---|---|---|---|---|
+| **Fine-tuned (LoRA) — submitted** | **78** | **121 (88%)** | 8 / 9 | — (these 50 are in its training data) |
+| Hidden-state probe | 68 | | | 75 |
+| Per-shelf thresholds | 60 | | | 60 |
+| Base model + global cost rule | 40 | 111 (80%) | 10 / 17 | 52 |
+| "Always full" | −50 | 91 (66%) | 0 / 47 | 52 |
+| Claude Opus, zero-shot, same prompt | | | | 72 |
+
+The blind 50 cannot score the submitted model (they were used to train it); no untouched check remains, so the official validation is the only independent test.
 
 - Processing cost: **about 4.5 s per camera image** on one NVIDIA RTX PRO 6000 (≈11 shelf areas per image), down from 16 s on day one.
 - Product identity is **not** assessed: every area is answered compliant (a product check produced more false alarms than catches on our labels).
-- Labels are our own (348 observations); the official score comes only from Sensei's hidden validation. Every experiment, kept or rejected, is in [`docs/RESULTS.md`](docs/RESULTS.md).
+- Labels are our own (348 observations, 344 with a stock level; 4 shelves were hidden by fridge curtains); the official score comes only from Sensei's hidden validation. Every experiment, kept or rejected, is in [`docs/RESULTS.md`](docs/RESULTS.md).
 
 ## How it decides
 

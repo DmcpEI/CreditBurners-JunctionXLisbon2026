@@ -1,3 +1,9 @@
+# Website verification — 11 October 2026
+
+UI-only correction on the current LoRA export: known curtain frames 6383_1751001156 and 6386_1751001156 are treated as occluded. No labels, model outputs or submission files changed. Recomputed with `observations` / `summary` from `ui/src/features/snapshots/insights.js`: 1,947 usable checks (195 empty / 631 half / 1,121 full), 42.42% empty or half, 180 observed changes, 12 confirmed observed recoveries, median observation gap 134.78 minutes; 15 periods without confirmed recovery. These are differences between sampled model states, not measured sales or continuous empty durations. Earlier study figures below describe the pre-exclusion run.
+
+Checks: 15 UI tests passed under `TZ=America/New_York`, including curtain exclusion/non-mutation, bilingual search and Lisbon midnight/daylight-saving times; production UI build and 15 ML smoke tests passed. API integration accepts either 400 or 404 for rejected encoded traversal paths, still requires 404 for unknown assets/IDs.
+
 # Results
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
@@ -21,7 +27,8 @@ From the LoRA export (`ui/src/features/snapshots/insights.js`): 43% of 1,954 she
 ## LoRA adopted — final pipeline v7 — 11 October 2026
 
 - **Final adapter** `lora-stock-v1` trained on all 344 labels (same settings as the folds, 8 minutes); half threshold 0.4 (`ml/lora_thresholds.json`, no per-shelf thresholds); the empty check (prompt v4, empty if A ≥ 0.7, asked when C < 0.5) runs on the base model with the adapter disabled, as evaluated.
-- **Why:** 2-fold held-out stock points (138 labels) LoRA 78 vs probe 68 vs per-shelf 60. No untouched check remains: the blind 50 are part of the 344 training labels.
+- **Why:** 2-fold held-out stock points (138 labels: 14 empty / 33 half / 91 full; max 138) LoRA 78 vs probe 68 vs per-shelf 60. Same 138: LoRA 121 correct (88%), 8 too low, 9 too high; base model + global rule 0.2 + empty check 40 points (111 correct, 10 low / 17 high); always full −50 (91 correct, 47 too high). The app's "about 88% right" is this LoRA figure. No untouched check remains: the blind 50 are part of the 344 training labels (348 labelled observations minus 4 curtain-hidden ones without a stock level). The LoRA threshold 0.4 was chosen on training labels; the 3/7 cost crossover is the principle (half is cheaper when P(half) ≥ 3/7), measured on base-model scores, not where 0.4 came from.
+- **Fresh run → app:** `run_validation.sh` now also copies the run's crops/photos back (`data/val-<name>/assets`, ≈ 99 MB for 26 images, 1.5 s) and prints the app command (`--sensei.data-dir=data/val-<name> --sensei.snapshots-file=data/val-<name>/export/snapshots.json`). Not yet rehearsed in the app.
 - **Full export** `results/qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1/`: 200 empty / 639 half / 1,123 full; 84% identical to the probe export, mostly full→half (243) — the cheaper direction under Sensei's costs. 8 areas (early images of cameras 6383/6386) answered D "can't tell" → fixed fallback (half).
 - **Cost:** 822 s for 181 images incl. model load = 4.5 s per camera image (p50 3.8 s model time); the adapter path does not share the image prefix between the two questions.
 - `ml.run --adapter` and `scripts/run_validation.sh` use the adapter; `ml.run` without `--adapter` keeps the probe pipeline.

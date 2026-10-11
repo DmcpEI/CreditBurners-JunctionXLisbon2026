@@ -6,8 +6,8 @@
 2. stock question with the fine-tuned adapter + empty check on the base model, from one image prefix (ml.infer_sample);
 3. product check: trained crop/name adapter (ml.compliance_lora --adapter-in);
 4. YOLO11n stock scores on square-padded crops (ml.yolo_cls predict);
-5. export: YOLO and VLM stock averaged, half if >= 0.4, empty check, non-compliant if the product check is >= 0.6 sure
-   (never on an area answered empty). Any failed step falls back (VLM missing -> YOLO; YOLO missing -> VLM; product
+5. export: YOLO (weight 0.6) and VLM stock averaged, half if >= 0.4, non-compliant if the product check is >= 0.99 sure
+   (never on an area answered empty). The empty-check answers are still computed and saved (results-empty.json). Any failed step falls back (VLM missing -> YOLO; YOLO missing -> VLM; product
    check missing -> compliant); every area is always answered.
 `scripts/run_validation.sh` runs the same steps with the GPU work on our server.
 """
@@ -59,9 +59,10 @@ def main():
              "--output", str(yolo), "--device", "0"], out / "yolo.log"):
         print("!!! YOLO failed: VLM stock alone (see yolo.log)", flush=True)
 
+    # decision settings tuned on Sensei's validation labels (11 Oct): YOLO weight 0.6, half >= 0.4, no empty check, product check >= 0.99
     build_outputs(out, results, out / "export", f"credit-burners-{out.name}", always_compliant=True,
-                  empty_results_path=empty if empty.exists() else None, area_thresholds_path=ROOT / "ml/lora_thresholds.json",
-                  compliance_path=check if check.exists() else None, compliance_threshold=0.6, yolo_path=yolo if yolo.exists() else None)
+                  area_thresholds_path=ROOT / "ml/lora_thresholds.json", compliance_path=check if check.exists() else None,
+                  compliance_threshold=0.99, yolo_path=yolo if yolo.exists() else None, yolo_weight=0.6)
     print(f"DONE in {time.perf_counter() - started:.0f}s: {out / 'export/submission.json'}", flush=True)
 
 

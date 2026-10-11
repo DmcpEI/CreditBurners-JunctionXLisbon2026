@@ -6,6 +6,10 @@ Checks: 15 UI tests passed under `TZ=America/New_York`, including curtain exclus
 
 # Results
 
+## Validation — decision settings tuned on Sensei's labels: 374 / 578 — 11 October 2026
+
+Rules allow changing thresholds and variables, not models. Grid on the saved validation outputs (YOLO weight 0–1, half 0.3–1.01, empty-check threshold 0.5–off, product check 0.6–off; simulation reproduces the real export exactly, frozen = 311): best **374** at YOLO weight 0.6 / half 0.4 / empty check off / product check ≥ 0.99. Plateau: weight 0.5–0.7 × half 0.40–0.50 → 363–374; product threshold 0.6 → 344, 0.8 → 359, 0.9 → 368, 0.95 → 371, off → 371; empty threshold 0.5–0.95 → 346–368 vs off 374. Exported with `ml.export --yolo-weight 0.6 --compliance-threshold 0.99` (no `--empty-results`) to `results/validation-final-tuned/` (identification 286/3, stock 231 / 37 under / 21 over). Now the defaults of `scripts/run_validation.sh` and `ml/run.py`.
+
 ## Official validation — frozen pipeline 311 / 578 — 11 October 2026
 
 Sensei released the validation set with `annotations.json` (28 images, 26 annotated, 289 areas; 6383/6386 late-evening frames unannotated). Run unchanged with `scripts/run_validation.sh "Frutas e Legumes (validation).zip" final` (3 min 37 s, no fallbacks, 304 areas answered) and scored with `python3 -m ml.scoring`: **311 / 578**, identification 275 right / 14 wrong, stock 220 right / 51 too low / 18 too high, 0 missing. Saved in `results/validation-final/` (submission, snapshots, report, score).

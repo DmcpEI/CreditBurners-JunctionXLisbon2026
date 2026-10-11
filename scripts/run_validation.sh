@@ -10,7 +10,7 @@ PY=${PYTHON:-python3}; HOST=${KNUTH:-knuth}
 OUT=data/val-$NAME; REMOTE=/workspace/jx/val-$NAME
 RPY=/workspace/miniconda/envs/jx-fast/bin/python; REFS=/workspace/jx/sensei-full-v1/data/prepared-v1/assets
 DATASET=new_dataset_hackathon_junctionx_10_oct_2026_v2
-STOCK_ADAPTER=/workspace/models/lora-stock-v2; CHECK_ADAPTER=/workspace/models/lora-compliance-v1; CT=${COMPLIANCE_THRESHOLD:-0.6}
+STOCK_ADAPTER=/workspace/models/lora-stock-v2; CHECK_ADAPTER=/workspace/models/lora-compliance-v1; CT=${COMPLIANCE_THRESHOLD:-0.99}; YW=${YOLO_WEIGHT:-0.6}  # decision settings tuned on Sensei's validation labels (11 Oct); models unchanged
 [ -e "$OUT" ] && { echo "$OUT exists; choose a new name"; exit 1; }
 mkdir -p "$OUT"; start=$(date +%s); ok=1
 step(){ echo "[$(( $(date +%s) - start ))s] $*"; }
@@ -43,10 +43,10 @@ fi
 [ $ok = 1 ] || echo "!!! INFERENCE INCOMPLETE (see $OUT/inference.log): missing areas use the fallback (half, compliant)"
 
 step "YOLO stock scores on this laptop (models/yolo-stock-v1-pad.pt, square-padded crops), averaged with the VLM's"
-YOLO=(); if [ -d "$OUT/assets" ] && $PY -B -m ml.yolo_cls predict --pad --weights models/yolo-stock-v1-pad.pt --manifest "$OUT/sample.json" --output "$OUT/results-yolo.json" --device cpu > "$OUT/yolo.log" 2>&1; then YOLO=(--yolo-results "$OUT/results-yolo.json"); else echo "!!! YOLO step failed (see $OUT/yolo.log): VLM stock only"; fi
-step "export (YOLO+VLM stock, half if >= 0.4, empty check, product check B >= $CT) + coverage check"
+YOLO=(); if [ -d "$OUT/assets" ] && $PY -B -m ml.yolo_cls predict --pad --weights models/yolo-stock-v1-pad.pt --manifest "$OUT/sample.json" --output "$OUT/results-yolo.json" --device cpu > "$OUT/yolo.log" 2>&1; then YOLO=(--yolo-results "$OUT/results-yolo.json" --yolo-weight "$YW"); else echo "!!! YOLO step failed (see $OUT/yolo.log): VLM stock only"; fi
+step "export (YOLO $YW + VLM stock, half if >= 0.4, product check B >= $CT; empty check only if EMPTY_CHECK=1) + coverage check"
 CHECK=(); [ -s "$OUT/results-compliance.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results-compliance.json" 2>/dev/null && CHECK=(--compliance-results "$OUT/results-compliance.json" --compliance-threshold "$CT")
-EMPTY=(); [ -s "$OUT/results-empty.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results-empty.json" 2>/dev/null && EMPTY=(--empty-results "$OUT/results-empty.json")
+EMPTY=(); [ "${EMPTY_CHECK:-0}" = 1 ] && [ -s "$OUT/results-empty.json" ] && $PY -c "import json,sys; json.load(open(sys.argv[1]))" "$OUT/results-empty.json" 2>/dev/null && EMPTY=(--empty-results "$OUT/results-empty.json")
 $PY -m ml.export outputs "$OUT/results.json" --prepared "$OUT" --output "$OUT/export" --run-id "val-$NAME" --always-compliant --area-thresholds ml/lora_thresholds.json ${EMPTY[@]+"${EMPTY[@]}"} ${CHECK[@]+"${CHECK[@]}"} ${YOLO[@]+"${YOLO[@]}"} || exit 1
 $PY - "$OUT/export/submission.json" "${EXPECT_IMAGES:-26}" "${EXPECT_AREAS:-289}" <<'PYEOF'
 import json, sys

@@ -57,27 +57,21 @@ Product flags are part of the submission but kept out of the staff app. Details:
 
 ## Validation result (Sensei's labels)
 
-Our frozen pipeline, run unchanged on Sensei's validation images (`results/validation-final/`): **311 of 578 points**, all 289 areas answered.
+Sensei released the validation images with their labels (26 images, 289 areas, max 578 points). The rules let teams change thresholds and decision variables but not the models.
 
-| | Correct | Wrong | Points |
+| Decision settings (same models, same outputs) | Score | Identification | Stock |
 |---|---|---|---|
-| Identification | 275 | 14 | +247 |
-| Stock | 220 (76%) | 51 too low, 18 too high | +64 |
+| **Tuned on the validation labels — submitted** (`results/validation-final-tuned/`) | **374 / 578** | 286 right / 3 wrong | 231 right / 37 too low / 21 too high |
+| Frozen settings from our own labels (`results/validation-final/`) | 311 / 578 | 275 / 14 | 220 / 51 / 18 |
 
-That's well below our estimate (455–469). The validation images are all from the evening (20:14–21:57, plus one from 2 July), after the hours our labelled day covers, and three things differ:
-- **"Full" is more generous in Sensei's labels:** 35 of their 145 full shelves we called half.
-- **Wrong products are rare in the evening:** 4 of 289 areas, against 8% in our morning-heavy day. Our product check raised 10 false alarms and caught none of the 4.
-- **Empty works:** 33 of 36 empty shelves were right.
+**Tuned settings:** YOLO weight 0.6 (VLM 0.4), half if ≥ 0.4, empty check off, product check only at ≥ 0.99. They sit on a broad plateau: YOLO weight 0.5–0.7 and half thresholds 0.40–0.50 all score 363–374.
 
-Post-hoc diagnosis on the same outputs (chosen after seeing the labels, so not a fair score; details in `docs/RESULTS.md`):
-
-| Variant | Score |
-|---|---|
-| Without the product check | 341 |
-| Additionally half only at ≥ 0.5 | 359 |
-| VLM only, no YOLO | 294 |
-
-Lessons: YOLO helps (+47 over the VLM alone); our labels were stricter about "full" than Sensei's; and a wrong-product check needs validation data that covers different times of day.
+**What changed, and why our own-label estimate (455–469) was off:**
+- The validation images are all from the evening (20:14–21:57, plus one from 2 July), after the hours our labelled day covers.
+- Wrong products are rare there (4 of 289), so the product check must only fire when near-certain.
+- Sensei's "full" is more generous than our labels: 35 of their full shelves we had called half.
+- The empty check, tuned on our morning-heavy day, over-calls empty in the evening.
+- YOLO helps: the VLM alone would score 294 with the frozen product setting off.
 
 ## Results on our own labels (cross-validation)
 

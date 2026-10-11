@@ -46,7 +46,7 @@ def reason(record, stock, compliant, fallback, model_mismatch=False, product_che
 
 
 def build_outputs(prepared, results_path, output, run_id, always_compliant=False, empty_results_path=None, area_thresholds_path=None,
-                  compliance_path=None, compliance_threshold=0.9, yolo_path=None):
+                  compliance_path=None, compliance_threshold=0.9, yolo_path=None, yolo_weight=0.5):
     if output.exists():
         raise ValueError("Output exists; choose a new directory")
     expected = json.loads((prepared/"expected.json").read_text())
@@ -69,7 +69,7 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
             stats["yolo_only"] += 1
         elif record is not None and key in yolo and "stock" in record.get("answers", {}):
             vlm = record["answers"]["stock"]["scores"]
-            scores = {c: (vlm[c] + yolo[key][c]) / 2 for c in "ABC"}
+            scores = {c: yolo_weight * yolo[key][c] + (1 - yolo_weight) * vlm[c] for c in "ABC"}
             record = {**record, "answers": {**record["answers"], "stock": {**record["answers"]["stock"], "scores": scores, "vlm_scores": vlm}},
                       "observed_stock": {"A": "empty", "B": "half", "C": "full"}[max("ABC", key=scores.get)]}
             stats["yolo_blended"] += 1
@@ -147,9 +147,10 @@ if __name__ == "__main__":
     b.add_argument("--compliance-results", type=Path, help="Trained product check scores (ml.compliance_lora --adapter-in); non-compliant if B >= threshold")
     b.add_argument("--compliance-threshold", type=float, default=0.9)
     b.add_argument("--yolo-results", type=Path, help="YOLO stock scores (ml.yolo_cls predict), averaged with the VLM's")
+    b.add_argument("--yolo-weight", type=float, default=0.5, help="Weight of YOLO in the average (VLM gets the rest)")
     args = parser.parse_args()
     if args.mode == "inputs":
         build_inputs(args.prepared, args.dataset, args.output)
     else:
         build_outputs(args.prepared, args.results, args.output, args.run_id, args.always_compliant, args.empty_results, args.area_thresholds,
-                      args.compliance_results, args.compliance_threshold, args.yolo_results)
+                      args.compliance_results, args.compliance_threshold, args.yolo_results, args.yolo_weight)

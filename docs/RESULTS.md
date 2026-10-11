@@ -8,9 +8,25 @@ Checks: 15 UI tests passed under `TZ=America/New_York`, including curtain exclus
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
-## LoRA settings sweep — running — 11 October 2026
+## LoRA settings sweep — round 1 done, round 2 running — 11 October 2026
 
-`ml/lora_cv.py` on knuth: 5-fold CV over all 344 labels (seed 20261011, each label scored once by a model that never saw it), base model loaded once, one adapter per fold, out-of-fold scores in `data/lora-cv/<config>.json`. Configs: current r8 / lr 1e-4 / 2 epochs; lr 2e-4 and 5e-5; 1 and 3 epochs; rank 16; 50% and 75% of the training folds (is more labelling worth it?). Scoring (`python -m ml.lora_cv --score data/lora-cv --labels … --empty-results …`): stock points with the production empty check, half threshold chosen on the pooled out-of-fold scores (same optimism for every config). Adopt a new setting only if it beats the current one by more than ≈ 10 points. ≈ 7 min per fold, ≈ 4 h in total.
+`ml/lora_cv.py` on knuth: 5-fold CV over all 344 labels (seed 20261011; each label scored once by a model that never saw it), base model loaded once, one adapter per fold; out-of-fold scores in `data/lora-cv/<config>.json`. Scored with `python -m ml.lora_cv --score data/lora-cv --labels data/finetune-v1/labels.json --empty-results data/full-v1/results-probe-v4.json`: stock points (max 344) with the production empty check; "best" = half threshold chosen on the pooled out-of-fold scores (same optimism for all), plus the fixed production threshold 0.4.
+
+| Config (round 1) | Best points (threshold) | At 0.4 | Correct |
+|---|---|---|---|
+| rank 16, lr 1e-4, 2 epochs | **216** (0.10) | 190 | 305 (88.7%) |
+| rank 8, lr 2e-4, 2 epochs | 204 (0.25) | **199** | 304 (88.4%) |
+| rank 8, lr 1e-4, 3 epochs | 197 (0.45) | 193 | 300 (87.2%) |
+| **current** rank 8, lr 1e-4, 2 epochs | 186 (0.30) | 163 | 298 (86.6%) |
+| current, 75% of training data | 181 (0.20) | 146 | 297 |
+| rank 8, lr 5e-5, 2 epochs | 171 (0.35) | 156 | 295 |
+| rank 8, lr 1e-4, 1 epoch | 150 (0.45) | 137 | 288 |
+| current, 50% of training data | 119 (0.35) | 110 | 277 |
+
+- **The adopted setting is undertrained:** every change that trains harder (rank 16, lr 2e-4, 3 epochs) gains 11–30 points; training less loses 15–36.
+- **More labels:** 50% → 75% → 100% of the training folds gives 119 → 181 → 186; the curve flattens, so better settings beat a few dozen more labels.
+- Seven of eight runs took 7 min per fold (3 epochs 10 min; 1 epoch or half data 3.6 min).
+- **Round 2 (running, ≈ 3 h):** rank 16 + lr 2e-4, rank 16 + 3 epochs, lr 2e-4 + 3 epochs, and rank 16 with another training seed to size run-to-run noise. Adopt only a setting that wins robustly (at its best threshold and at a fixed one) and beats seed noise; then retrain on all 344, re-export, re-rehearse.
 
 ## Estimated official score (extrapolation) — 11 October 2026
 

@@ -20,6 +20,11 @@ CONFIGS = {  # name: rank, lr, epochs, share of the training folds used
     "r8-lr1e-4-e1": dict(rank=8, lr=1e-4, epochs=1, share=1.0),
     "r8-lr1e-4-e2-half-data": dict(rank=8, lr=1e-4, epochs=2, share=0.5),
     "r8-lr1e-4-e2-3q-data": dict(rank=8, lr=1e-4, epochs=2, share=0.75),
+    # round 2 (11 Oct, after round 1: training harder helped): combinations + a seed repeat to size the noise
+    "r16-lr2e-4-e2": dict(rank=16, lr=2e-4, epochs=2, share=1.0),
+    "r16-lr1e-4-e3": dict(rank=16, lr=1e-4, epochs=3, share=1.0),
+    "r8-lr2e-4-e3": dict(rank=8, lr=2e-4, epochs=3, share=1.0),
+    "r16-lr1e-4-e2-seed2": dict(rank=16, lr=1e-4, epochs=2, share=1.0, seed=100),
 }
 
 
@@ -55,7 +60,7 @@ def run(args):
             pool = [samples[i] for part in split[:f] + split[f + 1:] for i in part]
             pool = random.Random(f).sample(pool, round(len(pool) * config["share"]))
             peft = get_peft_model(model, LoraConfig(r=config["rank"], lora_alpha=2 * config["rank"], lora_dropout=0.05, target_modules=TARGETS))
-            train(peft, proc, encode, pool, labels, config["epochs"], config["lr"], 8, seed=f)
+            train(peft, proc, encode, pool, labels, config["epochs"], config["lr"], 8, seed=f + config.get("seed", 0))
             peft.eval()
             with torch.inference_mode():
                 for i in test:

@@ -13,7 +13,7 @@ public class SnapshotRepository {
     private final Map<String, JsonNode> snapshots = new LinkedHashMap<>();
     private final Map<String, Path> assets = new HashMap<>();
     public SnapshotRepository(@Value("${sensei.data-dir:data/prepared-v1}") String directory,
-            @Value("${sensei.snapshots-file:results/qwen3.8-27b-lora2-yolo-emptycheck-alwayscompliant-full-v1/snapshots.json}") String snapshotsFile) throws IOException {
+            @Value("${sensei.snapshots-file:results/qwen3.8-27b-lora2-yolopad-emptycheck-alwayscompliant-full-v1/snapshots.json}") String snapshotsFile) throws IOException {
         Path root = Path.of(directory).toRealPath();
         Path assetRoot = root.resolve("assets").toRealPath();
         JsonNode data = JsonMapper.builder().build().readTree(Path.of(snapshotsFile).toFile());

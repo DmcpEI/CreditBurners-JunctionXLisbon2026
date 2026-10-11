@@ -53,7 +53,8 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
     results = json.loads(results_path.read_text())
     empty_results = json.loads(empty_results_path.read_text()) if empty_results_path else None
     compliance = json.loads(compliance_path.read_text()) if compliance_path else {}  # trained product check (ml/compliance_lora.py)
-    yolo = json.loads(yolo_path.read_text()) if yolo_path else {}  # YOLO stock scores, averaged 50/50 with the VLM answer (ml/yolo_cls.py)
+    yolo = json.loads(yolo_path.read_text()) if yolo_path else {}
+    samples = {x["sample_id"]: x for x in json.loads((prepared/"sample.json").read_text())} if yolo and (prepared/"sample.json").exists() else {}  # YOLO stock scores, averaged 50/50 with the VLM answer (ml/yolo_cls.py)
     area_thresholds = json.loads(area_thresholds_path.read_text()) if area_thresholds_path else dict(default=HALF_THRESHOLD, areas={})
     if probe_path:
         import numpy as np
@@ -67,7 +68,12 @@ def build_outputs(prepared, results_path, output, run_id, always_compliant=False
     for camera, filename, area in expected:
         key = f"{camera}_{Path(filename).stem}_{area}"
         record = results.get(key)
-        if record is not None and key in yolo and "stock" in record.get("answers", {}):
+        if (record is None or "stock" not in record.get("answers", {})) and key in yolo and key in samples:
+            # VLM answer missing: use YOLO alone rather than the fixed fallback (still compliant by policy)
+            record = dict(sample=samples[key], answers={"stock": {"scores": {**yolo[key], "D": 0.0}}}, visibility="clear", observed_compliance=True,
+                          observed_stock={"A": "empty", "B": "half", "C": "full"}[max("ABC", key=yolo[key].get)])
+            stats["yolo_only"] += 1
+        elif record is not None and key in yolo and "stock" in record.get("answers", {}):
             vlm = record["answers"]["stock"]["scores"]
             scores = {c: (vlm[c] + yolo[key][c]) / 2 for c in "ABC"}
             record = {**record, "answers": {**record["answers"], "stock": {**record["answers"]["stock"], "scores": scores, "vlm_scores": vlm}},

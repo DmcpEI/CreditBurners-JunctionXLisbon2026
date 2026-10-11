@@ -38,3 +38,4 @@ models/*
 !models/lora-stock-v1/
 !models/yolo-stock-v1.pt
 !models/lora-stock-v2/
+!models/yolo-stock-v1-pad.pt

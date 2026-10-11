@@ -16,11 +16,33 @@ ASSETS = Path("data/prepared-v1/assets")
 CURTAIN = ("6383_1751001156", "6386_1751001156")
 
 
+PAD = False  # --pad: square-pad crops (black, like out-of-view pixels) so ultralytics' Resize + CenterCrop keeps the whole tray
+
+
+def square(image):
+    from PIL import Image
+    image = image.convert("RGB")
+    side = max(image.size)
+    canvas = Image.new("RGB", (side, side))
+    canvas.paste(image, ((side - image.width) // 2, (side - image.height) // 2))
+    return canvas
+
+
+def source(path):
+    """What the classifier sees: the crop path, or the square-padded crop."""
+    from PIL import Image
+    return square(Image.open(path)) if PAD else str(path)
+
+
 def link(paths_by_class, root):
+    from PIL import Image
     for cls, ids in paths_by_class.items():
         (root / cls).mkdir(parents=True, exist_ok=True)
         for i in ids:
-            (root / cls / f"{i}.png").symlink_to((ASSETS / f"{i}.png").resolve())
+            if PAD:
+                square(Image.open(ASSETS / f"{i}.png")).save(root / cls / f"{i}.png")
+            else:
+                (root / cls / f"{i}.png").symlink_to((ASSETS / f"{i}.png").resolve())
 
 
 def train(data, out, args):
@@ -45,11 +67,11 @@ def stock(args):
         link({c: [i for i in test if labels[i] == c] for c in ("empty", "half", "full")}, root / "val")
         model = train(root, root, args)
         for i in test:
-            probs = model.predict(str(ASSETS / f"{i}.png"), imgsz=args.imgsz, device=args.device, verbose=False)[0].probs.data.tolist()
+            probs = model.predict(source(ASSETS / f"{i}.png"), imgsz=args.imgsz, device=args.device, verbose=False)[0].probs.data.tolist()
             p = dict(zip(model.names.values(), probs))
             oof[i] = dict(A=p["empty"], B=p["half"], C=p["full"], D=0.0)
         print(f"fold {f + 1}/5 done", flush=True)
-    target = Path("data/lora-cv") / f"yolo-{Path(args.weights).stem}-e{args.epochs}{'' if args.imgsz == 224 else f'-i{args.imgsz}'}.json"
+    target = Path("data/lora-cv") / f"yolo-{Path(args.weights).stem}-e{args.epochs}{'' if args.imgsz == 224 else f'-i{args.imgsz}'}{'-pad' if PAD else ''}.json"
     target.write_text(json.dumps(oof) + "\n")
     print(f"STOCK_DONE {target}", flush=True)
 
@@ -74,7 +96,7 @@ def product(args):
     scores = {}
     for i, n, st in rows:
         if i in held:
-            probs = model.predict(str(ASSETS / f"{i}.png"), imgsz=args.imgsz, device=args.device, verbose=False)[0].probs.data.tolist()
+            probs = model.predict(source(ASSETS / f"{i}.png"), imgsz=args.imgsz, device=args.device, verbose=False)[0].probs.data.tolist()
             own = probs[index[cls[n]]] if cls[n] in index else 0.0
             scores[i] = dict(own=own, top=max(probs), stock=st)
     target = Path("data/compliance-review") / f"yolo-product-{Path(args.weights).stem}-e{args.epochs}.json"
@@ -90,10 +112,11 @@ def final(args):
     shutil.rmtree(root, ignore_errors=True)
     link({c: [i for i in ids if labels[i] == c] for c in ("empty", "half", "full")}, root / "train")
     link({c: [i for i in ids if labels[i] == c][:1] for c in ("empty", "half", "full")}, root / "val")
-    train(root, root, args)
+    model = train(root, root, args)
     Path("models").mkdir(exist_ok=True)
-    shutil.copy(root / "run" / "weights" / "last.pt", "models/yolo-stock-v1.pt")
-    print(f"FINAL_DONE models/yolo-stock-v1.pt ({len(ids)} labels)", flush=True)
+    target = f"models/yolo-stock-v1{'-pad' if PAD else ''}.pt"
+    shutil.copy(model.trainer.last, target)  # ultralytics 8.4 nests relative projects under runs/classify/
+    print(f"FINAL_DONE {target} ({len(ids)} labels)", flush=True)
 
 
 def predict(args):
@@ -102,7 +125,7 @@ def predict(args):
     manifest = Path(args.manifest)
     out = {}
     for sample in json.loads(manifest.read_text()):
-        probs = model.predict(str(manifest.parent / sample["crop"]), imgsz=args.imgsz, device=args.device, verbose=False)[0].probs.data.tolist()
+        probs = model.predict(source(manifest.parent / sample["crop"]), imgsz=args.imgsz, device=args.device, verbose=False)[0].probs.data.tolist()
         p = dict(zip(model.names.values(), probs))
         out[sample["sample_id"]] = dict(A=p["empty"], B=p["half"], C=p["full"])
     Path(args.output).write_text(json.dumps(out) + "\n")
@@ -120,5 +143,7 @@ if __name__ == "__main__":
     parser.add_argument("--device", default="mps")
     parser.add_argument("--work", type=Path, default=Path("data/yolo"))
     parser.add_argument("--eval-ids", default="data/compliance-review/eval-ids.json")
+    parser.add_argument("--pad", action="store_true", help="Square-pad crops for training and prediction (whole tray visible)")
     args = parser.parse_args()
+    PAD = args.pad
     dict(stock=stock, product=product, final=final, predict=predict)[args.task](args)

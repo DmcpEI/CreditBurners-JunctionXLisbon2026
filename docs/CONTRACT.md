@@ -93,8 +93,10 @@ Committed in `results/<run_id>/` (deliberately tracked for integration; regenera
 
 | Run | Use |
 |---|---|
-| `qwen3.8-27b-lora2-yolo-emptycheck-productcheck-full-v1` | **Submission-format best (11 Oct).** Stock: YOLO11n + LoRA v2 averaged, half ≥ 0.4, empty check; product check B ≥ 0.6 → 102 non-compliant. Held out 253/344 stock points. |
-| `qwen3.8-27b-lora2-yolo-emptycheck-alwayscompliant-full-v1` | **Use for the app.** Same stock as above, every area compliant (product flags kept out of the staff UI). Point `sensei.snapshots-file` here (Spring default). |
+| `qwen3.8-27b-lora2-yolopad-emptycheck-productcheck-full-v1` | **Submission-format best (v9, 11 Oct).** YOLO on square-padded crops; held out 255/344. Otherwise as the row below. |
+| `qwen3.8-27b-lora2-yolopad-emptycheck-alwayscompliant-full-v1` | **Use for the app (v9).** Spring default. |
+| `qwen3.8-27b-lora2-yolo-emptycheck-productcheck-full-v1` | Superseded by yolopad (v8). Stock: YOLO11n + LoRA v2 averaged, half ≥ 0.4, empty check; product check B ≥ 0.6 → 102 non-compliant. Held out 253/344 stock points. |
+| `qwen3.8-27b-lora2-yolo-emptycheck-alwayscompliant-full-v1` | Superseded (v8 app). Same stock as above, every area compliant (product flags kept out of the staff UI). Point `sensei.snapshots-file` here (Spring default). |
 | `qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1` | Superseded (LoRA v1 alone). Stock question answered by Qwen3.8-27B with our LoRA adapter (`/workspace/models/lora-stock-v1`), half if its half score ≥ 0.4 (`ml/lora_thresholds.json`); empty check on the base model; every area compliant. Held-out (2 folds, 138 labels): 78 stock points vs 68 for the probe. About 4.5 s per camera image. 8 of 1,962 areas use the fallback (model answered "can't tell"). |
 | `qwen3.8-27b-ctx640-probe-emptycheck-shared-alwayscompliant-full-v1` | Superseded (hidden-state probe + per-shelf thresholds; blind 75/99, 3.8 s per image). |
 | `qwen3.8-27b-ctx640-perarea-emptycheck-shared-alwayscompliant-full-v1` | Superseded (per-shelf half rule on the answer scores; blind 60/99). |

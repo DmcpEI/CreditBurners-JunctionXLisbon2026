@@ -41,7 +41,7 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 - **Local app fails:** show the recorded walkthrough and say it is a recording.
 - **Photo mode unreliable or unfinished:** omit it. The store replay remains the main product.
 - No invented model results or impact metrics. Any development fixture must say "Illustrative mock" and must not enter evaluation results.
-- Current integration data: `results/qwen3.8-27b-lora2-yolo-emptycheck-alwayscompliant-full-v1/snapshots.json`. The old `data/prepared-v1/snapshots.json` is a constant baseline available only by explicit override; never present it as model output.
+- Current integration data: `results/qwen3.8-27b-lora2-yolopad-emptycheck-alwayscompliant-full-v1/snapshots.json`. The old `data/prepared-v1/snapshots.json` is a constant baseline available only by explicit override; never present it as model output.
 
 ## Acceptance checks before judging
 - Public URL and QR code work from a phone on mobile data; list, detail and replay work on a narrow screen.
@@ -128,7 +128,7 @@ Mentor approved publishing the store images. Live link (Cloudflare quick tunnel,
 ```bash
 caffeinate -dims &                                    # keep the Mac awake
 java -jar api/target/sensei-0.1.0.jar --sensei.data-dir=data/prepared-v1 \
-  --sensei.snapshots-file=results/qwen3.8-27b-lora2-yolo-emptycheck-alwayscompliant-full-v1/snapshots.json \
+  --sensei.snapshots-file=results/qwen3.8-27b-lora2-yolopad-emptycheck-alwayscompliant-full-v1/snapshots.json \
   --server.address=127.0.0.1 --server.port=8081 &
 cloudflared tunnel --no-autoupdate --url http://127.0.0.1:8081   # prints the public https URL
 ```

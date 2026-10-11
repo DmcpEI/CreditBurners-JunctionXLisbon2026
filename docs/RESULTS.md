@@ -361,7 +361,7 @@ Code: `ml/infer_sample.py` adds `--stock-prompt {v1,v2}` (default v1, old cache 
 | Development | 20/30 (66.7%) | 25/25 (100%) | 16/55 | half: -1/55 |
 | Holdout | 15/26 (57.7%) | 16/18 (88.9%) | -5/44 | half: -6/44 |
 
-Points use Sensei's per-task penalties but only definite local labels, so maximum equals eligible stock labels plus eligible compliance labels. These are NOT the official 289-area score. All definite compliance labels in both splits are true: this reference cannot measure real wrong-product recall. Holdout gain is only one point over the half baseline, not convincing evidence of reliable generalisation. Labels were assistant-prefilled and human-reviewed, not independently blinded.
+Points use Sensei's per-task penalties but only definite local labels, so maximum equals eligible stock labels plus eligible compliance labels. These are NOT the official 289-area score. All definite compliance labels in both splits are true: this reference cannot measure real wrong-product recall. Holdout gain is only one point over the half baseline, not convincing evidence of reliable generalisation. Labels were pre-filled, then reviewed: not independently blinded.
 
 Exclusions: exactly two labelled curtain observations in each split; no stock/product points from them. Uncertain compliance is also excluded independently (five additional visible development cases, eight additional visible holdout cases). Stock has 30/26 eligible labels. Coverage is checked before exclusions; missing prediction records fail evaluation. Predicted abstentions on visible labelled cases are scored with fixed half/true fallbacks and counted, never silently excluded. Development: no fallbacks. Holdout: two stock fallbacks, one eligible compliance fallback.
 

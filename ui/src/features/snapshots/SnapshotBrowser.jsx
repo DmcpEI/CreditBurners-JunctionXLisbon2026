@@ -31,6 +31,7 @@ export default function SnapshotBrowser() {
   const fallback = displayedAreas.some(a => a.fallback_used);
   const allFallback = displayedAreas.length > 0 && displayedAreas.every(a => a.fallback_used);
   const alerts = displayedAreas.filter(isAlert);
+  const allAreas = storeView ? storeSnapshots.flatMap(s => s.areas.map(a => ({...a, snapshot_id: s.snapshot_id, camera_id: s.camera_id, captured_at: s.captured_at, prediction_source: s.prediction_source}))) : displayedAreas;  // the bell ignores the camera filter
   const attention = alerts.length;
   const unassessed = displayedAreas.filter(a => a.fallback_used).length;
   const lastShelf = useRef(null);
@@ -69,7 +70,7 @@ export default function SnapshotBrowser() {
   }, [location.area, mode, loading, location.scope, browser.current?.camera_id]);
   return <div className={`app-shell ${area ? 'detail-open' : 'gallery-view'} ${mode==='study'?'study-page':''}`}>
     <a className="skip-link" href="#main-content">Skip to shelf checklist</a>
-    <header className="app-header"><a className="brand" href="/" aria-label="Sensei home"><BrandSymbol/>sensei<span className="brand-divider" aria-hidden="true"/><span className="brand-description">Shelf assistant</span></a><nav className="app-nav" aria-label="Main pages"><button aria-current={mode==='shelves' ? 'page' : undefined} onClick={()=>selectMode('shelves')}>Store view</button><button aria-current={mode==='study' ? 'page' : undefined} onClick={()=>selectMode('study')}>Shelf study</button></nav><div className="header-tools"><span className="recorded-label">Simulated live · recorded data</span>{mode==='shelves' && <AlertsPanel areas={alerts} unavailable={displayedAreas.filter(a => a.fallback_used || (a.prediction_source === 'mock' && !a.manual_preview)).length} busy={loading || !!error || !displayedAreas.length} onOpen={openShelf}/>}</div></header>
+    <header className="app-header"><a className="brand" href="/" aria-label="Sensei home"><BrandSymbol/>sensei<span className="brand-divider" aria-hidden="true"/><span className="brand-description">Shelf assistant</span></a><nav className="app-nav" aria-label="Main pages"><button aria-current={mode==='shelves' ? 'page' : undefined} onClick={()=>selectMode('shelves')}>Store view</button><button aria-current={mode==='study' ? 'page' : undefined} onClick={()=>selectMode('study')}>Shelf study</button></nav><div className="header-tools"><span className="recorded-label">Simulated live · recorded data</span>{mode==='shelves' && <AlertsPanel areas={allAreas.filter(isAlert)} unavailable={allAreas.filter(a => a.fallback_used || (a.prediction_source === 'mock' && !a.manual_preview)).length} busy={loading || !!error || !displayedAreas.length} onOpen={openShelf}/>}</div></header>
     <main id="main-content">
       {demo && <aside className="manual-preview-notice"><strong>Demo · Simulated alerts</strong><p>Manual statuses on real photos. Not model predictions.</p><button onClick={() => navigate({demo:'0'},true)}>Exit preview</button></aside>}
       <div className="overview-content">

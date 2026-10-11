@@ -581,3 +581,7 @@ h1 { font-size: clamp(44px, 5.4vw, 78px); font-weight: 450; line-height: .99; le
   .study-select { width: 100%; }.study-select select { flex: 1; min-width: 0; }
   .study-lists .study-attention button { grid-template-columns: 1fr auto; }
 }
+.live-time, .hero-camera-open > .live-time, .camera-gallery button .live-time { display: inline-flex; align-items: center; gap: 6px; color: #a13a31; font-weight: 500; }
+.live-time i { width: 7px; height: 7px; flex: none; border-radius: 50%; background: #d0453a; animation: live-pulse 1.6s ease-in-out infinite; }
+@keyframes live-pulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .live-time i { animation: none; } }

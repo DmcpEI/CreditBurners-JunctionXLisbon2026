@@ -26,6 +26,13 @@ Existing ceiling cameras → for every planogram area: **is the shelf empty, hal
 4. **Empty check:** a second question encoding the stock definition (*empty = about one purchase left*), asked on the base model only when the first answer is not confidently full; it overrides to empty when ≥ 70% sure.
 5. **Never skip an area:** if anything fails, the area gets the fixed fallback (half, compliant) — a missing area costs 5.
 
+## The app
+
+A phone-first web app (React + Spring) on the saved predictions, two pages:
+
+- **Store view — simulated live view.** The latest image of every camera stands in for a live feed (labelled "Simulated live · recorded data", red live dot, last-seen time). Camera cards show how many shelves need urgent / soon restocking and are sorted by urgency; tapping one lists only that camera's shelves, and every task opens the shelf crop and the camera photo with the shelf outlined. The bell lists every alert in the store.
+- **Shelf study.** The recorded day studied for the whole store, one camera zone or one product: share of checks empty or half, median wait from empty to refilled, stock by hour, products most and least often low, where stock moves most, slowest refills. On 27 June: shelves are fullest at 10:00 (72% full) and lowest at 19:00 (41%); an empty shelf waits a median 2 h 15 min to be refilled. Availability and replenishment, not sales.
+
 ## Validation run
 
 We run the pipeline ourselves when Sensei releases the validation images and commit the output (`submission.json`) to this repository; judges don't need to run anything. The commands below are for reproducing it.

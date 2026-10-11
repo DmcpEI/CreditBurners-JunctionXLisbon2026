@@ -2,6 +2,14 @@
 
 Latest rule update after the benchmark: truly empty areas are compliant; `ml/infer_sample.py` now implements this. Frozen labels and the historical numbers below are unchanged. Cost efficiency is now a judging criterion; see the Resume here section of `docs/PLAN.md` for the measurement protocol, provisional cost formula, model shortlist and next steps. No smaller VLM or YOLO benchmark has been run.
 
+## LoRA settings sweep — running — 11 October 2026
+
+`ml/lora_cv.py` on knuth: 5-fold CV over all 344 labels (seed 20261011, each label scored once by a model that never saw it), base model loaded once, one adapter per fold, out-of-fold scores in `data/lora-cv/<config>.json`. Configs: current r8 / lr 1e-4 / 2 epochs; lr 2e-4 and 5e-5; 1 and 3 epochs; rank 16; 50% and 75% of the training folds (is more labelling worth it?). Scoring (`python -m ml.lora_cv --score data/lora-cv --labels … --empty-results …`): stock points with the production empty check, half threshold chosen on the pooled out-of-fold scores (same optimism for every config). Adopt a new setting only if it beats the current one by more than ≈ 10 points. ≈ 7 min per fold, ≈ 4 h in total.
+
+## Store insights from one recorded day (app, Shelf study) — 11 October 2026
+
+From the LoRA export (`ui/src/features/snapshots/insights.js`): 43% of 1,954 shelf checks empty or half. By hour: 06:00 30% empty / 33% full (overnight state), 09:00–10:00 2–3% empty / 70–72% full (restocked), 14:00 dip (11% empty), 15:00–16:00 refill, 19:00 19% empty / 41% full (evening run-down). Of 230 raw level changes only 116 persist two images (model noise ≈ half); the app removes A-B-A flicker. Median wait empty → refilled 2 h 15 min (12 refills; 15 empty spells not refilled by the shelf's last image; slowest: Fuji apples 6385_4 > 7.5 h). Often low: papaya, shallot, sweet potato, guava, chayote, melon (some may be displayed half-full by design); rarely low: lime, cherry, potato, pumpkin, ginger. Most movement: cameras 6376 and 6491 (22 lasting changes each); least: 6371, 6386, 6781. Caveats: one day, hourly images, model estimates (≈ 88% stock accuracy held out); not sales.
+
 ## Wrong-product check retried — not adopted — 11 October 2026
 
 - **Labels:** 10 wrong products in 330 labelled observations (3%), 9 areas, mostly category swaps (bananas in a citrus area, onions in a potato area, kiwi packs where orange nets belong); the same area is often compliant at other times. Flagging gains 3 per catch and costs 3 per false alarm, so it pays only above 50% precision; even perfect detection would add ≈ 24 points over 289 areas.

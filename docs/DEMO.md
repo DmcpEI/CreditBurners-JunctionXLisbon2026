@@ -1,6 +1,6 @@
 # Demo
 
-Status: working local Spring/React app on saved real predictions from `qwen3.8-27b-ctx640-perarea-emptycheck-shared-alwayscompliant-full-v1`. Store view, alerts, interactive camera/crop navigation and historical stock graphs are implemented. Public deployment/QR and the final presentation rehearsal remain pending. Current continuation instructions: `docs/PLAN.md`, Member2 continuation.
+Status: working local Spring/React app on saved real predictions from `qwen3.8-27b-ctx640-lora-emptycheck-alwayscompliant-full-v1` (fine-tuned model). Store view (simulated live view with urgency per camera and a per-camera filter), alerts, camera/crop evidence and the Shelf study (store / camera / product insights for the recorded day) are implemented. Public deployment/QR and the final presentation rehearsal remain pending. Current continuation instructions: `docs/PLAN.md`, Member2 continuation.
 
 Challenge confirmed: Sensei. The script below demonstrates the shelf assistant and its measured results.
 
@@ -10,11 +10,11 @@ We turn existing store cameras into a prioritised list of shelf tasks, with visi
 ## What judges can try
 - Open the phone-friendly app without installing anything (local Wi-Fi now; public QR still pending).
 - Store view: open a camera or priority shelf task and inspect the crop/full-camera evidence.
-- Shelf study: choose a camera and a timeline bar; compare saved stock states, then open a shelf-to-watch row.
+- Shelf study: switch Whole store / Camera / Product; read when shelves run low by hour, which products are most often low or rarely low, where stock moves most and the slowest refills; open any row's evidence.
 - Watch a short recorded sequence and see tasks change with the actual observations.
 - Stretch: request fresh inference on an approved image. Further stretch: photograph one produce tray and select the expected product.
 
-The core demo works from saved results. Label it "Recorded store replay" and show the capture timestamp. "Analysed now" means fresh processing, not a live camera feed. Mark reference timestamps and any use of later frames. Never describe a saved result as fresh inference.
+The core demo works from saved results. Label it "Simulated live view (recorded data)" and show the last-seen time, as the app does. "Analysed now" means fresh processing, not a live camera feed. Mark reference timestamps and any use of later frames. Never describe a saved result as fresh inference.
 
 ## 3-minute script
 - **0:00–0:20 — Problem:** staff discover shelf problems by walking the store; explain the cost of missing an empty shelf or raising an unnecessary alert.
@@ -59,11 +59,11 @@ Two-person presentation: Member2 leads the problem and product demonstration; Me
 
 ## Current app and verification
 
-The default export contains 181 frames / 1,962 observations: 166 empty, 544 half, 1,252 full, including 14 fallbacks. Product identity is not assessed (`product_check: not_assessed`); fixed compliance=true must never become a verified-product badge. Staff UI deliberately omits technical product-check notices. Fallback/unusable shelves remain neutral/unassessed and are excluded from study counts and reliable stock alerts. Source files and model values are never rewritten by UI controls. `?demo=1` is an explicitly labelled illustrative preview preserving supplied values; not evaluation or inference.
+The default export contains 181 frames / 1,962 observations: 200 empty, 639 half, 1,123 full, including 8 fallbacks. Product identity is not assessed (`product_check: not_assessed`); fixed compliance=true must never become a verified-product badge. Staff UI deliberately omits technical product-check notices. Fallback/unusable shelves remain neutral/unassessed and are excluded from study counts and reliable stock alerts. Source files and model values are never rewritten by UI controls. `?demo=1` is an explicitly labelled illustrative preview preserving supplied values; not evaluation or inference.
 
-Store view always uses each camera's latest capture, displays all camera cards on mobile and exposes product search/task filters. No Store camera/time dropdown. Empty/half/full backgrounds and polygons use red/amber/green with neutral card borders. “Restock urgently” means empty; “Restock” means half. Desktop hero preview has transparent chrome, discrete camera arrows and clickable regions; hidden on mobile. Selecting a camera shows the map; selecting a fruit scrolls to its crop. Mobile offers all shelves together in a two-column selector; desktop evidence scrolls independently. Back restores the list position. Cart SVG and the original dark sensei wordmark remain; no startup splash/toast/name badge. Hero typing remains and may feel slow (known user feedback).
+Store view is a simulated live view: each camera's latest capture, labelled "Simulated live · recorded data" with a red live dot and last-seen times. Camera cards show urgent/soon counts and are sorted by urgency; tapping a camera filters the shelf list to it ("Show all cameras" resets), while the bell always lists every camera's alerts. Empty/half/full backgrounds and polygons use red/amber/green with neutral card borders. "Restock urgently" means empty; "Restock" means half. Desktop hero preview has camera arrows and clickable regions; hidden on mobile. Back restores the list position.
 
-Shelf study: camera dropdown, daily stacked bars and selected-image distribution. Each timeline bar selects a frame; selected counts are never accumulated day totals. “Shelves to watch” shows up to five areas ranked by (empty+half)/assessed frames, separated empty/half bars and an evidence link to the latest matching frame. Coverage graph, technical expanders, thumbnail archive and long stock-change list are removed. Recorded-image dropdown and replay remain. The data cannot prove sales, customer movement, restocks or exact empty duration. Product names come from the planogram.
+Shelf study: Whole store / Camera / Product scopes over the recorded day: share of checks low, median wait empty → refilled, lasting stock changes, stock by hour, products most/least often low, zones with most movement, slowest refills (each opens evidence). Whole store on 27 Jun: 43% of checks low; fullest 10:00 (72% full), lowest 19:00 (41% full), first image 06:00 30% empty; median 2 h 15 min to refill (12 refills, 15 not refilled by the last image); most movement cameras 6376 and 6491. The data cannot prove sales or customer movement; hour-scale gaps bound refill times.
 
 Alerts are derived from the latest selected saved data: a new observation with no issue removes the corresponding task, but there is no automatic ingestion or manual completion database. Login, staff roles, assignment, vibration/push notifications and fresh-analysis jobs are not implemented.
 

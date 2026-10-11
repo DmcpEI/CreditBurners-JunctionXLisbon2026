@@ -81,6 +81,17 @@ Product flags are part of the submission but kept out of the staff app. Details:
 - the mentor's unit-counting idea: SAM 3 instance counts with a learned adapter reach 140/344 alone but add only +2 to the average (branch `feat/unit-counting`);
 - Claude Haiku / Sonnet / Opus zero-shot (Opus close to our earlier pipeline, at a per-image API cost and with store images leaving the premises).
 
+## Scaling to many stores and chains (next step)
+
+We only had one store and one day, but the pipeline is already split the way a multi-chain product needs:
+
+1. **A shared model that sees.** Train the camera models on images from many supermarkets and products, so they output how much is left (empty / half / full probabilities, unit counts) for any shelf. Today: Qwen3.8-27B with a LoRA adapter plus YOLO11n, trained on 344 labels from one store.
+2. **A small adapter per chain that decides.** Retailers judge the same shelf differently. One strawberry pack nobody buys is *empty*, but one melon still sells; one chain calls a single pack *empty*, another calls it *half*. These are policy choices, not vision, so they live in a cheap layer on top:
+   - decision thresholds (today one file, `ml/lora_thresholds.json`, which already supports per-area values);
+   - per-product unit rules (the learned count adapter on branch `feat/unit-counting` takes unit size into account);
+   - optionally a per-chain LoRA (60 MB, about 8 min of training) swapped in at inference on one shared base model.
+3. **Calibrate a new chain from a few labels.** Our learning curve shows what labels buy: 50% → 75% → 100% of our labels gave 119 → 181 → 186 held-out points for the same model. A new chain's policy layer needs on the order of a hundred labelled shelves, made with our labelling page, not a new model.
+
 ## Run it
 
 **Validation (what we run on submission day):**

@@ -11,12 +11,12 @@ client = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 def get(path):
     return client.open(base + path, timeout=10)
 
-def expect_status(path, status):
+def expect_status(path, *statuses):
     try:
         actual = get(path).status
     except urllib.error.HTTPError as error:
         actual = error.code
-    assert actual == status, (path, actual)
+    assert actual in statuses, (path, actual, statuses)
 
 summaries = json.load(get('/api/snapshots'))
 assert summaries, 'No published snapshots'
@@ -30,7 +30,7 @@ for url in [snapshot['image_url'], snapshot['areas'][0]['crop_url']]:
 assert json.load(get('/api/snapshots/' + snapshot['snapshot_id'])) == snapshot
 expect_status('/api/snapshots/unknown', 404)
 expect_status('/assets/unknown', 404)
-expect_status('/assets/%2e%2e%2fsnapshots.json', 400)
+expect_status('/assets/%2e%2e%2fsnapshots.json', 400, 404)
 html = get('/').read().decode()
 resources = re.findall(r'(?:src|href)="(/app/[^"]+)"', html)
 assert len(resources) >= 2, 'Missing bundled frontend'

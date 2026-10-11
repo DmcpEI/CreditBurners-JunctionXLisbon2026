@@ -33,7 +33,7 @@ export default function SnapshotBrowser() {
   const alerts = displayedAreas.filter(isAlert);
   const allAreas = storeView ? storeSnapshots.flatMap(s => s.areas.map(a => ({...a, snapshot_id: s.snapshot_id, camera_id: s.camera_id, captured_at: s.captured_at, prediction_source: s.prediction_source}))) : displayedAreas;  // the bell ignores the camera filter
   const attention = alerts.length;
-  const unassessed = displayedAreas.filter(a => a.fallback_used).length;
+  const unassessed = displayedAreas.filter(a => a.fallback_used || a.visibility !== 'clear').length;
   const lastShelf = useRef(null);
   const lastShelfSnapshot = useRef(null);
   const listScroll = useRef(0);

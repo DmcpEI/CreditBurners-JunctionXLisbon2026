@@ -1,6 +1,6 @@
 import React, {useMemo} from 'react';
 import english from '../../../../ml/products_en.json';
-import {fullTime, productLabel, shelfLabel, timeLabel} from './presentation';
+import {fullTime, productLabel, shelfLabel, timeLabel, storeHour} from './presentation';
 import {byHour, observations, rank, shelfEvents, summary} from './insights';
 import {manualPreview} from './manualPreview';
 import ObservationToolbar from './ObservationToolbar';
@@ -43,8 +43,8 @@ export default function ShelfStudy({browser, onOpen}) {
 
     <div className="study-metrics">
       <div><strong>{pct(stats.low)}</strong><span>of checks empty or half</span><small>{stats.n} shelf checks · {subject}</small></div>
-      <div><strong>{stats.medianRefill === null ? '—' : duration(stats.medianRefill)}</strong><span>median wait, empty → refilled</span><small>{plural(stats.refilled, 'refill')}{stats.stillEmpty ? ` · ${stats.stillEmpty} not refilled by the last image` : ''}</small></div>
-      <div><strong>{stats.changes}</strong><span>lasting stock changes</span><small>sales and restocks, flicker removed</small></div>
+      <div><strong>{stats.medianRefill === null ? '—' : duration(stats.medianRefill)}</strong><span>median observation gap, empty → stocked</span><small>{stats.refilled} observed {stats.refilled === 1 ? 'recovery' : 'recoveries'}{stats.stillEmpty ? ` · ${stats.stillEmpty} without a confirmed recovery` : ''}</small></div>
+      <div><strong>{stats.changes}</strong><span>observed stock changes</span><small>immediate reversals filtered</small></div>
     </div>
 
     <HourChart hours={byHour(obs)} scope={scope} frames={frames} browser={browser}/>
@@ -53,7 +53,7 @@ export default function ShelfStudy({browser, onOpen}) {
       {scope === 'store' && <>
         <RankList title="Products most often low" note="Share of checks empty or half. Candidates for more space or more frequent refills (or displayed half-full by design: check the photos). Tap to study the product."
           rows={rank(all, 'category').filter(r => r.n >= 13).slice(0, 6).map(r => ({...r, name: title(r.key), sub: plural(new Set(all.filter(o => o.category === r.key).map(o => o.area_id)).size, 'shelf').replace('shelfs', 'shelves'), onClick: () => goProduct(r.key)}))}/>
-        <RankList title="Products rarely low" note="Almost always full. Their space may exceed what they sell; check before giving them more."
+        <RankList title="Products rarely low" note="Often stocked in these images. Review replenishment frequency before changing shelf space."
           rows={rank(all, 'category').filter(r => r.n >= 13).reverse().slice(0, 5).map(r => ({...r, name: title(r.key), sub: plural(new Set(all.filter(o => o.category === r.key).map(o => o.area_id)).size, 'shelf').replace('shelfs', 'shelves'), onClick: () => goProduct(r.key)}))}/>
         <ActivityList changes={changes} cameras={cameras} onPick={goCamera}/>
       </>}
@@ -66,19 +66,15 @@ export default function ShelfStudy({browser, onOpen}) {
     {scope === 'camera' && <section className="study-archive"><h3>Browse this camera's images</h3>
       <div className="study-frame-choice" aria-label="Selected study image"><button aria-label="Previous image" disabled={browser.position <= 0} onClick={() => browser.selectFrame(frames[browser.position - 1].snapshot_id)}>←</button><div><span>Image {browser.position + 1} of {frames.length}</span><strong>{current && fullTime(current.captured_at)}</strong></div><button aria-label="Next image" disabled={browser.position < 0 || browser.position >= frames.length - 1} onClick={() => browser.selectFrame(frames[browser.position + 1].snapshot_id)}>→</button></div>
       <ObservationToolbar browser={browser} hideCamera/></section>}
-    <p className="study-note">One recorded day (27 June 2025), about one image per camera per hour. Stock levels are model estimates (about 88% right on our labelled shelves); a change counts unless the next image goes straight back. These figures show availability and replenishment, not sales.</p>
+    <p className="study-note">One recorded day (27 June 2025), about one image per camera per hour. All times are Europe/Lisbon. Confirmed curtain-covered frames and unusable assessments are excluded. Stock levels are model estimates; changes need a following observation that does not immediately reverse them. Observation gaps are not exact replenishment durations, and stock changes do not measure sales.</p>
   </section>;
 }
 
 function HourChart({hours, scope, frames, browser}) {
-  const usable = hours.slice(1).filter(h => h.n >= Math.max(...hours.map(x => x.n)) / 2);  // first image = overnight state
-  const full = h => h.full / h.n;
-  const best = usable.reduce((a, b) => full(b) > full(a) ? b : a, usable[0]);
-  const worst = usable.reduce((a, b) => full(b) < full(a) ? b : a, usable[0]);
-  const frameAt = hour => frames.find(f => new Date(f.captured_at).getHours() === hour);
+  const frameAt = hour => frames.find(f => storeHour(f.captured_at) === hour);
   return <section className="study-chart study-hours active-chart"><header><span className="section-kicker">Stock by hour</span>
     <h3>When shelves run low</h3>
-    {best && <p>Fullest around {hourLabel(best.hour)} ({pct(full(best))} full). Lowest around {hourLabel(worst.hour)} ({pct(full(worst))} full){hours[0] && hours[0] !== worst ? `; the first image (${hourLabel(hours[0].hour)}) starts at ${pct(hours[0].empty / hours[0].n)} empty` : ''}.{scope === 'camera' ? ' Tap an hour to open that image.' : ''}</p>}</header>
+    <p>Share of assessed shelves at each recorded hour · Lisbon time.{scope === 'camera' ? ' Tap an hour to open that image.' : ''}</p></header>
     <div className="chart-legend">{['empty', 'half', 'full'].map(state => <span key={state}><i className={`stock-${state}`}/>{title(state)}</span>)}</div>
     <div className="timeline-scroll" tabIndex={0} aria-label="Stock share by hour"><div className="stock-timeline">{hours.map(h => {
       const bar = <><span className="timeline-bar" aria-hidden="true">{['empty', 'half', 'full'].map(state => <i key={state} className={`stock-${state}`} style={{height: `${h[state] / h.n * 100}%`}}/>)}</span><strong>{hourLabel(h.hour)}</strong><small>{pct((h.empty + h.half) / h.n)} low</small></>;
@@ -106,16 +102,16 @@ function ActivityList({changes, cameras, onPick}) {
   const counts = cameras.map(id => ({id, n: changes.filter(c => c.camera_id === id).length})).sort((a, b) => b.n - a.n);
   const max = Math.max(1, ...counts.map(c => c.n));
   const quiet = counts.slice(-3).reverse();
-  return <section className="study-attention"><h3>Where stock moves most</h3><p>Lasting stock changes per camera zone (sales and restocks). Quietest: {quiet.map(c => `camera ${c.id} (${c.n})`).join(', ')}. Tap to study the zone.</p><ul>{counts.slice(0, 6).map(c => <li key={c.id}>
+  return <section className="study-attention"><h3>Where stock moves most</h3><p>Observed stock changes per camera zone, with immediate reversals filtered. Quietest: {quiet.map(c => `camera ${c.id} (${c.n})`).join(', ')}. Tap to study the zone.</p><ul>{counts.slice(0, 6).map(c => <li key={c.id}>
     <button onClick={() => onPick(c.id)}><div><strong>Camera {c.id}</strong><span>{plural(new Set(changes.filter(x => x.camera_id === c.id).map(x => x.area_id)).size, 'shelf').replace('shelfs', 'shelves')} changed</span></div>
       <Track parts={[['activity', c.n / max]]}/><span className="attention-count">{c.n} changes</span></button></li>)}</ul></section>;
 }
 
 function RefillList({spells, onOpen}) {
   const rows = spells.map(s => ({...s, wait: s.minutes ?? (s.open_until - s.t) / 60000})).sort((a, b) => b.wait - a.wait).slice(0, 6);
-  if (!rows.length) return <section className="study-attention"><h3>Slowest refills</h3><p>No shelf went empty during the day here.</p></section>;
+  if (!rows.length) return <section className="study-attention"><h3>Longest observed empty periods</h3><p>No confirmed empty period started after the first usable check. Shelves already empty at the first check are excluded.</p></section>;
   const max = Math.max(...rows.map(r => r.wait));
-  return <section className="study-attention"><h3>Slowest refills</h3><p>How long shelves stayed empty after running out. Each hour empty is a possible lost sale. Tap to see the empty shelf.</p><ul>{rows.map(r => <li key={`${r.area_id}:${r.t}`}>
-    <button onClick={() => onOpen({snapshot_id: r.snapshot_id, area_id: r.area_id})}><div><strong>{productLabel(r.product_name)}</strong><span>{shelfLabel(r)} · Camera {r.camera_id} · empty from {timeLabel(r.t)}</span></div>
-      <Track parts={[['stock-empty', r.wait / max]]}/><span className="attention-count">{r.minutes === null ? `${duration(r.wait)}+` : duration(r.wait)}<small>{r.minutes === null ? `still empty at ${timeLabel(r.open_until)}` : 'until refilled'}</small></span></button></li>)}</ul></section>;
+  return <section className="study-attention"><h3>Longest observed empty periods</h3><p>Gaps between an empty observation and a confirmed stocked observation. Replenishment may happen between checks; continuous emptiness is not proven. Tap to inspect the evidence.</p><ul>{rows.map(r => <li key={`${r.area_id}:${r.t}`}>
+    <button onClick={() => onOpen({snapshot_id: r.snapshot_id, area_id: r.area_id})}><div><strong>{productLabel(r.product_name)}</strong><span>{shelfLabel(r)} · Camera {r.camera_id} · observed empty at {timeLabel(r.t)}</span></div>
+      <Track parts={[['stock-empty', r.wait / max]]}/><span className="attention-count">{duration(r.wait)}<small>{r.minutes === null ? `no confirmed recovery by ${timeLabel(r.open_until)}` : 'between observed states'}</small></span></button></li>)}</ul></section>;
 }

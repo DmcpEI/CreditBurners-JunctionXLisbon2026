@@ -1,14 +1,16 @@
 // Shelf study maths: saved stock assessments over the recorded day, for the store, a camera or a product.
 // Stock levels are model estimates on hourly images, so single changes are noisy: a change counts unless the next
 // image goes straight back (A-B-A flicker). Nothing here measures sales.
+import {withAssessmentMetadata} from './assessmentMetadata.js';
+import {storeHour} from './presentation.js';
 export const LEVEL = {empty: 0, half: 1, full: 2};
 
 const usable = (snapshot, area, includePreview) => !area.fallback_used && area.visibility === 'clear' && area.stock_level in LEVEL &&
   (area.manual_preview ? includePreview : snapshot.prediction_source !== 'mock');
 
 export function observations(snapshots, {category = name => name, includePreview = false} = {}) {
-  return snapshots.flatMap(snapshot => snapshot.areas.filter(area => usable(snapshot, area, includePreview)).map(area => ({
-    t: Date.parse(snapshot.captured_at), hour: new Date(snapshot.captured_at).getHours(), snapshot_id: snapshot.snapshot_id,
+  return snapshots.map(withAssessmentMetadata).flatMap(snapshot => snapshot.areas.filter(area => usable(snapshot, area, includePreview)).map(area => ({
+    t: Date.parse(snapshot.captured_at), hour: storeHour(snapshot.captured_at), snapshot_id: snapshot.snapshot_id,
     camera_id: snapshot.camera_id, area_id: area.area_id, product_name: area.product_name, category: category(area.product_name),
     level: LEVEL[area.stock_level]})));
 }

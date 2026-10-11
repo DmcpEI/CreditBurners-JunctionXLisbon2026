@@ -1,7 +1,9 @@
 import {action} from './actions.js';
 
-export const dateLabel = value => new Intl.DateTimeFormat(undefined, {dateStyle: 'medium'}).format(new Date(value));
-export const timeLabel = value => new Intl.DateTimeFormat(undefined, {hour: '2-digit', minute: '2-digit', timeZoneName: 'short'}).format(new Date(value));
+const timeZone = 'Europe/Lisbon';
+export const dateLabel = value => new Intl.DateTimeFormat(undefined, {dateStyle: 'medium', timeZone}).format(new Date(value));
+export const timeLabel = value => new Intl.DateTimeFormat(undefined, {hour: '2-digit', minute: '2-digit', timeZoneName: 'short', timeZone}).format(new Date(value));
+export const storeHour = value => Number(new Intl.DateTimeFormat('en-GB', {hour: '2-digit', hourCycle: 'h23', timeZone}).format(new Date(value)));
 export const fullTime = value => `${dateLabel(value)} · ${timeLabel(value)}`;
 export const productLabel = value => {
   const name = value || 'Unnamed product';
@@ -26,6 +28,8 @@ export function areaHref(location, id) {
 }
 
 export const searchText = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
+export const matchesProduct = (area, query, englishName = '') =>
+  searchText(`${area.product_name} ${englishName} ${area.area_id} ${shelfLabel(area)}`).includes(searchText(query));
 export function assessmentFacts(area) {
   if (area.fallback_used || area.visibility !== 'clear' || (area.prediction_source === 'mock' && !area.manual_preview)) return [];
   return [

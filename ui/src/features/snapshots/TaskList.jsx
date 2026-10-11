@@ -1,9 +1,10 @@
 import React, {useMemo, useRef} from 'react';
 import Evidence from './Evidence';
+import english from '../../../../ml/products_en.json';
 import AssessmentBadges from './AssessmentBadges';
 import useShelfMotion from './useShelfMotion';
 import {isAlert, rank} from './actions';
-import {assessmentFacts, searchText, fullTime, timeLabel, areaHref, productLabel, shelfLabel, statusClass, statusLabel, taskDescription} from './presentation';
+import {assessmentFacts, matchesProduct, fullTime, timeLabel, areaHref, productLabel, shelfLabel, statusClass, statusLabel, taskDescription} from './presentation';
 
 export default function TaskList({areas: sourceAreas, storeView, camera, location, navigate, onOpen}) {
   const query = location.q || '';
@@ -11,7 +12,7 @@ export default function TaskList({areas: sourceAreas, storeView, camera, locatio
   const areas = useMemo(() => [...sourceAreas].sort((a, b) => rank(a) - rank(b)), [sourceAreas]);
   const attention = areas.filter(area => isAlert(area));
   const shown = areas.filter(area => (filter === 'all' || isAlert(area)) &&
-    searchText(`${area.product_name} ${area.area_id} ${shelfLabel(area)}`).includes(searchText(query)));
+    matchesProduct(area, query, english[area.product_name]));
   const motionScope = useRef(null);
   useShelfMotion(motionScope, `${location.snapshot}:${location.q || ''}:${filter}:${sourceAreas.length}`);
   const follow = (event, area) => {

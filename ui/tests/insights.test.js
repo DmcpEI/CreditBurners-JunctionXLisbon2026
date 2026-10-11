@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {byHour, observations, rank, shelfEvents, summary} from '../src/features/snapshots/insights.js';
+import {withAssessmentMetadata} from '../src/features/snapshots/assessmentMetadata.js';
+import {matchesProduct, storeHour, fullTime} from '../src/features/snapshots/presentation.js';
 
-const snap = (hour, levels, patch = {}) => ({snapshot_id: `c_${hour}`, camera_id: 'c', captured_at: `2025-06-27T${String(hour).padStart(2, '0')}:00:00`, prediction_source: 'saved',
+const snap = (hour, levels, patch = {}) => ({snapshot_id: `c_${hour}`, camera_id: 'c', captured_at: `2025-06-27T${String(hour).padStart(2, '0')}:00:00+01:00`, prediction_source: 'saved',
   areas: Object.entries(levels).map(([area, level]) => ({area_id: area, product_name: area === 'c_1' ? 'MACA FUJI' : 'BANANA', stock_level: level, visibility: 'clear', fallback_used: false, ...patch}))});
 
 test('unusable observations are excluded; preview only when asked', () => {
@@ -33,4 +35,29 @@ test('hour profile and ranking by share of low observations', () => {
   const ranked = rank(obs, 'area_id');
   assert.deepEqual(ranked.map(r => [r.key, r.low]), [['c_2', 1], ['c_1', 0.5]]);
   assert.equal(ranked[1].latest_low.hour, 10);
+});
+
+test('confirmed curtains never become stock evidence, including in manual previews', () => {
+  for (const snapshot_id of ['6383_1751001156', '6386_1751001156']) {
+    const original = {...snap(6, {c_1: 'full'}), snapshot_id};
+    const assessed = withAssessmentMetadata(original);
+    assert.equal(assessed.areas[0].visibility, 'occluded');
+    assert.equal(original.areas[0].visibility, 'clear');
+    assert.equal(observations([original]).length, 0);
+    assert.equal(observations([{...original, areas: original.areas.map(a => ({...a, manual_preview: true}))}], {includePreview: true}).length, 0);
+  }
+  assert.equal(observations([snap(7, {c_1:'full'})]).length, 1);
+});
+
+test('English and Portuguese searches find the same shelf without losing ID search', () => {
+  const area = {area_id:'6462_1', product_name:'MORANGO EMB. 500 GR'};
+  for (const query of ['strawberry', 'Morango', '6462_1', 'shelf 1']) assert.ok(matchesProduct(area, query, 'strawberry'));
+  assert.equal(matchesProduct(area, 'banana', 'strawberry'), false);
+});
+
+test('store hours follow Lisbon daylight saving and midnight regardless of viewer timezone', () => {
+  assert.equal(storeHour('2025-06-27T23:30:00Z'), 0);
+  assert.equal(storeHour('2025-12-27T23:30:00Z'), 23);
+  assert.equal(observations([{...snap(6, {c_1:'full'}), captured_at:'2025-06-27T05:00:00Z'}])[0].hour, 6);
+  assert.match(fullTime('2025-06-27T23:30:00Z'), /28/);
 });

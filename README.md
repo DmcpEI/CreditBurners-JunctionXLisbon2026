@@ -69,7 +69,7 @@ Sensei released the validation images with their labels (26 images, 289 areas, m
 **What changed, and why our own-label estimate (455–469) was off:**
 - The validation images are all from the evening (20:14–21:57, plus one from 2 July), after the hours our labelled day covers.
 - Wrong products are rare there (4 of 289), so the product check must only fire when near-certain.
-- Sensei's "full" is more generous than our labels: 35 of their full shelves we had called half.
+- **"Full" is defined differently, the biggest loss.** On our own held-out labels the stock model calls a full shelf half at most 6% of the time at any hour, and 0% in the evening. On Sensei's labels it's 20% (29 of 145). Two independently trained models agree on these, and they aren't close calls. 17 of the 29 shelves show visible gaps with plenty left: our labels (following "half = staff would replenish now; in doubt, lower") call those half, Sensei calls them full. About 9 look genuinely full and are real misses, likely because these images are later in the day than any we trained on. Details: `docs/RESULTS.md`, `docs/review/validation-full-called-half.*`.
 - The empty check, tuned on our morning-heavy day, over-calls empty in the evening.
 - YOLO helps: the VLM alone would score 294 with the frozen product setting off.
 

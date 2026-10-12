@@ -6,6 +6,24 @@ Checks: 15 UI tests passed under `TZ=America/New_York`, including curtain exclus
 
 # Results
 
+## Why we said "full" less often than Sensei — validation error analysis — 11 October 2026
+
+Tuned validation export (`results/validation-final-tuned/`): stock 231 right, 37 too low, 21 too high. Confusion (Sensei → ours): full→full 116, **full→half 29**, half→half 82, half→full 18, half→empty 8, empty→empty 33, empty→full 2, empty→half 1. The 29 full→half cases are in `docs/review/validation-full-called-half.csv` / `.jpg`.
+
+**What it is not**
+- *Not the cost-rule threshold:* in 28 of 29 cases "half" was already the top answer (median averaged half score 0.82); the half ≥ 0.4 rule changed only one.
+- *Not one model:* the VLM says half in 25, YOLO in 27, both in 23 — two independently trained models agree.
+- *Not shelf memorisation:* on the 281 validation areas whose shelf we had labelled, predictions match Sensei 229 times and "our usual label for that shelf" only 162; always answering our usual label would score −179 stock points vs +104 for the model. The models read the image.
+- *Not our labels being stricter shelf by shelf:* on the 23 shelves we labelled half/empty ≥ 70% of the day, Sensei also says half in 14.
+
+**What it is — a definition gap on "full" (labeller, not model)**
+- On our own labels, held out (same 5 folds, same tuned decision settings), the stock model calls a labelled-full shelf half only 4/71 (06–09 h), 3/66 (10–13 h), 2/62 (14–17 h), **0/29 (18–21 h)**. On Sensei's evening labels: **29/145 (20%)**. Same models and same kind of images; the difference is who labelled "full".
+- Reading the 29 crops: **17 show visible gaps or bare floor with plenty left** (3 melons in a crate, a kiwi tray missing a row, a half-empty mango box, a few grape bags, garlic, oranges with gaps). Our labels followed the organiser's "half = staff would replenish now" and "in doubt, choose the lower level", so visible gaps became half; Sensei's labellers call these full ("still plenty to sell"). **9 look genuinely full** (red onions ×2, heart tomatoes ×2, zucchini, clementines, apples, onion bags, red cabbage): confident misses, likely the time-of-day shift (validation 20:14–21:57 and one 2 July image; our latest labelled frame 20:16; only 29 evening full labels to learn from). **3 are ambiguous** narrow/clipped crops.
+- By design the system errs low (over-estimate −3, under-estimate −2): 37 too low (−74) vs 21 too high (−63).
+
+**Implication:** the visual model transfers; the stock *definition* must be calibrated per client. A small policy adapter on the client's own labels is the fix (README, "Scaling"); re-tuning only thresholds on Sensei's labels already moved validation from 311 to 374 with the models unchanged.
+
+
 ## Validation — decision settings tuned on Sensei's labels: 374 / 578 — 11 October 2026
 
 Rules allow changing thresholds and variables, not models. Grid on the saved validation outputs (YOLO weight 0–1, half 0.3–1.01, empty-check threshold 0.5–off, product check 0.6–off; simulation reproduces the real export exactly, frozen = 311): best **374** at YOLO weight 0.6 / half 0.4 / empty check off / product check ≥ 0.99. Plateau: weight 0.5–0.7 × half 0.40–0.50 → 363–374; product threshold 0.6 → 344, 0.8 → 359, 0.9 → 368, 0.95 → 371, off → 371; empty threshold 0.5–0.95 → 346–368 vs off 374. Exported with `ml.export --yolo-weight 0.6 --compliance-threshold 0.99` (no `--empty-results`) to `results/validation-final-tuned/` (identification 286/3, stock 231 / 37 under / 21 over). Now the defaults of `scripts/run_validation.sh` and `ml/run.py`.
